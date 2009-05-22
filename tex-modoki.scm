@@ -9,14 +9,16 @@
 ;;   code = -1  : control sequence
 ;;   others     : TeX category code
 
-;; string-port -> (code . token)
+;; string-port -> [(code . token)]
 (define (read-tex-token . iport)
   (define (in-ctrl-seq c seq p)
     (let ((x (peek-char p)))
       (cond 
+       ((eof-object? (peek-char p))
+	(cons -1 seq))
        ((char-set-contains? #[\s] x)
-	(in-spaces (read-char p) seq p))
-       ((char-set-contains? #[\W\d_] x) 
+	(in-spaces x #?=seq p))
+       ((char-set-contains? #[\W\d_] x)
 	(cond ((string-null? seq)
 	       (cons -1 (string (read-char p))))
 	      (else
@@ -24,13 +26,16 @@
        (else 
 	(in-ctrl-seq (read-char p) (string+char seq x) p)))))
   (define (in-spaces c seq p)
-    (cond ((char-set-contains? #[\s] (peek-char p))
+    (cond ((eof-object? (peek-char p))
+	   (if (string-null? seq)
+	       (cons 10 #\space)
+	       (cons -1 seq)))
+	  ((char-set-contains? #[\s] (peek-char p))
 	   (in-spaces (read-char p) seq p))
 	  (else
-	   (cond ((string-null? seq)
-		  (cons 10 #\space))
-		 (else
-		  (cons -1 seq))))))
+	   (if (string-null? seq)
+	       (cons 10 #\space)
+	       (cons -1 seq)))))
   (define (loop c seq p)
     (cond ((eof-object? c)
 	   c)
@@ -60,7 +65,7 @@
 	  ((char=? #\null c)
 	   (cons 9 (read-char p)))
 	  ((char=? #\space c)
-	   (in-spaces (read-char p) "" p))
+	   (in-spaces (read-char p) seq p))
 	  ((char-set-contains? #[a-zA-Z] c)
 	   (cons 11 (read-char p)))
 	  ((char=? #\~ c)
@@ -76,10 +81,15 @@
 	       (car iport))))
     (loop (peek-char p) "" p)))
 
-;; take the head group from a token list
+;; this gets the head group from a token list,
+;; returning the group and the rest of the string in multivalues as tokenlists.
+;; [token] -> ([token] and [token])
+(define-condition-type <read-group-error> <error> #f)
 (define (get-tex-group ls)
   (define (in-group ls body i)
-    (cond ((endgroup? (car ls))
+    (cond ((null? ls)
+	   (error <read-group-error> "unterminated tex group"))
+	  ((endgroup? (car ls))
 	   (if (= 0 i)
 	       (values (reverse body) (cdr ls))
 	       (in-group (cdr ls) (cons (car ls) body) (- i 1))))
@@ -89,17 +99,38 @@
 	   (in-group (cdr ls) (cons (car ls) body) i))))
   (define (out-group ls)
     (cond ((null? ls)
-	   '())
+	   (values '() '()))
 	  ((begingroup? (car ls))
 	   (in-group (cdr ls) '() 0))
 	  ((texspaces? (car ls))
 	   (out-group (cdr ls)))
 	  (else
-	   (error <read-group-error> "the first token shoule have catcode 1"))))
+	   (values `(,(car ls)) (cdr ls))))) ; a token is also a group
   (out-group ls))
 
+;; this gets n groups or tokens at the top of the token list as tokenlists.
+;; Integer -> [token] -> ([token] and [token])
+(define (get-args n ls)
+  (define (trim-texspaces ls)
+    (cond ((null? ls) '())
+	  ((texspaces? (car ls))
+	   (trim-texspaces (cdr ls)))
+	  (else
+	   ls)))
+  (guard (exc
+	  ((<read-group-error> exc) (error "missing argument" n))
+	  ((<error> exc) (error "missing argument" n)))
+	 (if (> n 0)
+	     (receive (arg unseen)
+		      (get-tex-group ls)
+		      (receive (got rest)
+			       (get-args (- n 1) unseen)
+			       (values (cons arg got) (trim-texspaces rest))))
+	     (values '() ls))))
 
-;; get a command and its parameters from a manuscript
+;; this gets a command and its parameters from a token list,
+;; returning the before string, the command sequence and the after string in multivalues as tokenlists.
+;; String -> Integer -> [token] -> ([token], [token] and [token])
 (define (get-command-sequence cmd arity tokenlist)
   (let R ((before '())
 	  (cmdseq '())
@@ -109,6 +140,11 @@
 	   (values (reverse before)
 		   cmdseq
 		   after))
+	  ((commenthead? (car next))
+	   (receive (comment rest)
+		    (get-comment-line next)
+		    (R (append (reverse comment) before) 
+		       cmdseq after rest)))
 	  ((< (cat (car next)) 0)
 	   (if (string=? cmd (cdar next))
 	       (values (reverse before)
@@ -118,19 +154,54 @@
 	  (else
 	   (R (cons (car next) before) cmdseq after (cdr next))))))
 
-(define-condition-type <read-group-error> <error> #f)
+;; this gets the inline math portion at the head of a token list, 
+;; returning a math portion and the rest of the string in multivalues as tokenlists.
+;; [token] -> ([token] and [token])
+(define-condition-type <read-math-error> <error> #f)
+(define (get-inline-math ls)
+  (define (in-math ls body)
+    (cond ((null? ls)
+	   (error <read-math-error> "unterminated math $"))
+	  ((mathdollar? (car ls))
+	   (values (reverse body) (cdr ls)))
+	  (else
+	   (in-math (cdr ls) (cons (car ls) body)))))
+  (define (out-math ls)
+    (cond ((null? ls)
+	   (values '() '()))
+	  ((mathdollar? (car ls))
+	   (in-math (cdr ls) '()))
+	  ((texspaces? (car ls))
+	   (out-math (cdr ls)))
+	  (else
+	   (error <read-math-error> "the first token shoule have catcode 3"))))
+  (out-math ls))
 
-(define (get-args n ls)
-  (guard (exc
-	  ((<read-group-error> exc) (error "missing argument" n))
-	  ((<error> exc) (error "missing argument" n)))
-	 (if (> n 0)
-	     (receive (arg unseen)
-		      (get-tex-group ls)
-		      (receive (got rest)
-			       (get-args (- n 1) unseen)
-			       (values (cons arg got) rest)))
-	     (values '() ls))))
+;; this gets a comment line at the head of a token list,
+;; returning a comment line and the rest of the string in multivalues as tokenlists.
+;; [token] -> ([token] and [token])
+(define-condition-type <read-comment-error> <error> #f)
+(define (get-comment-line ls)
+  (define (in-comment comment rest)
+    (cond ((null? rest)
+	   (values (reverse comment) rest))
+	  ((newline? (car rest))
+	   (values (reverse comment) rest)) ; with \n
+	  (else
+	   (in-comment (cons (car rest) comment) (cdr rest)))))
+  (define (out-comment ls)
+    (cond ((null? ls)
+	   (values '() '()))
+	  ((commenthead? (car ls))
+	   (in-comment `(,(car ls)) (cdr ls))) ; with %
+	  ((texspaces? (car ls))
+	   (out-comment (cdr ls)))
+	  (else
+	   (error <read-comment-error> "the first token shoule have catcode 14"))))
+  (out-comment ls))
+
+
+
 
 
 ;; utils
@@ -150,17 +221,32 @@
   (and (textoken? t)
        (= 2 (car t))))
 
+(define (mathdollar? t)
+  (and (textoken? t)
+       (= 3 (car t))))
+
 (define (texspaces? t)
   (and (textoken? t)
        (or (=  5 (car t))
 	   (= 10 (car t))
 	   (=  9 (car t)))))
 
+(define (newline? t)
+  (and (textoken? t)
+       (=  5 (car t))))
+
+(define (commenthead? t)
+  (and (textoken? t)
+       (=  14 (car t))))
+
+
 (define (tokenlist->string tls)
   (define (restore-command token)
-    (if (> (cat token) 0)
-	(cdr token)
-	(string-append "\\" (cdr token))))
+    (if (or (< (cat token) 0) 
+	    (and (= (cat token) 12)
+		 (char-set-contains? #[$%&#_] (cdr token))))
+	(string-append "\\" (x->string (cdr token)))
+	(cdr token)))
   (tree->string (map restore-command tls)))
 
 (define (string->tokenlist str)
@@ -168,4 +254,6 @@
     (lambda ()
       (port-map values read-tex-token))))
 
+(define (port->tokenlist p)
+  (port->list read-tex-token p))
 

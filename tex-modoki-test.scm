@@ -1,11 +1,17 @@
 (use gauche.test)
 
-(add-load-path ".")
-(use tex-modoki)
+(add-load-path "/home/kshikano/gauche/lib/text/tex-modoki/")
+(load "tex-modoki.scm")
 
 (test* "read-tex-token: case \"{\\\\hskip 136 pt}\"" 
        '((1 . #\{) (-1 . "hskip") (12 . #\1) (12 . #\3) (12 . #\6) (10 . #\ ) (11 . #\p) (11 . #\t) (2 . #\}))
        (with-input-from-string "{\\hskip 136 pt}" 
+	 (lambda () 
+	   (port-map values read-tex-token))))
+
+(test* "read-tex-token: case \"    d     \""
+       '((10 . #\space) (11 . #\d) (10 . #\space)) 
+       (with-input-from-string "    d     " 
 	 (lambda () 
 	   (port-map values read-tex-token))))
 
@@ -32,4 +38,17 @@
 	1))
 
 
+(test* "read-tex-token: case \"    d     \""
+       '((10 . #\space) (11 . #\d) (10 . #\space)) 
+       (with-input-from-string "   d   " 
+	 (lambda () 
+	   (port-map values read-tex-token))))
+
+(test* "get-inline-math" 
+       '((11 . #\a) (11 . #\b) (11 . #\c) (10 . #\space) (12 . #\=) (10 . #\space) (12 . #\1))
+       (get-inline-math (string->tokenlist "$abc = 1$.")))
+
+(test* "get-comment-line"
+       '((14 . #\%) (10 . #\space) (11 . #\c) (11 . #\o) (11 . #\m) (11 . #\m) (11 . #\e) (11 . #\n) (11 . #\t) (10 . #\space)) 
+       (get-comment-line (string->tokenlist "% comment \n")))
 
