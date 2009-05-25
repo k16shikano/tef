@@ -1,6 +1,6 @@
 (use gauche.test)
 
-(add-load-path "/home/kshikano/gauche/lib/text/tex-modoki/")
+(add-load-path "/home/k16/myproj/tex-modoki/")
 (load "tex-modoki.scm")
 
 (test* "read-tex-token: case \"{\\\\hskip 136 pt}\"" 
@@ -16,7 +16,7 @@
 	   (port-map values read-tex-token))))
 
 (test* "tokenlist->string for \"{\\\\hskip 36 pt}{This    is \\\\bf{pen}}\""
-       "{\\hskip36 pt}{This is \\bf{pen}}" 
+       "{\\hskip 36 pt}{This is \\bf{pen}}" 
        (with-input-from-string "{\\hskip 36 pt}{This    is \\bf{pen}}" 
 	 (lambda () 
 	   (tokenlist->string (port-map values read-tex-token)))))
