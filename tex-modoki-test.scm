@@ -4,7 +4,7 @@
 (load "tex-modoki.scm")
 
 (test* "read-tex-token: case \"{\\\\hskip 136 pt}\"" 
-       '((1 . #\{) (-1 . "hskip") (12 . #\1) (12 . #\3) (12 . #\6) (10 . #\ ) (11 . #\p) (11 . #\t) (2 . #\}))
+       '((1 . #\{) (-10 . "hskip") (12 . #\1) (12 . #\3) (12 . #\6) (10 . #\ ) (11 . #\p) (11 . #\t) (2 . #\}))
        (with-input-from-string "{\\hskip 136 pt}" 
 	 (lambda () 
 	   (port-map values read-tex-token))))

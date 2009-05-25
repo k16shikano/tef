@@ -6,7 +6,9 @@
   (string-append str (apply string char)))
 
 ;; special category code
-;;   code = -1  : control sequence
+;;   code < 0     : control sequence
+;;     code = -1  : terminated with a character or eof
+;;     code = -10 : terminated with space(s)
 ;;   others     : TeX category code
 
 ;; string-port -> [(code . token)]
@@ -17,7 +19,7 @@
        ((eof-object? (peek-char p))
 	(cons -1 seq))
        ((char-set-contains? #[\s] x)
-	(in-spaces x #?=seq p))
+	(in-spaces x seq p))
        ((char-set-contains? #[\W\d_] x)
 	(cond ((string-null? seq)
 	       (cons -1 (string (read-char p))))
@@ -26,16 +28,13 @@
        (else 
 	(in-ctrl-seq (read-char p) (string+char seq x) p)))))
   (define (in-spaces c seq p)
-    (cond ((eof-object? (peek-char p))
+    (cond ((or (eof-object? (peek-char p))
+	       (char-set-contains? #[^\s] (peek-char p)))	       
 	   (if (string-null? seq)
 	       (cons 10 #\space)
-	       (cons -1 seq)))
-	  ((char-set-contains? #[\s] (peek-char p))
-	   (in-spaces (read-char p) seq p))
+	       (cons -10 seq)))
 	  (else
-	   (if (string-null? seq)
-	       (cons 10 #\space)
-	       (cons -1 seq)))))
+	   (in-spaces (read-char p) seq p))))
   (define (loop c seq p)
     (cond ((eof-object? c)
 	   c)
@@ -242,11 +241,14 @@
 
 (define (tokenlist->string tls)
   (define (restore-command token)
-    (if (or (< (cat token) 0) 
-	    (and (= (cat token) 12)
-		 (char-set-contains? #[$%&#_] (cdr token))))
-	(string-append "\\" (x->string (cdr token)))
-	(cdr token)))
+    (cond ((or (= (cat token) -1) 
+	       (and (= (cat token) 12)
+		    (char-set-contains? #[$%&#_] (cdr token))))
+	   (string-append "\\" (x->string (cdr token))))
+	  ((= (cat token) -10)
+	   (string-append "\\" (x->string (cdr token)) " "))
+	  (else
+	   (cdr token))))
   (tree->string (map restore-command tls)))
 
 (define (string->tokenlist str)
