@@ -9,7 +9,8 @@
 ;;   code < 0     : control sequence
 ;;     code = -1  : terminated with a character or eof
 ;;     code = -10 : terminated with space(s)
-;;   others     : TeX category code
+;;     code = -5  : terminated with newline
+;;   others       : TeX category code
 
 ;; string-port -> [(code . token)]
 (define (read-tex-token . iport)
@@ -29,12 +30,16 @@
 	(in-ctrl-seq (read-char p) (string+char seq x) p)))))
   (define (in-spaces c seq p)
     (cond ((or (eof-object? (peek-char p))
-	       (char-set-contains? #[^\s] (peek-char p)))	       
+	       (char-set-contains? #[^\s] (peek-char p)))
 	   (if (string-null? seq)
 	       (cons 10 #\space)
-	       (cons -10 seq)))
+	       (if (char=? #\newline c)
+		   (cons -5 seq)
+		   (cons -10 seq))))
 	  (else
-	   (in-spaces (read-char p) seq p))))
+	   (let* ((readc (read-char p))
+		  (nextc (if (char=? #\newline c) #\newline readc)))
+	     (in-spaces nextc seq p)))))
   (define (loop c seq p)
     (cond ((eof-object? c)
 	   c)
@@ -124,7 +129,7 @@
 		      (get-tex-group ls)
 		      (receive (got rest)
 			       (get-args (- n 1) unseen)
-			       (values (cons arg got) (trim-texspaces rest))))
+			       (values (cons arg got) rest)))
 	     (values '() ls))))
 
 ;; this gets a command and its parameters from a token list,
@@ -247,6 +252,8 @@
 	   (string-append "\\" (x->string (cdr token))))
 	  ((= (cat token) -10)
 	   (string-append "\\" (x->string (cdr token)) " "))
+	  ((= (cat token) -5)
+	   (string-append "\\" (x->string (cdr token)) "\n"))
 	  (else
 	   (cdr token))))
   (tree->string (map restore-command tls)))
