@@ -1,6 +1,6 @@
 (use gauche.test)
 
-(add-load-path "/home/k16/myproj/tex-modoki/")
+(add-load-path ".")
 (load "tex-modoki.scm")
 
 (test* "read-tex-token: case \"{\\\\hskip 136 pt}\"" 
