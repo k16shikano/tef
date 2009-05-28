@@ -3,40 +3,40 @@
 
 (define-condition-type <read-parameter-error> <error> #f)
 
-;; [token] -> [parameter-token]
+;; [token] -> [parameter-token] and [rest token]
 (define (parameter-token ts)
   (cond ((null? ts)
-	 '())
+	 (values '() '()))
 	((= 6 (cat (car ts)))
 	 (if (null? (cdr ts))
 	     (error <read-parameter-error> "unterminated parameter token")
 	     (cond ((= 6 (cat (cadr ts)))
-		    `((6 . #\#) . ,(parameter-token (cddr ts))))
+		    (values '((6 . #\#)) (cddr ts)))
 		   ((and (= 12 (cat (cadr ts)))
 			 (char-set-contains? #[1-9] (cdadr ts)))
-		    `((-100 . ,(x->integer (string (cdadr ts)))) . 
-		      ,(parameter-token (cddr ts))))
+		    (values `((-100 . ,(x->integer (string (cdadr ts)))))
+			    (cddr ts)))
 		   (else
 		    (error <read-parameter-error> "unterminated parameter token")))))
 	(else
-	 (cons (car ts) (parameter-token (cdr ts))))))
+	 (values `(,(car ts)) (cdr ts)))))
 
 ;; [token] -> [[parameter token]] and [def body token] and [rest string token]
-(define (parse-parameter paramtexts)
+(define (parse-parameter ts)
   (let R ((params '())
-	  (rest paramtexts))
-    (cond ((null? rest)
-	   (error <read-parameter-error> "malformed def definition"))
-	  ((= 1 (cat (car rest)))
-	   (receive (body after)
-		    (get-tex-group rest)
-		    (values (reverse (map reverse params)) body after)))
-	  ((= -100 (cat (car rest)))
-	   (R `((,(car rest)) . ,params) (cdr rest)))
-	  ((null? params)
-	   (R `((,(car rest))) (cdr rest)))
-	  (else
-	   (R `((,(car rest) . ,(car params)) . ,(cdr params)) (cdr rest))))))
+	  (ts ts))
+    (receive (pt rest)
+	     (parameter-token ts)
+	     (cond ((= 1 (cat (car pt)))
+		    (receive (body after)
+			     (get-tex-group ts)
+			     (values (reverse (map reverse params)) body after)))
+		   ((= -100 (cat (car pt)))
+		    (R `((,(car pt)) . ,params) rest))
+		   ((null? params)
+		    (R `((,(car pt))) rest))
+		   (else
+		    (R `((,(car pt) . ,(car params)) . ,(cdr params)) rest))))))
 
 ;; [groupen token] -> [token]
 (define (treat-group param)
@@ -118,32 +118,23 @@
 
 (use gauche.test)
 
-(test* "parameter-token: a sample from ch20 of the TeX book." 
-       '((11 . #\A) (11 . #\B) (-100 . 1) (-100 . 2) (11 . #\C) (3 . #\$) 
-	 (-100 . 3) (12 . #\$) (10 . #\space) 
-	 (1 . #\{) (-100 . 3) (1 . #\{) (11 . #\a) (11 . #\b) (-100 . 1) (2 . #\}) 
-	 (-100 . 1) (10 . #\space) (11 . #\c) 
-	 (6 . #\#) (-10 . "x") (-100 . 2) (2 . #\})) 
-       (parameter-token 
-	(string->tokenlist "AB#1#2C$#3\\$ {#3{ab#1}#1 c##\\x #2}")))
-
 (test* "parse parameter"
        '(((11 . #\a)) ((-100 . 1) (12 . #\.) (10 . #\space)) ((-100 . 2)))
-       (parse-parameter (parameter-token (string->tokenlist "a#1. #2{...}"))))
+       (parse-parameter (string->tokenlist "a#1. #2{...}aa")))
 
 (test* "match-def-parameter: a sample from ch20 of the TeX book"
        '("You owe {\\$5.00}" "Pay it.")
        (map tokenlist->string 
 	    (match-def-parameter
 	     (string->tokenlist "You owe {\\$5.00}. Pay it.\\par{...}")
-	     (parameter-token (string->tokenlist "#1. #2\\par{...}")))))
+	     (string->tokenlist "#1. #2\\par{...}"))))
 
 (test* "match-def-parameter: a sample from ch20 of the TeX book"
        '("\\LOOK" "" "{And\\$ }{look}")
        (map tokenlist->string 
 	    (match-def-parameter
 	     (string->tokenlist "AB {\\LOOK}C${And\\$ }{look}\\$ 5.")
-	     (parameter-token (string->tokenlist "AB #1#2C$#3\\$ {...}")))))
+	     (string->tokenlist "AB #1#2C$#3\\$ {...}"))))
 
 (test* "match-def-parmeter: rest of tokens"
        "5."
@@ -151,6 +142,6 @@
 	(values-ref
 	 (match-def-parameter
 	  (string->tokenlist "AB {\\LOOK}C${And\\$ }{look}\\$ 5.")
-	  (parameter-token (string->tokenlist "AB #1#2C$#3\\$ {...}")))
+	  (string->tokenlist "AB #1#2C$#3\\$ {...}"))
 	 1)))
 
