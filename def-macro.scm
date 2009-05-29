@@ -27,7 +27,8 @@
 	  (ts ts))
     (receive (pt rest)
 	     (parameter-token ts)
-	     (cond ((= 1 (cat (car pt)))
+	     (cond ((or (null? pt)
+			(= 1 (cat (car pt))))
 		    (receive (body after)
 			     (get-tex-group ts)
 			     (values (reverse (map reverse params)) body after)))
@@ -110,7 +111,106 @@
 		    (tail-match rest (car patterns))
 		    (R (cons param params) rest-token (cdr patterns)))))))
 
-;; 
+
+
+;;;; Evaluator for TeX macros.
+;;;; env is a list of hash-tables having macro definitions. 
+;;;; its key is the name of macros in symbol, 
+;;;; and its value is [[parameter token] . [body token]].
+
+(define global-env
+  (list (make-hash-table)))
+
+(define (def? token)
+  (and (= -1 (cat token))
+       (string=? "def" (cdr token))))
+
+;; [token list with cmd head] -> env -> 
+;;    parameter tokens, macro defining tokens, and rest of tokens
+(define (grab-macro-definition ts)
+  (cond ((null? ts)
+	 (values '() '()))
+	((= 1 (cat (car ts)))
+	 (receive (body rest)
+		  (get-tex-group ts)
+		  (values '() body rest)))
+	(else
+	 (receive (param body rest)
+		  (grab-macro-definition (cdr ts))
+		  (values (cons (car ts) param) body rest)))))
+
+;; [token] -> env -> env and rest tokens
+(define (update-env ts env)
+  (receive (param body rest)
+	   (grab-macro-definition (cdr ts))
+	   (if (< (cat (car ts)) 0)
+	       (let ((k (string->symbol (cdar ts)))
+		     (b (cons param body)))
+		 (if (hash-table-exists? (car env) k)
+		     (hash-table-update! (car env) k (lambda (old) b))
+		     (hash-table-put! (car env) k b))
+		 (values env rest))
+	       (error "malformed macro definition"))))
+
+;; [token] -> env -> [expanded token] and [rest]
+(define (expand-macro ts env)
+  (cond ((find-macro-definition (string->symbol (cdar ts)) env)
+	 => (lambda (v)
+	      (receive (params rest)
+		       (match-def-parameter (cdr ts) (car v))
+		       (if (null? params)
+			   (values (eval-macro (cdr v) env) rest)
+			   (values (replace-pattern (cdr v) params env) rest)))))
+	(else
+	 (values `(,(car ts)) (cdr ts)))))
+
+;; [token] -> env -> [expanded token]
+(define (eval-macro ts env)
+  (cond ((null? ts)
+	 '())
+	((def? (car ts))      ; \\def\\cs ...
+	 (receive (newenv rest)
+		  (update-env (cdr ts) env)
+		  (eval-macro rest newenv)))
+	((< (cat (car ts)) 0) ; \\cs ...
+	 (receive (expanded rest)
+		  (expand-macro ts env)
+		  (append expanded
+			  (eval-macro rest env))))
+	(else
+	 (cons (car ts) (eval-macro (cdr ts) env)))))
+
+;; [token] -> [[token]] -> env -> [expanded token]
+(define (replace-pattern body params env)
+  (receive (head rest)
+	   (parameter-token body)
+	   (cond ((null? body)
+		  '())
+		 ((= -100 (caar head))
+		  (append (list-ref params (- (x->integer (cdar head)) 1))
+			  (replace-pattern rest params env)))
+		 ((def? (car head))      ; \\def\\cs ...
+		  (receive (newenv rest)
+			   (update-env rest (cons (make-hash-table) env))
+			   (replace-pattern rest params newenv)))
+		 ((< (cat (car head)) 0) ; \\cs ...
+		  (receive (expanded rest)
+			   (expand-macro (cons (car head) rest) env)
+			   (append expanded
+				   (replace-pattern rest params env))))
+		 (else
+		  (cons (car head)
+			(replace-pattern rest params env)))
+		  )))
+
+;; symbol -> env
+(define (find-macro-definition key env)
+  (cond ((null? env)
+	 #f)
+	((hash-table-get (car env) key #f)
+	 => values)
+	(else
+	 (find-macro-definition key (cdr env)))))
 
 
 
@@ -123,11 +223,11 @@
        (parse-parameter (string->tokenlist "a#1. #2{...}aa")))
 
 (test* "match-def-parameter: a sample from ch20 of the TeX book"
-       '("You owe {\\$5.00}" "Pay it.")
+       '("You owe {\\$5.00}" " Pay it.")
        (map tokenlist->string 
 	    (match-def-parameter
 	     (string->tokenlist "You owe {\\$5.00}. Pay it.\\par{...}")
-	     (string->tokenlist "#1. #2\\par{...}"))))
+	     (string->tokenlist "#1.#2\\par{...}"))))
 
 (test* "match-def-parameter: a sample from ch20 of the TeX book"
        '("\\LOOK" "" "{And\\$ }{look}")
@@ -144,4 +244,15 @@
 	  (string->tokenlist "AB {\\LOOK}C${And\\$ }{look}\\$ 5.")
 	  (string->tokenlist "AB #1#2C$#3\\$ {...}"))
 	 1)))
+
+(test* "eval macro: exercise 20.2 of the TeX book" 
+       "ABCAB" 
+       (tokenlist->string 
+	(eval-macro 
+	 (string->tokenlist "\
+\\def\\a{\\b}\
+\\def\\b{A\\def\\a{B\\def\\a{C\\def\\a{\\b}}}}\
+\\def\\puzzle{\\a\\a\\a\\a\\a}\
+\\puzzle") 
+	 (list (make-hash-table)))))
 
