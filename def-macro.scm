@@ -187,7 +187,7 @@
 	   (cond ((null? body)
 		  '())
 		 ((= -100 (caar head))
-		  (append (list-ref params (- (x->integer (cdar head)) 1))
+		  (append (eval-macro (list-ref params (- (x->integer (cdar head)) 1)) env)
 			  (replace-pattern rest params env)))
 		 ((def? (car head))      ; \\def\\cs ...
 		  (receive (newenv rest)
@@ -255,4 +255,13 @@
 \\def\\puzzle{\\a\\a\\a\\a\\a}\
 \\puzzle") 
 	 (list (make-hash-table)))))
+
+(test* "innner parameter definition"
+       "b"
+       (tokenlist->string
+	(eval-macro
+	 (string->tokenlist "\\def\\a#1{\\def\\/{b}#1}\\a{\\/}")
+	 global-env
+	 )))
+
 
