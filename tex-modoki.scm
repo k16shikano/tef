@@ -135,28 +135,31 @@
 ;; this gets a command and its parameters from a token list,
 ;; returning the before string, the command sequence and the after string in multivalues as tokenlists.
 ;; String -> Integer -> [token] -> ([token], [token] and [token])
-(define (get-command-sequence cmd arity tokenlist)
-  (let R ((before '())
-	  (cmdseq '())
-	  (after  '())
-	  (next   tokenlist))
-    (cond ((null? next)
-	   (values (reverse before)
-		   cmdseq
-		   after))
-	  ((commenthead? (car next))
-	   (receive (comment rest)
-		    (get-comment-line next)
-		    (R (append (reverse comment) before) 
-		       cmdseq after rest)))
-	  ((< (cat (car next)) 0)
-	   (if (string=? cmd (cdar next))
-	       (values (reverse before)
-		       (cons (car next) (values-ref (get-args arity (cdr next)) 0))
-		       (values-ref (get-args arity (cdr next)) 1))
-	       (R (cons (car next) before) cmdseq after (cdr next))))
-	  (else
-	   (R (cons (car next) before) cmdseq after (cdr next))))))
+(define (get-command-sequence cmd arity tokenlist . keywords)
+  (let-keywords* keywords ((comment? #t))
+    (let R ((before '())
+	    (cmdseq '())
+	    (after  '())
+	    (next   tokenlist))
+      (cond ((null? next)
+	     (values (reverse before)
+		     cmdseq
+		     after))
+	    ((commenthead? (car next))
+	     (receive (comment rest)
+		      (get-comment-line next)
+		      (if comment?
+			  (R (append (reverse comment) before)
+			     cmdseq after rest)
+			  (R before cmdseq after (cdr rest)))))
+	    ((< (cat (car next)) 0)
+	     (if (string=? cmd (cdar next))
+		 (values (reverse before)
+			 (cons (car next) (values-ref (get-args arity (cdr next)) 0))
+			 (values-ref (get-args arity (cdr next)) 1))
+		 (R (cons (car next) before) cmdseq after (cdr next))))
+	    (else
+	     (R (cons (car next) before) cmdseq after (cdr next)))))))
 
 ;; this gets the inline math portion at the head of a token list, 
 ;; returning a math portion and the rest of the string in multivalues as tokenlists.
@@ -204,8 +207,6 @@
 	   (error <read-comment-error> "the first token shoule have catcode 14"))))
   (out-comment ls))
 
-
-
 ;; utils
 (define (textoken? t)
   (and (dotted-list? t)
@@ -241,12 +242,39 @@
   (and (textoken? t)
        (=  14 (car t))))
 
+;; this is a kludge aimed for the pretty printing. 
+;; i must refactor the line spliting process to treat newlines properly.
+(define (newline->par ts post-newline? post-paragraph? commentline?)
+  (cond ((null? ts)
+	 '())
+	((commenthead? (car ts))
+	 (cons (car ts)
+	       (newline->par (cdr ts) #f #f #t)))
+	((newline? (car ts))
+	 (cond (commentline?
+		(cons (car ts) (newline->par (cdr ts) post-newline? post-paragraph? #f)))
+	       (post-newline?
+		(newline->par (cdr ts) #f #t #f))
+	       (else
+		(newline->par (cdr ts) #t #f #f))))
+	(post-paragraph?
+	 (cons '(-1 . "par") 
+	       (cons (car ts) (newline->par (cdr ts) #f #f #f))))
+	(post-newline?
+	 (cons '(10 . #\space) 
+	       (cons (car ts) (newline->par (cdr ts) #f #f #f))))
+	(else
+	 (cons (car ts) (newline->par (cdr ts) #f #f commentline?)))))
 
 (define (tokenlist->string tls)
   (define (restore-command token)
-    (cond ((or (= (cat token) -1) 
-	       (and (= (cat token) 12)
-		    (char-set-contains? #[$%&#_] (cdr token))))
+    (cond ((= (cat token) -1)
+	   (cond ((string=? "par" (cdr token))
+		  "\n\n")
+		 (else
+		  (string-append "\\" (x->string (cdr token))))))
+	  ((and (= (cat token) 12)
+		(char-set-contains? #[$%&#_] (cdr token)))
 	   (string-append "\\" (x->string (cdr token))))
 	  ((= (cat token) -10)
 	   (string-append "\\" (x->string (cdr token)) " "))
@@ -263,4 +291,6 @@
 
 (define (port->tokenlist p)
   (port->list read-tex-token p))
+
+
 
