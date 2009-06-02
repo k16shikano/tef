@@ -125,6 +125,10 @@
   (and (= -1 (cat token))
        (string=? "def" (cdr token))))
 
+(define (expandafter? token)
+  (and (= -1 (cat token))
+       (string=? "expandafter" (cdr token))))
+
 ;; [token list with cmd head] -> env -> 
 ;;    parameter tokens, macro defining tokens, and rest of tokens
 (define (grab-macro-definition ts)
@@ -168,6 +172,10 @@
     (values '() '()))
    ((def? (car ts))
     (values '() (update-env (cdr ts) env)))
+   ((expandafter? (car ts))
+    (receive (expanded rest)
+	     (eval-macro (cddr ts) env)
+	     (values (driver-loop `(,(cadr ts) ,@expanded) env) rest)))
    ((find-macro-definition (string->symbol (cdar ts)) env)
 	 => (lambda (v)
 	      (receive (params rest)

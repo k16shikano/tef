@@ -102,3 +102,13 @@
 	 global-env
 	 )))
 
+(test* "expandafter: exercise 20.2 of the TeX book" 
+       "yx" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\A#1,#2{#2#1}\
+\\def\\B#1;#2{#1,#2}\
+\\def\\C{x;y}\
+\\expandafter\\A\\expandafter\\B\\C")
+	 (list (make-hash-table)))))
