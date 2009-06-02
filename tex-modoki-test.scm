@@ -112,3 +112,12 @@
 \\def\\C{x;y}\
 \\expandafter\\A\\expandafter\\B\\C")
 	 (list (make-hash-table)))))
+
+(test* "\\def#1#{...}" 
+       "\\hbox to 3pt{x}" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\a#1#{\\hbox to #1}\
+\\a3pt{x}")
+	 (list (make-hash-table)))))
