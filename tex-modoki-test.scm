@@ -86,7 +86,7 @@
 (test* "eval macro: exercise 20.2 of the TeX book" 
        "ABCAB" 
        (tokenlist->string 
-	(eval-macro 
+	(driver-loop
 	 (string->tokenlist "\
 \\def\\a{\\b}\
 \\def\\b{A\\def\\a{B\\def\\a{C\\def\\a{\\b}}}}\
@@ -97,7 +97,8 @@
 (test* "innner parameter definition"
        "b"
        (tokenlist->string
-	(eval-macro
+	(driver-loop
 	 (string->tokenlist "\\def\\a#1{\\def\\/{b}#1}\\a{\\/}")
 	 global-env
 	 )))
+
