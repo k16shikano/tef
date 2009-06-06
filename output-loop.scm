@@ -11,42 +11,6 @@
 (define global-env
   (list (make-hash-table)))
 
-;; [token list with cmd head] -> env -> 
-;;    parameter tokens, macro defining tokens, and rest of tokens
-(define (grab-macro-definition ts)
-  (cond ((null? ts)
-	 (values '() '()))
-	((= 1 (cat (car ts)))
-	 (receive (body rest)
-		  (get-tex-group ts)
-		  (values '() body rest)))
-	(else
-	 (receive (param body rest)
-		  (grab-macro-definition (cdr ts))
-		  (values (cons (car ts) param) body rest)))))
-
-;; [token] -> env -> rest tokens
-(define (update-env ts env)
-  (receive (param body rest)
-	   (grab-macro-definition (cdr ts))
-	   (if (< (cat (car ts)) 0)
-	       (let ((k (string->symbol (cdar ts)))
-		     (b (cons param body)))
-		 (if (hash-table-exists? (car env) k)
-		     (hash-table-update! (car env) k (lambda (old) b))
-		     (hash-table-put! (car env) k b))
-		 rest)
-	       (error "malformed macro definition"))))
-
-;; symbol -> env
-(define (find-macro-definition key env)
-  (cond ((null? env)
-	 #f)
-	((hash-table-get (car env) key #f)
-	 => values)
-	(else
-	 (find-macro-definition key (cdr env)))))
-
 ;; [token] -> env -> [expanded token] and [rest]
 (define (eval-macro ts env)
   (cond
@@ -77,23 +41,26 @@
 	   (parameter-token body)
 	   (cond ((null? body)
 		  '())
-		 ((= -15 (caar head))
+		 ((parameter? (car head))
 		  (append (driver-loop 
 			   (list-ref params (- (x->integer (cdar head)) 1))
 			   env)
 			  (apply-pattern rest params env)))
-		 ((< (cat (car head)) 0)
-		  (let ((env (if (def? (car head))
-				 (cons (make-hash-table) env)
-				 env)))
+		 ((def? (car head))
+		  (let ((env (cons (make-hash-table) env)))
 		    (receive (expanded rest)
 			     (eval-macro body env)
 			     (append expanded
 				     (apply-pattern rest params env)))))
+		 ((< (cat (car head)) 0)
+		  (receive (expanded rest)
+			   (eval-macro (cons (car head)
+					     (apply-pattern rest params env)) env)
+			   (append expanded rest)))
 		 (else
 		  (cons (car head)
 			(apply-pattern rest params env)))
-		  )))
+		 )))
 
 ;; [token] -> env -> [expanded token]
 (define (driver-loop ts env)

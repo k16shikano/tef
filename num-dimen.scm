@@ -1,8 +1,10 @@
 (load "tex-modoki.scm")
+(load "parser-utils.scm")
+(load "def-macro.scm")
 
 ;; this get-tex-dimen is not completed. 
 ;; it must support the spec. described in the TeX book chapter 24.
-;; [token] -> [pattern] -> [matched pattern] [rest token]
+;; [token] -> [pattern] -> [matched pattern] and [rest token]
 (define (get-tex-dimen ts)
   (define unit-strings
     (map (compose string->tokenlist symbol->string)
@@ -24,12 +26,17 @@
 		    (values `((-101 . ,(tokenlist->string (append (reverse unit) num-unit))))
 			    rest))
 		   ((and (= 12 (cat (car target)))
-			 (char-set-contains? #[1-9] (cdar target)))
+			 (or (char-set-contains? #[0-9] (cdar target))
+			     (char-set-contains? #[.] (cdar target))))
 		    (unit-rest `(,(car target) . ,unit) (cdr target)))
+		   ((= 6 (cat (car target)))
+		    (receive (param rest)
+			     (parameter-token target)
+			     (values param rest)))
 		   ((texspaces? (car target))
 		    (unit-rest unit (cdr target)))
 		   (else
-		    (error <read-parameter-error> "unknown unit" target)))))
+		    (error <read-num-error> "unsupported number" (tokenlist->string target))))))
   (unit-rest '() ts))
 
 (define (get-tex-dimen-after str ts)
@@ -38,22 +45,4 @@
 	(get-tex-dimen dimen)
 	(values '() ts))))
 
-(define-syntax orvalues
-  (syntax-rules ()
-    ((_) (values '() '()))
-    ((_ v1) v1)
-    ((_ v1 v2 ...) 
-     (if (null? (values-ref v1 0)) (orvalues v2 ...) v1))))
 
-
-
-;;; test
-
-(use gauche.test)
-
-(test* "get-tex-dimen-after and orvalues"
-       "136pt"
-       (tokenlist->string
-	(let ((ts (string->tokenlist "to136pt{...}")))
-	  (orvalues (get-tex-dimen-after "to" ts)
-		    (get-tex-dimen-after "spread" ts)))))

@@ -2,6 +2,7 @@
 
 (add-load-path ".")
 (load "tex-modoki.scm")
+(load "output-loop.scm")
 (load "def-macro.scm")
 
 (test* "read-tex-token: case \"{\\\\hskip 136 pt}\"" 
@@ -113,11 +114,36 @@
 \\expandafter\\A\\expandafter\\B\\C")
 	 (list (make-hash-table)))))
 
-(test* "\\def#1#{...}" 
-       "\\hbox to 3pt{x}" 
+(test* "box expansion" 
+       "x" 
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\
-\\def\\a#1#{\\hbox to #1}\
+\\hbox to 3pt{x}")
+	 (list (make-hash-table)))))
+
+(test* "get-tex-dimen-after and orvalues"
+       "1.0pt"
+       (tokenlist->string
+	(let ((ts (string->tokenlist "to1.0pt{...}")))
+	  (orvalues (get-tex-dimen-after "to" ts)
+		    (get-tex-dimen-after "spread" ts)))))
+
+(test* "\\def#1#{...}" 
+       "xB" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\a#1#{\\hbox to #1\\def\\a{B}\\a}\
 \\a3pt{x}")
 	 (list (make-hash-table)))))
+
+(test* "\\def#1#{...}" 
+       "1cx" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\a#1#{#1x}\
+\\a1c")
+	 (list (make-hash-table)))))
+

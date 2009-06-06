@@ -1,5 +1,5 @@
 * Name
-tex-modoki.scm
+tex-modoki
  
 * Overview
  A simple parser for tex manuscripts.

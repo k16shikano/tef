@@ -1,14 +1,19 @@
-(add-load-path ".")
 (load "tex-modoki.scm")
+(load "parser-utils.scm")
 
 ;;;; def (usre macro)
 
 ;;;; predicates
-
 (define (def? token)
   (and (= -1 (cat token))
        (string=? "def" (cdr token))))
 
+(define (parameter? token)
+  (= -15 (car token)))
+
+;; 
+(define groupen 
+  (put-specific-code -100 begingroup? get-tex-group))
 
 (define-condition-type <read-parameter-error> <error> #f)
 
@@ -18,13 +23,15 @@
 	 (values '() '()))
 	((= 6 (cat (car ts)))
 	 (if (null? (cdr ts))
-	     (values '((1 . #\{)) (cdr ts))
+	     (values '((11 . #\{)) (cdr ts))
 	     (cond ((= 6 (cat (cadr ts)))
 		    (values '((6 . #\#)) (cddr ts)))
 		   ((and (= 12 (cat (cadr ts)))
 			 (char-set-contains? #[1-9] (cdadr ts)))
 		    (values `((-15 . ,(x->integer (string (cdadr ts)))))
 			    (cddr ts)))
+		   ((= 1 (cat (cadr ts)))
+		    (values '((11 . #\{)) (cdr ts)))
 		   (else
 		    (error <read-parameter-error> "unterminated parameter token")))))
 	(else
@@ -63,11 +70,9 @@
 	  (else
 	   (append-map ex-group param)))))
 
-;; [token] -> [token] -> [token] or #f
-(define (match-head ls pattern) 
-  (if (equal? (map (lambda (p l) l) pattern ls) pattern)
-      (drop ls (length pattern))
-      #f))
+(define (charlbrace? token)
+  (and (= 11 (cat token))
+       (char=? #\{ (cdr token))))
 
 ;; [token] -> [pattern] -> ([token] and [token])
 (define (tail-match token pattern)
@@ -75,6 +80,9 @@
     (let R ((param  '()) (target token))
       (cond ((null? target)
 	     (values '() target))
+	    ((and (charlbrace? (car pattern))  ; for \def#1#{...} pattern
+		  (not (charlbrace? (last target))))
+	     (R param (append target '((11 . #\{)))))
 	    ((match-head target pattern)
 	     => (cut values (treat-group param) <>))
 	    (else
@@ -109,9 +117,38 @@
 		    (tail-match rest (car patterns))
 		    (R (cons param params) rest-token (cdr patterns)))))))
 
+;; [token list with cmd head] -> env -> 
+;;    parameter tokens, macro defining tokens, and rest of tokens
+(define (grab-macro-definition ts)
+  (cond ((null? ts)
+	 (values '() '()))
+	((= 1 (cat (car ts)))
+	 (receive (body rest)
+		  (get-tex-group ts)
+		  (values '() body rest)))
+	(else
+	 (receive (param body rest)
+		  (grab-macro-definition (cdr ts))
+		  (values (cons (car ts) param) body rest)))))
 
+;; [token] -> env -> rest tokens
+(define (update-env ts env)
+  (receive (param body rest)
+	   (grab-macro-definition (cdr ts))
+	   (if (< (cat (car ts)) 0)
+	       (let ((k (string->symbol (cdar ts)))
+		     (b (cons param body)))
+		 (if (hash-table-exists? (car env) k)
+		     (hash-table-update! (car env) k (lambda (old) b))
+		     (hash-table-put! (car env) k b))
+		 rest)
+	       (error "malformed macro definition"))))
 
-
-
-
-
+;; symbol -> env
+(define (find-macro-definition key env)
+  (cond ((null? env)
+	 #f)
+	((hash-table-get (car env) key #f)
+	 => values)
+	(else
+	 (find-macro-definition key (cdr env)))))
