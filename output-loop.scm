@@ -18,6 +18,8 @@
     (values '() '()))
    ((def? (car ts))
     (values '() (update-env (cdr ts) env)))
+   ((edef? (car ts))
+    (values '() (edef->def ts env)))
    ((expandafter? (car ts))
     (receive (expanded rest)
 	     (eval-macro (cddr ts) env)
@@ -76,12 +78,17 @@
 
 ;; predicates
 
-(define (expandafter? token)
-  (and (< (cat token) 0)
-       (string=? "expandafter" (cdr token))))
-
+(defpred def? "def")
+(defpred edef? "edef")
+(defpred expandafter? "expandafter")
 
 ;; evaluator
 
 (define (eval-box box env) (driver-loop (cdddr box) env))
 
+(define (edef->def ts env)
+  (receive (param body rest)
+	   (grab-macro-definition (cddr ts))
+	   `((-1 . "def") ,(cadr ts) ,@param 
+	     (1 . #\{) ,@(driver-loop body env) (2 . #\}) 
+	     ,@rest)))

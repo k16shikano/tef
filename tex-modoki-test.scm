@@ -147,3 +147,14 @@
 \\a1c")
 	 (list (make-hash-table)))))
 
+(test* "\\edef..." 
+       "xyxyxyxy"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\double#1{#1#1}\
+\\edef\\a{\\double{xy}}\
+\\edef\\a{\\double\\a}\
+\\a")
+	 (list (make-hash-table)))))
+
