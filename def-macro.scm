@@ -120,7 +120,7 @@
 ;;    parameter tokens, macro defining tokens, and rest of tokens
 (define (grab-macro-definition ts)
   (cond ((null? ts)
-	 (values '() '()))
+	 (values '() '() '()))
 	((= 1 (cat (car ts)))
 	 (receive (body rest)
 		  (get-tex-group ts)
