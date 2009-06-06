@@ -7,9 +7,6 @@
        (member (cdr token) 
 	       '("hbox" "vbox" "vtop" "box" "copy" "vsplit" "lastbox" "vcenter"))))
 
-(define boxen
-  (put-specific-code -102 box? get-box-parameter))
-
 (define (get-box-parameter ts)
   (cond ((member (cdar ts) '("hbox" "vbox" "vtop"))
 	 (receive (dimen rest)
@@ -33,5 +30,5 @@
 	((string=? (cdar ts) "lastbox")
 	 (values '() rest))))
 
-
-
+(define boxen
+  (put-specific-code -102 box? get-box-parameter))
