@@ -4,9 +4,8 @@
 ;;;; def (usre macro)
 
 ;;;; predicates
-(define (def? token)
-  (and (= -1 (cat token))
-       (string=? "def" (cdr token))))
+
+(defpred def? "def")
 
 (define (parameter? token)
   (= -15 (car token)))

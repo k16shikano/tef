@@ -24,3 +24,11 @@
     ((_ v1) v1)
     ((_ v1 v2 ...) 
      (if (null? (values-ref v1 0)) (orvalues v2 ...) v1))))
+
+(define-syntax defpred
+  (syntax-rules ()
+    ((_ name str)
+     (define (name token)
+       (and (< (car token) 0)
+	    (string=? str (cdr token)))))))
+
