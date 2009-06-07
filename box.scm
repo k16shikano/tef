@@ -10,7 +10,7 @@
 (define (get-box-parameter ts)
   (cond ((member (cdar ts) '("hbox" "vbox" "vtop"))
 	 (receive (dimen rest)
-		  (orvalues (get-tex-dimen-after "to" #?=(cdr ts))
+		  (orvalues (get-tex-dimen-after "to" (cdr ts))
 			    (get-tex-dimen-after "spread" (cdr ts)))
 		  (receive (body rest)
 			   (get-tex-group rest)
