@@ -125,7 +125,7 @@
 (test* "get-tex-dimen-after and orvalues"
        "1.0pt"
        (tokenlist->string
-	(let ((ts (string->tokenlist "to1.0pt{...}")))
+	(let ((ts (string->tokenlist "spread 1.0pt{...}")))
 	  (orvalues (get-tex-dimen-after "to" ts)
 		    (get-tex-dimen-after "spread" ts)))))
 
@@ -139,7 +139,7 @@
 	 (list (make-hash-table)))))
 
 (test* "\\def#1#{...}" 
-       "1cx" 
+       "1cx" ; not 1xc!
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\
@@ -158,3 +158,35 @@
 \\a")
 	 (list (make-hash-table)))))
 
+(test* "for real lexer" 
+       "You owe \\$5.00!!! --- Pay it.!!!"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\cs #1. #2\\par{#1!!! --- #2!!!}%
+\\cs You owe \\$5.00. Pay it.
+
+
+")
+	 (list (make-hash-table)))))
+
+(test* "for real lexer" 
+       "a\n\nb x s\n\nc"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+a
+
+b x
+s
+
+c")
+	 (list (make-hash-table)))))
+
+(test* "for real lexer" 
+       "\\ab c"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\ab c")
+	 (list (make-hash-table)))))

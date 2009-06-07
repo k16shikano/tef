@@ -8,8 +8,6 @@
 ;; special category code
 ;;   code < 0     : control sequence
 ;;     code = -1  : terminated with a character or eof
-;;     code = -10 : terminated with space(s)
-;;     code = -5  : terminated with newline
 ;;   others       : TeX category code
 
 ;; string-port -> [(code . token)]
@@ -17,30 +15,42 @@
   (define (in-ctrl-seq c seq p)
     (let ((x (peek-char p)))
       (cond 
-       ((eof-object? (peek-char p))
+       ((or (eof-object? (peek-char p))
+	    (char=? #\newline c))
 	(cons -1 seq))
        ((char-set-contains? #[\s] x)
-	(in-spaces x seq p))
+	(in-spaces x seq #t #f p))
        ((char-set-contains? #[\W\d_] x)
 	(cond ((string-null? seq)
 	       (cons -1 (string (read-char p))))
 	      (else
 	       (cons -1 seq))))
-       (else 
+       (else
 	(in-ctrl-seq (read-char p) (string+char seq x) p)))))
-  (define (in-spaces c seq p)
+  (define (in-spaces c seq S? N? p)
     (cond ((or (eof-object? (peek-char p))
 	       (char-set-contains? #[^\s] (peek-char p)))
-	   (if (string-null? seq)
-	       (cons 10 #\space)
-	       (if (char=? #\newline c)
-		   (cons -5 seq)
-		   (cons -10 seq))))
+	   (cond (N? (cons -1 "par"))
+		 ((not (string-null? seq))
+		  (cons -1 seq))
+		 (S? )
+		 (else
+		  (cons 10 #\space))))
 	  (else
-	   (let* ((readc (read-char p))
-		  (nextc (if (char=? #\newline c) #\newline readc)))
-	     (in-spaces nextc seq p)))))
-  (define (loop c seq p)
+	   (in-spaces (read-char p) seq S? N? p))))
+  (define (in-comment c p) 
+    (cond ((char=? #\newline (peek-char p))
+	   (read-char p)
+	   (cons 5 #\newline))
+	  (else
+	   (in-comment (read-char p) p))))
+  (define (in-newlines c N? p)
+    (cond ((char-set-contains? #[\s] (peek-char p))
+	   (in-spaces (read-char p) "" #t #t p))
+	  (N? (cons -1 "par"))
+	  (else
+	   (cons 10 #\space))))
+  (define (loop c p)
     (cond ((eof-object? c)
 	   c)
 	  ((char=? #\\ c)
@@ -59,7 +69,7 @@
 	  ((char=? #\& c)
 	   (cons 4 (read-char p)))
 	  ((char=? #\newline c)
-	   (cons 5 (read-char p)))
+	   (in-newlines (read-char p) #f p))
 	  ((char=? #\# c)
 	   (cons 6 (read-char p)))
 	  ((char=? #\^ c)
@@ -69,13 +79,13 @@
 	  ((char=? #\null c)
 	   (cons 9 (read-char p)))
 	  ((char=? #\space c)
-	   (in-spaces (read-char p) seq p))
+	   (in-spaces (read-char p) "" #f #f p))
 	  ((char-set-contains? #[a-zA-Z] c)
 	   (cons 11 (read-char p)))
 	  ((char=? #\~ c)
 	   (cons 13 (read-char p)))
 	  ((char=? #\% c)
-	   (cons 14 (read-char p)))
+	   (in-comment (read-char p) p))
 	  ((char=? #\delete c)
 	   (cons 15 (read-char p)))
 	  (else
@@ -83,7 +93,7 @@
   (let ((p (if (null? iport)
 	       (current-input-port)
 	       (car iport))))
-    (loop (peek-char p) "" p)))
+    (loop (peek-char p) p)))
 
 ;; this gets the head group from a token list,
 ;; returning the group and the rest of the string in multivalues as tokenlists.
@@ -242,47 +252,28 @@
   (and (textoken? t)
        (=  14 (car t))))
 
-;; this is a kludge aimed for the pretty printing. 
-;; i must refactor the line spliting process to treat newlines properly.
-(define (newline->par ts post-newline? post-paragraph? commentline?)
-  (cond ((null? ts)
-	 '())
-	((commenthead? (car ts))
-	 (cons (car ts)
-	       (newline->par (cdr ts) #f #f #t)))
-	((newline? (car ts))
-	 (cond (commentline?
-		(cons (car ts) (newline->par (cdr ts) post-newline? post-paragraph? #f)))
-	       (post-newline?
-		(newline->par (cdr ts) #f #t #f))
-	       (else
-		(newline->par (cdr ts) #t #f #f))))
-	(post-paragraph?
-	 (cons '(-1 . "par") 
-	       (cons (car ts) (newline->par (cdr ts) #f #f #f))))
-	(post-newline?
-	 (cons '(10 . #\space) 
-	       (cons (car ts) (newline->par (cdr ts) #f #f #f))))
-	(else
-	 (cons (car ts) (newline->par (cdr ts) #f #f commentline?)))))
-
 (define (tokenlist->string tls)
-  (define (restore-command token)
-    (cond ((= (cat token) -1)
-	   (cond ((string=? "par" (cdr token))
-		  "\n\n")
-		 (else
-		  (string-append "\\" (x->string (cdr token))))))
-	  ((and (= (cat token) 12)
-		(char-set-contains? #[$%&#_] (cdr token)))
-	   (string-append "\\" (x->string (cdr token))))
-	  ((= (cat token) -10)
-	   (string-append "\\" (x->string (cdr token)) " "))
-	  ((= (cat token) -5)
-	   (string-append "\\" (x->string (cdr token)) "\n"))
-	  (else
-	   (cdr token))))
-  (tree->string (map restore-command tls)))
+  (define (restore-command ts)
+    (cond ((null? ts)
+	   '())
+	  ((= -1 (cat (car ts)))
+	   (cons 
+	    (cond ((string=? "par" (cdar ts))
+		   "\n\n")
+		  ((null? (cdr ts))
+		   (string-append "\\" (x->string (cdar ts))))
+		  ((= 11 (cat (cadr ts)))
+		   (string-append "\\" (x->string (cdar ts)) " "))
+		  (else
+		   (string-append "\\" (x->string (cdar ts)))))
+	    (restore-command (cdr ts))))
+	   ((and (= (cat (car ts)) 12)
+		 (char-set-contains? #[$%&#_] (cdar ts)))
+	    (cons (string-append "\\" (x->string (cdar ts)))
+		  (restore-command (cdr ts))))
+	   (else
+	    (cons (cdar ts) (restore-command (cdr ts))))))
+  (tree->string (restore-command tls)))
 
 (define (string->tokenlist str)
   (with-input-from-string str

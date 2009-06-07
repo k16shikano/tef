@@ -73,6 +73,8 @@
 		  (eval-macro ts env)
 		  (append expanded
 			  (driver-loop rest env))))
+	((= (cat (car ts)) 5)
+	 (driver-loop (cdr ts) env))
 	(else
 	 (cons (car ts) (driver-loop (cdr ts) env)))))
 
