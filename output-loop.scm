@@ -25,7 +25,7 @@
 	     (eval-macro (cddr ts) env)
 	     (values (driver-loop `(,(cadr ts) ,@expanded) env) rest)))
    ((box? (car ts))
-    (let ((boxed (boxen ts)))
+    (let ((boxed (boxen ts env)))
       (values (eval-box (car boxed) env) (cdr boxed))))
    ((find-macro-definition (string->symbol (cdar ts)) env)
     => (lambda (v)
@@ -68,6 +68,11 @@
 (define (driver-loop ts env)
   (cond ((null? ts)
 	 '())
+	((begingroup? (car ts))
+	 (receive (group rest)
+		  (get-tex-group ts (cons (make-hash-table) env))
+		  (append group
+			  (driver-loop rest env))))
 	((< (cat (car ts)) 0)
 	 (receive (expanded rest)
 		  (eval-macro ts env)
@@ -77,12 +82,6 @@
 	 (driver-loop (cdr ts) env))
 	(else
 	 (cons (car ts) (driver-loop (cdr ts) env)))))
-
-;; predicates
-
-(defpred def? "def")
-(defpred edef? "edef")
-(defpred expandafter? "expandafter")
 
 ;; evaluator
 

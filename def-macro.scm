@@ -3,14 +3,6 @@
 
 ;;;; def (usre macro)
 
-;;;; predicates
-
-(defpred def? "def")
-
-(define (parameter? token)
-  (= -15 (car token)))
-
-;; 
 (define groupen 
   (put-specific-code -100 begingroup? get-tex-group))
 
@@ -68,10 +60,6 @@
 	   (cdar param))
 	  (else
 	   (append-map ex-group param)))))
-
-(define (charlbrace? token)
-  (and (= 11 (cat token))
-       (char=? #\{ (cdr token))))
 
 ;; [token] -> [pattern] -> ([token] and [token])
 (define (tail-match token pattern)
