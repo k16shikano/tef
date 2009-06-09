@@ -33,7 +33,8 @@
 		  (match-def-parameter (cdr ts) (car v))
 		  (if (null? params)
 		      (values (driver-loop (cdr v) env) rest)
-		      (values (apply-pattern (cdr v) params env) rest)))))
+		      (values (driver-loop 
+			       (apply-pattern (cdr v) params env) env) rest)))))
    (else
     (values `(,(car ts)) (cdr ts)))))
 
@@ -44,21 +45,8 @@
 	   (cond ((null? body)
 		  '())
 		 ((parameter? (car head))
-		  (append (driver-loop 
-			   (list-ref params (- (x->integer (cdar head)) 1))
-			   env)
+		  (append (list-ref params (- (x->integer (cdar head)) 1))
 			  (apply-pattern rest params env)))
-		 ((def? (car head))
-		  (let ((env (cons (make-hash-table) env)))
-		    (receive (expanded rest)
-			     (eval-macro body env)
-			     (append expanded
-				     (apply-pattern rest params env)))))
-		 ((< (cat (car head)) 0)
-		  (receive (expanded rest)
-			   (eval-macro (cons (car head)
-					     (apply-pattern rest params env)) env)
-			   (append expanded rest)))
 		 (else
 		  (cons (car head)
 			(apply-pattern rest params env)))

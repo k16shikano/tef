@@ -93,6 +93,11 @@
 	       (car iport))))
     (loop (peek-char p) p)))
 
+(define (perror ls)
+  (if (<= (length ls) 20)
+      (tokenlist->string ls)
+      (string-append (tokenlist->string (take ls 20)) "...")))
+
 ;; this gets the head group from a token list,
 ;; returning the group and the rest of the string in multivalues as tokenlists.
 ;; [token] -> ([token] and [token])

@@ -110,10 +110,10 @@
 	 (list (make-hash-table)))))
 
 (test* "innner parameter definition"
-       "bc" ; neither bb nor cc
+       "bb" ; neither bb nor cc
        (tokenlist->string
 	(driver-loop
-	 (string->tokenlist "\\def\\/{c}\\def\\a#1{\\def\\/{b}#1}\\a{\\/}\\/")
+	 (string->tokenlist "\\def\\/{c}\\def\\a#1{\\def\\/{b}#1}\\a\\/\\/")
 	 global-env
 	 )))
 
@@ -144,11 +144,11 @@
 		    (get-tex-dimen-after "spread" ts)))))
 
 (test* "\\def#1#{...}" 
-       "xB" 
+       "x" 
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\
-\\def\\a#1#{\\hbox to #1\\def\\a{B}\\a}\
+\\def\\a#1#{\\hbox to #1}\
 \\a3pt{x}")
 	 (list (make-hash-table)))))
 
@@ -210,5 +210,13 @@ c")
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}")
+	 (list (make-hash-table)))))
+
+(test* "for box parameters" 
+       "a012b012c"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist 
+	  "\\def\\newtoken#1{\\def#1=##1{a##1b##1c}}\\newtoken\\ss\\ss={012}")
 	 (list (make-hash-table)))))
 
