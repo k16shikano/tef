@@ -227,3 +227,11 @@ c")
 	 (string->tokenlist 
 	  "\\def\\a{11}{\\def\\a{00}}\\a")
 	 (list (make-hash-table)))))
+
+(test* "for global definition" 
+       "12"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist 
+	  "\\def\\a{0}{\\global\\def\\a{2}\\def\\a{1}\\a}\\a")
+	 (list (make-hash-table)))))

@@ -131,6 +131,19 @@
 		 rest)
 	       (error "malformed macro definition" (perror ts)))))
 
+;; [token] -> env -> rest tokens
+(define (update-global-env ts env)
+  (receive (param body rest)
+	   (grab-macro-definition (cdr ts))
+	   (if (< (cat (car ts)) 0)
+	       (let ((k (string->symbol (cdar ts)))
+		     (b (cons param body)))
+		 (if (hash-table-exists? (last env) k)
+		     (hash-table-update! (last env) k (lambda (old) b))
+		     (hash-table-put! (last env) k b))
+		 rest)
+	       (error "malformed macro definition" (perror ts)))))
+
 ;; symbol -> env
 (define (find-macro-definition key env)
   (cond ((null? env)

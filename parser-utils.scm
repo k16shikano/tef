@@ -87,3 +87,7 @@
 (defpred expandafter? "expandafter")
 
 (defpred par? "par")
+
+(defpred global? "global")
+
+(defpred gdef? "gdef")
