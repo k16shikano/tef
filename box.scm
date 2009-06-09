@@ -14,7 +14,7 @@
 			    (get-tex-dimen-after "spread" (cdr ts)))
 		  (receive (body rest)
 			   (get-tex-group rest)
-			   (values `(,(car ts) ,@dimen ,@body) rest))))
+			   (values `(,(car ts) ,dimen ,body) rest))))
 	((member (cdar ts) '("box" "copy"))
 	 (receive (oct rest)
 ;		  (get-oct (cdr ts))
@@ -26,7 +26,7 @@
 		  (get-tex-dimen (cdr ts))
 		  (receive (dimen rest)
 			   (get-tex-dimen-after "to" (cdr ts))
-			   (values `(,(car ts) ,@oct ,@dimen) rest))))	
+			   (values `(,(car ts) ,@oct ,@dimen) rest))))
 	((string=? (cdar ts) "lastbox")
 	 (values '() rest))))
 

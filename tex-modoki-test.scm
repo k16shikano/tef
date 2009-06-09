@@ -4,6 +4,8 @@
 (load "tex-modoki.scm")
 (load "output-loop.scm")
 (load "def-macro.scm")
+(load "box.scm")
+(load "num-dimen.scm")
 
 (test* "read-tex-token: case \"{\\\\hskip 136 pt}\"" 
        '((1 . #\{) (-10 . "hskip") (12 . #\1) (12 . #\3) (12 . #\6) (10 . #\ ) (11 . #\p) (11 . #\t) (2 . #\}))
@@ -58,7 +60,7 @@
        (get-comment-line (string->tokenlist "% comment \n")))
 
 (test* "parse parameter"
-       '(((11 . #\a)) ((-100 . 1) (12 . #\.) (10 . #\space)) ((-100 . 2)))
+       '(((11 . #\a)) ((-15 . 1) (12 . #\.) (10 . #\space)) ((-15 . 2)))
        (parse-parameter (string->tokenlist "a#1. #2{...}aa")))
 
 (test* "match-def-parameter: a sample from ch20 of the TeX book"
@@ -122,6 +124,13 @@
 \\hbox to 3pt{x}")
 	 (list (make-hash-table)))))
 
+(test* "box expansion" 
+       "" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\\hbox{}")
+	 (list (make-hash-table)))))
+
 (test* "get-tex-dimen-after and orvalues"
        "1.0pt"
        (tokenlist->string
@@ -157,4 +166,16 @@
 \\edef\\a{\\double\\a}\
 \\a")
 	 (list (make-hash-table)))))
+
+(test* "\\def#1#{...}" 
+       "vv" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\b#1{}
+\\def\\a#1{#1#1}{{\\def\\b#1{\\a#1}\\b{v}}\\b{c}}\
+\\b{x}
+aaaa")
+	 (list (make-hash-table)))))
+
 
