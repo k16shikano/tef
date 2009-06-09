@@ -110,7 +110,7 @@
 	 (list (make-hash-table)))))
 
 (test* "innner parameter definition"
-       "bb" ; neither bb nor cc
+       "bb"
        (tokenlist->string
 	(driver-loop
 	 (string->tokenlist "\\def\\/{c}\\def\\a#1{\\def\\/{b}#1}\\a\\/\\/")
@@ -212,7 +212,7 @@ c")
 	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}")
 	 (list (make-hash-table)))))
 
-(test* "for box parameters" 
+(test* "for 'macro'" 
        "a012b012c"
        (tokenlist->string 
 	(driver-loop
@@ -220,3 +220,10 @@ c")
 	  "\\def\\newtoken#1{\\def#1=##1{a##1b##1c}}\\newtoken\\ss\\ss={012}")
 	 (list (make-hash-table)))))
 
+(test* "for inner definition" 
+       "11"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist 
+	  "\\def\\a{11}{\\def\\a{00}}\\a")
+	 (list (make-hash-table)))))

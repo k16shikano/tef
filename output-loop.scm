@@ -58,8 +58,8 @@
 	 '())
 	((begingroup? (car ts))
 	 (receive (group rest)
-		  (get-tex-group ts (cons (make-hash-table) env))
-		  (append group
+		  (get-tex-group ts)
+		  (append (driver-loop group (cons (make-hash-table) env))
 			  (driver-loop rest env))))
 	((< (cat (car ts)) 0)
 	 (receive (expanded rest)
