@@ -2,6 +2,8 @@
 (load "parser-utils.scm")
 (load "def-macro.scm")
 
+(define-condition-type <read-num-error> <error> #f)
+
 ;; this get-tex-dimen is not completed. 
 ;; it must support the spec. described in the TeX book chapter 24.
 ;; [token] -> [pattern] -> [matched pattern] and [rest token]
@@ -44,5 +46,3 @@
     (if dimen
 	(get-tex-dimen dimen)
 	(values '() ts))))
-
-
