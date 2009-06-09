@@ -141,7 +141,7 @@
 		     (hash-table-update! (car env) k (lambda (old) b))
 		     (hash-table-put! (car env) k b))
 		 rest)
-	       (error "malformed macro definition"))))
+	       (error "malformed macro definition" (perror ts)))))
 
 ;; symbol -> env
 (define (find-macro-definition key env)

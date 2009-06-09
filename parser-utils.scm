@@ -8,12 +8,14 @@
 
 ;; [token] -> [get token] [rest token]
 (define (put-specific-code code finder getter)
-  (lambda (ls)
+  (lambda (ls . env)
     (if (null? ls)
 	'()
 	(if (finder (car ls))
 	    (receive (group unseen)
-		     (getter ls)
+		     (if (null? env)
+			 (getter ls)
+			 (getter ls (car env)))
 		     (cons `(,code . ,group) unseen))
 	    ls))))
 
@@ -31,4 +33,6 @@
      (define (name token)
        (and (< (car token) 0)
 	    (string=? str (cdr token)))))))
+
+(defpred par? "par")
 

@@ -85,14 +85,23 @@
 	       (car iport))))
     (loop (peek-char p) "" p)))
 
+(define (perror ls)
+  (if (<= (length ls) 20)
+      (tokenlist->string ls)
+      (string-append (tokenlist->string (take ls 20)) "...")))
+
 ;; this gets the head group from a token list,
 ;; returning the group and the rest of the string in multivalues as tokenlists.
 ;; [token] -> ([token] and [token])
 (define-condition-type <read-group-error> <error> #f)
-(define (get-tex-group ls)
+(define (get-tex-group ls . env)
   (define (in-group ls body i)
     (cond ((null? ls)
-	   (error <read-group-error> "unterminated tex group"))
+	   (error <read-group-error> "unterminated tex group" (perror (reverse body))))
+	  ((commenthead? (car ls))
+	   (receive (comment rest)
+		    (get-comment-line ls)
+		    (in-group rest (append (reverse comment) body) i)))
 	  ((endgroup? (car ls))
 	   (if (= 0 i)
 	       (values (reverse body) (cdr ls))
@@ -104,9 +113,14 @@
   (define (out-group ls)
     (cond ((null? ls)
 	   (values '() '()))
+	  ((commenthead? (car ls))
+	   (receive (comment rest)
+		    (get-comment-line ls)
+		    (out-group rest)))
 	  ((begingroup? (car ls))
 	   (in-group (cdr ls) '() 0))
-	  ((texspaces? (car ls))
+	  ((or (texspaces? (car ls))
+	       (par? (car ls)))
 	   (out-group (cdr ls)))
 	  (else
 	   (values `(,(car ls)) (cdr ls))))) ; a token is also a group
@@ -121,13 +135,9 @@
 	   (trim-texspaces (cdr ls)))
 	  (else
 	   ls)))
-  (define (pargerror ls)
-    (if (<= (length ls) 20)
-	(tokenlist->string ls)
-	(string-append (tokenlist->string (take ls 20)) "...")))
   (guard (exc
-	  ((<read-group-error> exc) (error "missing argument" n (pargerror ls)))
-	  ((<error> exc) (error "missing argument" n (pargerror ls))))
+	  ((<read-group-error> exc) (error "missing argument" n (perror ls)))
+	  ((<error> exc) (error "missing argument" n (perror ls))))
 	 (if (> n 0)
 	     (receive (arg unseen)
 		      (get-tex-group ls)

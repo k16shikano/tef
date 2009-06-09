@@ -10,7 +10,7 @@
 (define (get-tex-dimen ts)
   (define unit-strings
     (map (compose string->tokenlist symbol->string)
-	 '(pt pc in bp cm mm dd cc sp)))
+	 '(pt pc in bp cm mm dd cc sp em)))
   (define (for-pattern target us)
     (cond ((null? us)
 	   (values #f target))

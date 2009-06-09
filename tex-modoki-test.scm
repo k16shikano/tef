@@ -167,15 +167,24 @@
 \\a")
 	 (list (make-hash-table)))))
 
-(test* "\\def#1#{...}" 
+(test* "inner def" 
        "vv" 
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\
-\\def\\b#1{}
+\\def\\b#1{}\
 \\def\\a#1{#1#1}{{\\def\\b#1{\\a#1}\\b{v}}\\b{c}}\
-\\b{x}
-aaaa")
+\\b{x}")
 	 (list (make-hash-table)))))
 
+(load "tex-trim-utils.scm")
+
+(test* "driver-loop" 
+       "b" 
+       (tokenlist->string
+	(driver-loop
+	 (string->tokenlist "%12
+\\def\\wd{1pt}\\def\\a{b}\\hbox to\\wd{\\a1 %c\n}\
+")
+	 (list (make-hash-table)))))
 
