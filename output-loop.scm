@@ -31,9 +31,10 @@
     => (lambda (v)
 	 (receive (params rest)
 		  (match-def-parameter (cdr ts) (car v))
-		  (if (null? params)
-		      (values (driver-loop (cdr v) env) rest)
-		      (values (apply-pattern (cdr v) params env) rest)))))
+		  (let ((newline (if (= -5 (cat (car ts))) '((5 . #\newline)) '())))
+		    (if (null? params)
+			(values (driver-loop `(,@(cdr v) . ,newline) env) rest)
+			(values (apply-pattern `(,@(cdr v) . ,newline) params env) rest))))))
    (else
     (values `(,(car ts)) (cdr ts)))))
 
@@ -68,6 +69,11 @@
 (define (driver-loop ts env)
   (cond ((null? ts)
 	 '())
+	((begingroup? (car ts))
+	 (receive (group rest)
+		  (get-tex-group ts)
+		  (append (driver-loop #?=group (cons (make-hash-table) env))
+			  (driver-loop rest env))))
 	((< (cat (car ts)) 0)
 	 (receive (expanded rest)
 		  (eval-macro ts env)
@@ -84,7 +90,8 @@
 
 ;; evaluator
 
-(define (eval-box box env) (driver-loop (cdddr box) env))
+(define (eval-box box env) 
+  (driver-loop (cadddr box) env))
 
 (define (edef->def ts env)
   (receive (param body rest)
