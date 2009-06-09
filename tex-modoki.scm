@@ -121,9 +121,13 @@
 	   (trim-texspaces (cdr ls)))
 	  (else
 	   ls)))
+  (define (pargerror ls)
+    (if (<= (length ls) 20)
+	(tokenlist->string ls)
+	(string-append (tokenlist->string (take ls 20)) "...")))
   (guard (exc
-	  ((<read-group-error> exc) (error "missing argument" n))
-	  ((<error> exc) (error "missing argument" n)))
+	  ((<read-group-error> exc) (error "missing argument" n (pargerror ls)))
+	  ((<error> exc) (error "missing argument" n (pargerror ls))))
 	 (if (> n 0)
 	     (receive (arg unseen)
 		      (get-tex-group ls)
@@ -192,7 +196,8 @@
   (define (in-comment comment rest)
     (cond ((null? rest)
 	   (values (reverse comment) rest))
-	  ((newline? (car rest))
+	  ((or (newline? (car rest))
+	       (= -5 (cat (car rest))))
 	   (values (reverse comment) rest)) ; with \n
 	  (else
 	   (in-comment (cons (car rest) comment) (cdr rest)))))
