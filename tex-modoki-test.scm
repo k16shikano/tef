@@ -1,6 +1,9 @@
 (use gauche.test)
 
+(test-start "tex-modoki")
 (load "tex-modoki.scm")
+
+(test-section "parse tex strings")
 
 (test* "read-tex-token: case \"{\\\\hskip 136 pt}\"" 
        '((1 . #\{) (-1 . "hskip") (12 . #\1) (12 . #\3) (12 . #\6) (10 . #\ ) (11 . #\p) (11 . #\t) (2 . #\}))
@@ -26,8 +29,7 @@
 	(get-tex-group 
 	 (string->tokenlist "{This information should be    {centered}}"))))
 
-;;;;;;;;;;;;;;
-
+(test-section "some utilites")
 (load "tex-trim-utils.scm")
 
 (test* "get-args" 
@@ -63,8 +65,7 @@
        '()
        (get-comment-line (string->tokenlist "% comment \n")))
 
-;;;;;;;;;;;;;;
-
+(test-section "macro definition")
 (load "def-macro.scm")
 
 (test* "parse parameter"
@@ -94,8 +95,7 @@
 	  (string->tokenlist "AB #1#2C$#3\\$ {...}"))
 	 1)))
 
-;;;;;;;;;;;;;;
-
+(test-section "macro expantion")
 (load "output-loop.scm")
 
 (test* "eval macro: exercise 20.2 of the TeX book" 
@@ -107,7 +107,7 @@
 \\def\\b{A\\def\\a{B\\def\\a{C\\def\\a{\\b}}}}\
 \\def\\puzzle{\\a\\a\\a\\a\\a}\
 \\puzzle") 
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "innner parameter definition"
        "bb"
@@ -126,7 +126,7 @@
 \\def\\B#1;#2{#1,#2}\
 \\def\\C{x;y}\
 \\expandafter\\A\\expandafter\\B\\C")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "box expansion" 
        "x" 
@@ -134,7 +134,7 @@
 	(driver-loop
 	 (string->tokenlist "\
 \\hbox to 3pt{x}")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "get-tex-dimen-after and orvalues"
        "1.0pt"
@@ -150,7 +150,7 @@
 	 (string->tokenlist "\
 \\def\\a#1#{\\hbox to #1}\
 \\a3pt{x}")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "\\def#1#{...}" 
        "1cx" ; not 1xc!
@@ -159,7 +159,7 @@
 	 (string->tokenlist "\
 \\def\\a#1#{#1x}\
 \\a1c")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "\\edef..." 
        "xyxyxyxy"
@@ -170,7 +170,7 @@
 \\edef\\a{\\double{xy}}\
 \\edef\\a{\\double\\a}\
 \\a")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "for real lexer" 
        "You owe \\$5.00!!! --- Pay it.!!!"
@@ -182,7 +182,7 @@
 
 
 ")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "for real lexer" 
        "a\n\nb x s\n\nc"
@@ -195,7 +195,7 @@ b x
 s
 
 c")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "for real lexer" 
        "\\ab c"
@@ -203,14 +203,14 @@ c")
 	(driver-loop
 	 (string->tokenlist "\
 \\ab c")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "for box parameters" 
        "x"
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "for 'macro'" 
        "a012b012c"
@@ -218,7 +218,7 @@ c")
 	(driver-loop
 	 (string->tokenlist 
 	  "\\def\\newtoken#1{\\def#1=##1{a##1b##1c}}\\newtoken\\ss\\ss={012}")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "for inner definition" 
        "11"
@@ -226,7 +226,7 @@ c")
 	(driver-loop
 	 (string->tokenlist 
 	  "\\def\\a{11}{\\def\\a{00}}\\a")
-	 (list (make-hash-table)))))
+	 global-env)))
 
 (test* "for global definition" 
        "12"
@@ -234,4 +234,6 @@ c")
 	(driver-loop
 	 (string->tokenlist 
 	  "\\def\\a{0}{\\global\\def\\a{2}\\def\\a{1}\\a}\\a")
-	 (list (make-hash-table)))))
+	 global-env)))
+
+(test-end)
