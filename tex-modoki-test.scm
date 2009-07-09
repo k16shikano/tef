@@ -136,14 +136,7 @@
 \\hbox to 3pt{x}")
 	 global-env)))
 
-(test* "get-tex-dimen-after and orvalues"
-       "1.0pt"
-       (tokenlist->string
-	(let ((ts (string->tokenlist "spread 1.0pt{...}")))
-	  (orvalues (get-tex-dimen-after "to" ts)
-		    (get-tex-dimen-after "spread" ts)))))
-
-(test* "\\def#1#{...}" 
+(test* "\\def#1#{...}"
        "x" 
        (tokenlist->string 
 	(driver-loop
@@ -235,5 +228,31 @@ c")
 	 (string->tokenlist 
 	  "\\def\\a{0}{\\global\\def\\a{2}\\def\\a{1}\\a}\\a")
 	 global-env)))
+
+(test-section "number and dimension")
+(load "num-dimen.scm")
+
+(test* "get-tex-dimen-after and orvalues"
+       "1.0pt"
+       (tokenlist->string
+	(let ((ts (string->tokenlist "spread1.0pt{...}")))
+	  (orvalues (get-tex-dimen-after "to" ts)
+		    (get-tex-dimen-after "spread" ts)))))
+
+(parser-test* "dimen-unit"
+	      "pt" ""
+	      dimen-unit "pt")
+
+(parser-test* "tex-number"
+	      "\"AB" "pt"
+	      tex-number "\"ABpt")
+
+(parser-test* "tex-number"
+	      "`a" "hoge"
+	      tex-number "'12 pt")
+
+(parser-test* "tex-dimen"
+	      "54.2em" "{...}"
+	      tex-dimen "54.2em{...}")
 
 (test-end)
