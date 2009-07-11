@@ -5,7 +5,7 @@
 
 (parser-test* "number"
 	      "1" "2"
-	      tex-number "12")
+	      (ordigits "digit" 0 1 2 3 4 5 6 7 8 9) "12")
 
 (parser-test* "one space"
 	      " " ""
@@ -13,6 +13,6 @@
 
 (parser-test* "tex integer constatnt"
 	      "1234" "abc00"
-	      tex-int-const "1234abc00")
+	      (parser-many (ordigits "digit" 0 1 2 3 4 5 6 7 8 9)) "1234abc00")
 
-
+(test-end)
