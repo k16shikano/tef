@@ -128,23 +128,6 @@
 \\expandafter\\A\\expandafter\\B\\C")
 	 global-env)))
 
-(test* "box expansion" 
-       "x" 
-       (tokenlist->string 
-	(driver-loop
-	 (string->tokenlist "\
-\\hbox to 3pt{x}")
-	 global-env)))
-
-(test* "\\def#1#{...}"
-       "x" 
-       (tokenlist->string 
-	(driver-loop
-	 (string->tokenlist "\
-\\def\\a#1#{\\hbox to #1}\
-\\a3pt{x}")
-	 global-env)))
-
 (test* "\\def#1#{...}" 
        "1cx" ; not 1xc!
        (tokenlist->string 
@@ -198,13 +181,6 @@ c")
 \\ab c")
 	 global-env)))
 
-(test* "for box parameters" 
-       "x"
-       (tokenlist->string 
-	(driver-loop
-	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}")
-	 global-env)))
-
 (test* "for 'macro'" 
        "a012b012c"
        (tokenlist->string 
@@ -239,6 +215,10 @@ c")
 	  (orvalues (get-tex-dimen-after "to" ts)
 		    (get-tex-dimen-after "spread" ts)))))
 
+(parser-test* "tex-dimen"
+	      "3pt" "{x}"
+	      get-tex-dimen "3pt{x}")
+
 (parser-test* "dimen-unit"
 	      "pt" ""
 	      dimen-unit "pt")
@@ -248,11 +228,38 @@ c")
 	      tex-number "\"ABpt")
 
 (parser-test* "tex-number"
-	      "`a" "hoge"
-	      tex-number "'12 pt")
+	      "`a " "hoge"
+	      tex-number "`a hoge")
 
 (parser-test* "tex-dimen"
 	      "54.2em" "{...}"
 	      tex-dimen "54.2em{...}")
+
+(test-section "box")
+(load "box.scm")
+
+(test* "box expansion" 
+       "x" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\hbox to 3pt{x}")
+	 global-env)))
+
+(test* "\\def#1#{...}"
+       "x" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\a#1#{\\hbox to #1}\
+\\a3pt{x}")
+	 global-env)))
+
+(test* "for box parameters" 
+       "x"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}")
+	 global-env)))
 
 (test-end)

@@ -29,9 +29,6 @@
     (receive (expanded rest)
 	     (eval-macro (cddr ts) env)
 	     (values (driver-loop `(,(cadr ts) ,@expanded) env) rest)))
-   ((box? (car ts))
-    (let ((boxed (boxen ts env)))
-      (values (eval-box (car boxed) env) (cdr boxed))))
    ((find-macro-definition (string->symbol (cdar ts)) env)
     => (lambda (v)
 	 (receive (params rest)
@@ -41,7 +38,15 @@
 		      (values (driver-loop 
 			       (apply-pattern (cdr v) params env) env) rest)))))
    (else
-    (values `(,(car ts)) (cdr ts)))))
+    (values #f '()))))
+;    (values `(,(car ts)) (cdr ts)))))
+
+(define (edef->def ts env)
+  (receive (param body rest)
+	   (grab-macro-definition (cddr ts))
+	   `((-1 . "def") ,(cadr ts) ,@param 
+	     (1 . #\{) ,@(driver-loop body env) (2 . #\}) 
+	     ,@rest)))
 
 ;; [token] -> [[token]] -> env -> [expanded token]
 (define (apply-pattern body params env)
@@ -69,20 +74,23 @@
 	((< (cat (car ts)) 0)
 	 (receive (expanded rest)
 		  (eval-macro ts env)
-		  (append expanded
-			  (driver-loop rest env))))
+		  (if expanded
+		      (append expanded
+			      (driver-loop rest env))
+		      (process-primitives ts env))))
 	((= (cat (car ts)) 5)
 	 (driver-loop (cdr ts) env))
 	(else
 	 (cons (car ts) (driver-loop (cdr ts) env)))))
 
-;; evaluator
+;; primitive processors
+(define (process-primitives ts env)
+  (cond ((box? (car ts))
+	 (let ((boxed (boxen ts env)))
+	   (values (process-box (car boxed) env) (cdr boxed))))
+	(else
+	 (cons (car ts) (driver-loop (cdr ts) env)))))
+	
+(define (process-box box env) (driver-loop (cdddr box) env))
 
-(define (eval-box box env) (driver-loop (cdddr box) env))
 
-(define (edef->def ts env)
-  (receive (param body rest)
-	   (grab-macro-definition (cddr ts))
-	   `((-1 . "def") ,(cadr ts) ,@param 
-	     (1 . #\{) ,@(driver-loop body env) (2 . #\}) 
-	     ,@rest)))
