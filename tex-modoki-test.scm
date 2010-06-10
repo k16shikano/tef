@@ -7,6 +7,8 @@
 (load "box.scm")
 (load "num-dimen.scm")
 
+(test-start "test basic macro expansion")
+
 (test* "read-tex-token: case \"{\\\\hskip 136 pt}\"" 
        '((1 . #\{) (-10 . "hskip") (12 . #\1) (12 . #\3) (12 . #\6) (10 . #\ ) (11 . #\p) (11 . #\t) (2 . #\}))
        (with-input-from-string "{\\hskip 136 pt}" 
@@ -167,24 +169,39 @@
 \\a")
 	 (list (make-hash-table)))))
 
-(test* "inner def" 
-       "vv" 
+(test* "inner \\def" 
+       "{vv}" 
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\
 \\def\\b#1{}\
-\\def\\a#1{#1#1}{{\\def\\b#1{\\a#1}\\b{v}}\\b{c}}\
+\\def\\a#1{#1#1}\
+{\\def\\b#1{\\a{#1}}\\b{v}}\
+\\b{cb}\
 \\b{x}")
 	 (list (make-hash-table)))))
 
-(load "tex-trim-utils.scm")
-
-(test* "driver-loop" 
-       "b" 
-       (tokenlist->string
+(test* "global \\def..." 
+       "{a}{aA}{A}"
+       (tokenlist->string 
 	(driver-loop
-	 (string->tokenlist "%12
-\\def\\wd{1pt}\\def\\a{b}\\hbox to\\wd{\\a1 %c\n}\
-")
+	 (string->tokenlist "\
+\\def\\a{a}\
+{\\a}\
+{\\a\\global\\def\\a{A}\\a}\
+{\\a}")
 	 (list (make-hash-table)))))
 
+(test* "global \\edef..." 
+       "{AAA}{BBB}"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\double#1{#1#1}\
+{\\xdef\\triple#1{\\double{#1}#1}\
+ \\triple{A}}\
+{\\triple{B}}")
+	 (list (make-hash-table)))))
+
+
+(test-end)

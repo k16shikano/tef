@@ -16,10 +16,10 @@
   (cond
    ((null? ts)
     (values '() '()))
-   ((def? (car ts))
-    (values '() (update-env (cdr ts) env)))
-   ((edef? (car ts))
-    (values '() (edef->def ts env)))
+   ((assignment? (car ts))
+    (values '() (assignment! ts env #f)))
+   ((global? (car ts))
+    (values '() (assignment! (cdr ts) env #t)))
    ((expandafter? (car ts))
     (receive (expanded rest)
 	     (eval-macro (cddr ts) env)
@@ -51,10 +51,7 @@
 			  (apply-pattern rest params env)))
 		 ((def? (car head))
 		  (let ((env (cons (make-hash-table) env)))
-		    (receive (expanded rest)
-			     (eval-macro body env)
-			     (append expanded
-				     (apply-pattern rest params env)))))
+		    (apply-pattern (assignment! body env #f) params env)))
 		 ((< (cat (car head)) 0)
 		  (receive (expanded rest)
 			   (eval-macro (cons (car head)
@@ -64,6 +61,26 @@
 		  (cons (car head)
 			(apply-pattern rest params env)))
 		 )))
+
+;; [token] -> env -> bool -> [token]
+(define (assignment! ts env global?)
+  (cond
+   ((def? (car ts))
+    (update-env! (cdr ts) env global?))
+   ((gdef? (car ts))
+    (update-env! (cdr ts) env #t))
+   ((edef? (car ts))
+    (edef->def ts env))
+   ((xdef? (car ts))
+    `((-1 . "global") ,@(edef->def ts env)))))
+
+(define (edef->def ts env)
+  (receive (param body rest)
+	   (grab-macro-definition (cddr ts))
+	   `((-1 . "def") ,(cadr ts) ,@param 
+	     (1 . #\{) ,@(driver-loop body env) (2 . #\}) 
+	     ,@rest)))
+
 
 ;; [token] -> env -> [expanded token]
 (define (driver-loop ts env)
@@ -92,16 +109,20 @@
 
 (defpred def? "def")
 (defpred edef? "edef")
+(defpred gdef? "gdef")
+(defpred xdef? "xdef")
 (defpred expandafter? "expandafter")
+(defpred global? "global")
+(define (assignment? token)
+  (or (def? token)
+      (edef? token)
+      (gdef? token)
+      (xdef? token)
+      ))
 
 ;; evaluator
 
 (define (eval-box box env) 
   (driver-loop (cadddr box) env))
 
-(define (edef->def ts env)
-  (receive (param body rest)
-	   (grab-macro-definition (cddr ts))
-	   `((-1 . "def") ,(cadr ts) ,@param 
-	     (1 . #\{) ,@(driver-loop body env) (2 . #\}) 
-	     ,@rest)))
+
