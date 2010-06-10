@@ -288,6 +288,9 @@
 		  "\n\n")
 		 (else
 		  (string-append "\\" (x->string (cdr token))))))
+	 #;((or (= (cat token) 1)
+	       (= (cat token) 2))
+	   "")
 	  ((and (= (cat token) 12)
 		(char-set-contains? #[$%&#_] (cdr token)))
 	   (string-append "\\" (x->string (cdr token))))
