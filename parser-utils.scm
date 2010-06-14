@@ -25,10 +25,11 @@
 ;; are there any values whose first value is not null?
 (define-syntax orvalues
   (syntax-rules ()
-    ((_) (values '() '()))
+    ((_) (values '(-101 . #f) '()))
     ((_ v1) v1)
     ((_ v1 v2 ...) 
-     (if (null? (values-ref v1 0)) (orvalues v2 ...) v1))))
+     (if (not (cdar (values-ref v1 0))) (orvalues v2 ...) v1))))
+
 
 ;; predicates
 
@@ -37,8 +38,8 @@
        (number? (car t))))
 
 (define (cat token)
-  (and (textoken? token)
-       (car token)))
+  (if (textoken? token) (car token) 
+      (error "not token" token)))
 
 (define (begingroup? t)
   (and (textoken? t)
@@ -80,14 +81,21 @@
        (and (< (car token) 0)
 	    (string=? str (cdr token)))))))
 
-(defpred def? "def")
-
-(defpred edef? "edef")
-
-(defpred expandafter? "expandafter")
 
 (defpred par? "par")
-
+(defpred expandafter? "expandafter")
 (defpred global? "global")
 
+(defpred def? "def")
+(defpred edef? "edef")
 (defpred gdef? "gdef")
+(defpred xdef? "xdef")
+
+(define (assignment? token)
+  (or (def? token)
+      (edef? token)
+      (gdef? token)
+      (xdef? token)
+      ))
+
+

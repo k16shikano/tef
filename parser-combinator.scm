@@ -11,7 +11,8 @@
     (cond ((null? ts)
 	   (error <parser-error> "there's no tokens"))
 	  ((or (eq? 'any cat-code)
-	       (and (= (cat (car ts)) cat-code)
+	       (and (textoken? (car ts))
+		    (= (cat (car ts)) cat-code)
 		    (pred (cdar ts))))
 	   (values (list (car ts)) (cdr ts)))
 	  (else

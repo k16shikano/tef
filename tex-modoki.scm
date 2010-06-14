@@ -105,7 +105,7 @@
 (define (get-tex-group ls . env)
   (define (in-group ls body i)
     (cond ((null? ls)
-	   (error <read-group-error> "unterminated tex group"))
+	   (error <read-group-error> "unterminated tex group" (perror (reverse body))))
 	  ((endgroup? (car ls))
 	   (if (= 0 i)
 	       (values (reverse body) (cdr ls))
@@ -124,13 +124,19 @@
 	   (out-group (cdr ls)))
 	  (else
 	   (values `(,(car ls)) (cdr ls))))) ; a token is also a group
-  (out-group ls))
-  
+ (out-group ls))
+
 ;; utils
 (define (tokenlist->string tls)
   (define (restore-command ts)
     (cond ((null? ts)
 	   '())
+	  ((not (textoken? (car ts)))
+	   (cond
+            ; group
+	    ((= -100 (caar ts))
+	     (cons (restore-command (cdar ts)) (restore-command (cdr ts))))
+	    (else '())))
 	  ((= -1 (cat (car ts)))
 	   (cons 
 	    (cond ((string=? "par" (cdar ts))

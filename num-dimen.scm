@@ -97,10 +97,20 @@
 (define tex-dimen
   (parser-cont extra-sign tex-factor dimen-unit))
 
+(define tex-register tex-factor)
+
 (define (get-tex-dimen-after str ts)
   (let ((dimen (match-head ts (string->tokenlist str))))
     (if dimen
 	(get-tex-dimen dimen)
-	(values '() ts))))
+	(values '((-101 . #f)) ts))))
+
+(define (token->dimen ts)
+  (if (not (= -101 (car ts))) (error "here expects dimensions")
+      (cdr ts)))
 
 
+#;(define (get-tex-dimen ts)
+  (receive (num-unit rest)
+	   (tex-dimen ts)
+	   (values `((-101 . ,(tokenlist->string num-unit))) rest)))

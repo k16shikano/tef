@@ -16,15 +16,10 @@
   (cond
    ((null? ts)
     (values '() '()))
+   ((assignment? (car ts))
+    (values '() (assignment! ts env #f)))
    ((global? (car ts))
-    (if (def? (cadr ts))
-	(eval-macro `((-1 . "gdef") ,@(cddr ts)) env)))
-   ((def? (car ts))
-    (values '() (update-env (cdr ts) env)))
-   ((edef? (car ts))
-    (values '() (edef->def ts env)))
-   ((gdef? (car ts))
-    (values '() (update-global-env (cdr ts) env)))
+    (values '() (assignment! (cdr ts) env #t)))
    ((expandafter? (car ts))
     (receive (expanded rest)
 	     (eval-macro (cddr ts) env)
@@ -62,15 +57,35 @@
 			(apply-pattern rest params env)))
 		 )))
 
+;; [token] -> env -> bool -> [token]
+(define (assignment! ts env global?)
+  (cond
+   ((def? (car ts))
+    (update-env! (cdr ts) env global?))
+   ((gdef? (car ts))
+    (update-env! (cdr ts) env #t))
+   ((edef? (car ts))
+    (edef->def ts env))
+   ((xdef? (car ts))
+    `((-1 . "global") ,@(edef->def ts env)))))
+
+(define (edef->def ts env)
+  (receive (param body rest)
+	   (grab-macro-definition (cddr ts))
+	   `((-1 . "def") ,(cadr ts) ,@param 
+	     (1 . #\{) ,@(driver-loop body env) (2 . #\}) 
+	     ,@rest)))
+
+
 ;; [token] -> env -> [expanded token]
 (define (driver-loop ts env)
   (cond ((null? ts)
 	 '())
+	((not (textoken? (car ts))) ts)
 	((begingroup? (car ts))
-	 (receive (group rest)
-		  (get-tex-group ts)
-		  (append (driver-loop group (cons (make-hash-table) env))
-			  (driver-loop rest env))))
+	 (let1 group (groupen ts)
+	       (append `((-100 . ,(driver-loop (cdar group) (cons (make-hash-table) env))))
+		       (driver-loop (cdr group) env))))
 	((< (cat (car ts)) 0)
 	 (receive (expanded rest)
 		  (eval-macro ts env)
@@ -87,10 +102,8 @@
 (define (process-primitives ts env)
   (cond ((box? (car ts))
 	 (let ((boxed (boxen ts env)))
-	   (values (process-box (car boxed) env) (cdr boxed))))
+	   (append (process-box (car boxed) env) (cdr boxed))))
 	(else
 	 (cons (car ts) (driver-loop (cdr ts) env)))))
 	
-(define (process-box box env) (driver-loop (cdddr box) env))
-
 

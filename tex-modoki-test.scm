@@ -205,6 +205,40 @@ c")
 	  "\\def\\a{0}{\\global\\def\\a{2}\\def\\a{1}\\a}\\a")
 	 global-env)))
 
+(test* "inner \\def" 
+       "vv" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\b#1{}\
+\\def\\a#1{#1#1}\
+{\\def\\b#1{\\a{#1}}\\b{v}}\
+\\b{cb}\
+\\b{x}")
+	 (list (make-hash-table)))))
+
+(test* "global \\def..." 
+       "aaAA"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\a{a}\
+{\\a}\
+{\\a\\global\\def\\a{A}\\a}\
+{\\a}")
+	 (list (make-hash-table)))))
+
+(test* "global \\edef..." 
+       "AAABBB"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\def\\double#1{#1#1}\
+{\\xdef\\triple#1{\\double{#1}#1}\
+ \\triple{A}}\
+{\\triple{B}}")
+	 (list (make-hash-table)))))
+
 (test-section "number and dimension")
 (load "num-dimen.scm")
 
@@ -239,15 +273,30 @@ c")
 (load "box.scm")
 
 (test* "box expansion" 
-       "x" 
+       "[this text is boxed] not boxed"
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\\hbox{this text is boxed} not boxed")
+	 (list (make-hash-table)))))
+
+(test* "box expansion" 
+       "[xx]aa" 
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\
-\\hbox to 3pt{x}")
+\\hbox spread 3pt{xx}aa")
+	 global-env)))
+
+(test* "box expansion" 
+       "|xx|aa" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\vbox to 1pc{xx}aa")
 	 global-env)))
 
 (test* "\\def#1#{...}"
-       "x" 
+       "[x]" 
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\
@@ -256,10 +305,19 @@ c")
 	 global-env)))
 
 (test* "for box parameters" 
-       "x"
+       "[x]"
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}")
 	 global-env)))
+
+(test* "box expansion" 
+       "|xx|" 
+       (tokenlist->string 
+	(driver-loop
+	 (string->tokenlist "\
+\\box100{xx}")
+	 global-env)))
+
 
 (test-end)
