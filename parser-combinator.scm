@@ -90,7 +90,10 @@
 	 (integer->digit x))
 	(else x)))
 
-(define-syntax ordigits
+(define (make-command-parser type)
+  (make-token-parser type -1 (cut string=? <> type)))
+
+(define-syntax orothers
   (syntax-rules ()
     ((_ desc d) (tex-other-char (x->digit d) desc))
     ((_ desc d1 ...)
@@ -131,3 +134,6 @@
      (test* (format "<~a>:  rest" ,desc) ,rest-expect
 	    (tokenlist->string
 	     (values-ref (,parser (string->tokenlist ,tokens)) 1)))))
+
+
+

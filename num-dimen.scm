@@ -19,12 +19,12 @@
    extra-space1))
 
 (define tex-oct-digit
-  (ordigits "octal digit" 0 1 2 3 4 5 6 7))
+  (orothers "octal digit" 0 1 2 3 4 5 6 7))
 (define tex-digit
-  (ordigits "digit" 0 1 2 3 4 5 6 7 8 9))
+  (orothers "digit" 0 1 2 3 4 5 6 7 8 9))
 (define tex-hex-digit
   (parser-or
-   (ordigits "" 0 1 2 3 4 5 6 7 8 9 #\A #\B #\C #\D #\E #\F)
+   (orothers "" 0 1 2 3 4 5 6 7 8 9 #\A #\B #\C #\D #\E #\F)
    (oralpha  "" #\A #\B #\C #\D #\E #\F)
    (error "it's not hexadecimal digit")))
 

@@ -7,6 +7,7 @@
 (load "def-macro.scm")
 (load "num-dimen.scm")
 (load "box.scm")
+(load "if.scm")
 
 (define global-env
   (list (make-hash-table)))
@@ -86,6 +87,9 @@
 	 (let1 group (groupen ts)
 	       (append `((-100 . ,(driver-loop (cdar group) (cons (make-hash-table) env))))
 		       (driver-loop (cdr group) env))))
+	((if? (car ts))
+	 (let1 ifstate (ifen ts env)
+	       (evalif ifstate)))
 	((< (cat (car ts)) 0)
 	 (receive (expanded rest)
 		  (eval-macro ts env)
@@ -106,4 +110,5 @@
 	(else
 	 (cons (car ts) (driver-loop (cdr ts) env)))))
 	
+
 

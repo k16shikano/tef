@@ -311,13 +311,17 @@ c")
 	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}")
 	 global-env)))
 
-(test* "box expansion" 
-       "|xx|" 
+
+(test-section "if")
+(load "if.scm")
+
+(test* "ifnum" 
+       "enough" 
        (tokenlist->string 
 	(driver-loop
 	 (string->tokenlist "\
-\\box100{xx}")
+\\def\\balance{100}
+\\ifnum\\balance>50 enough\\else short\\fi")
 	 global-env)))
-
 
 (test-end)
