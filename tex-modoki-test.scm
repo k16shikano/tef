@@ -101,143 +101,138 @@
 (test* "eval macro: exercise 20.2 of the TeX book" 
        "ABCAB" 
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 \\def\\a{\\b}\
 \\def\\b{A\\def\\a{B\\def\\a{C\\def\\a{\\b}}}}\
 \\def\\puzzle{\\a\\a\\a\\a\\a}\
-\\puzzle") 
-	 global-env)))
+\\puzzle"))))
 
 (test* "innner parameter definition"
        "bb"
        (tokenlist->string
-	(driver-loop
-	 (string->tokenlist "\\def\\/{c}\\def\\a#1{\\def\\/{b}#1}\\a\\/\\/")
-	 global-env
-	 )))
+	(output
+	 (string->tokenlist "\\def\\/{c}\\def\\a#1{\\def\\/{b}#1}\\a\\/\\/"))))
 
 (test* "expandafter: exercise 20.2 of the TeX book" 
        "yx" 
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 \\def\\A#1,#2{#2#1}\
 \\def\\B#1;#2{#1,#2}\
 \\def\\C{x;y}\
-\\expandafter\\A\\expandafter\\B\\C")
-	 global-env)))
+\\expandafter\\A\\expandafter\\B\\C"))))
+
+(test* "expandafter: appendix D of the TeX book" 
+       "dcba" 
+       (tokenlist->string 
+	(output
+	 (string->tokenlist "\
+\\def\\A#1#2#3{#1#2#3a}\\def\\B#1#2{#1#2b}\\def\\C#1{#1c}\\def\\D{d}\
+\\expandafter\\expandafter\\expandafter\\expandafter\
+\\expandafter\\expandafter\\expandafter\\A\
+\\expandafter\\expandafter\\expandafter\\B\\expandafter\\C\\D"))))
 
 (test* "\\def#1#{...}" 
        "1cx" ; not 1xc!
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 \\def\\a#1#{#1x}\
-\\a1c")
-	 global-env)))
+\\a1c"))))
 
 (test* "\\edef..." 
        "xyxyxyxy"
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 \\def\\double#1{#1#1}\
 \\edef\\a{\\double{xy}}\
 \\edef\\a{\\double\\a}\
-\\a")
-	 global-env)))
+\\a"))))
 
 (test* "for real lexer" 
        "You owe \\$5.00!!! --- Pay it.!!!"
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 \\def\\cs #1. #2\\par{#1!!! --- #2!!!}%
 \\cs You owe \\$5.00. Pay it.
 
 
-")
-	 global-env)))
+"))))
 
 (test* "for real lexer" 
        "a\n\nb x s\n\nc"
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 a
 
 b x
 s
 
-c")
-	 global-env)))
+c"))))
 
 (test* "for real lexer" 
        "\\ab c"
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
-\\ab c")
-	 global-env)))
+\\ab c"))))
 
 (test* "for 'macro'" 
        "a012b012c"
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist 
-	  "\\def\\newtoken#1{\\def#1=##1{a##1b##1c}}\\newtoken\\ss\\ss={012}")
-	 global-env)))
+	  "\\def\\newtoken#1{\\def#1=##1{a##1b##1c}}\\newtoken\\ss\\ss={012}"))))
 
 (test* "for inner definition" 
        "11"
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist 
-	  "\\def\\a{11}{\\def\\a{00}}\\a")
-	 global-env)))
+	  "\\def\\a{11}{\\def\\a{00}}\\a"))))
 
 (test* "for global definition" 
        "12"
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist 
-	  "\\def\\a{0}{\\global\\def\\a{2}\\def\\a{1}\\a}\\a")
-	 global-env)))
+	  "\\def\\a{0}{\\global\\def\\a{2}\\def\\a{1}\\a}\\a"))))
 
 (test* "inner \\def" 
        "vv" 
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 \\def\\b#1{}\
 \\def\\a#1{#1#1}\
 {\\def\\b#1{\\a{#1}}\\b{v}}\
 \\b{cb}\
-\\b{x}")
-	 (list (make-hash-table)))))
+\\b{x}"))))
 
 (test* "global \\def..." 
        "aaAA"
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 \\def\\a{a}\
 {\\a}\
 {\\a\\global\\def\\a{A}\\a}\
-{\\a}")
-	 (list (make-hash-table)))))
+{\\a}"))))
 
 (test* "global \\edef..." 
        "AAABBB"
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 \\def\\double#1{#1#1}\
 {\\xdef\\triple#1{\\double{#1}#1}\
  \\triple{A}}\
-{\\triple{B}}")
-	 (list (make-hash-table)))))
+{\\triple{B}}"))))
 
 (test-section "number and dimension")
 (load "num-dimen.scm")
@@ -275,41 +270,36 @@ c")
 (test* "box expansion" 
        "[this text is boxed] not boxed"
        (tokenlist->string 
-	(driver-loop
-	 (string->tokenlist "\\hbox{this text is boxed} not boxed")
-	 (list (make-hash-table)))))
+	(output
+	 (string->tokenlist "\\hbox{this text is boxed} not boxed"))))
 
 (test* "box expansion" 
        "[xx]aa" 
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
-\\hbox spread 3pt{xx}aa")
-	 global-env)))
+\\hbox spread 3pt{xx}aa"))))
 
 (test* "box expansion" 
        "|xx|aa" 
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
-\\vbox to 1pc{xx}aa")
-	 global-env)))
+\\vbox to 1pc{xx}aa"))))
 
 (test* "\\def#1#{...}"
        "[x]" 
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
 \\def\\a#1#{\\hbox to #1}\
-\\a3pt{x}")
-	 global-env)))
+\\a3pt{x}"))))
 
 (test* "for box parameters" 
        "[x]"
        (tokenlist->string 
-	(driver-loop
-	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}")
-	 global-env)))
+	(output
+	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}"))))
 
 
 (test-section "if")
@@ -318,10 +308,11 @@ c")
 (test* "ifnum" 
        "enough" 
        (tokenlist->string 
-	(driver-loop
+	(output
 	 (string->tokenlist "\
-\\def\\balance{100}
-\\ifnum\\balance>50 enough\\else short\\fi")
-	 global-env)))
+\\def\\balance{100}\
+\\ifnum\\balance<150\\ifnum\\balance>50 enough\\else short\\fi \\fi aaa"))))
+
 
 (test-end)
+

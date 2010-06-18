@@ -3,9 +3,6 @@
 
 ;;;; def (usre macro)
 
-(define groupen 
-  (put-specific-code -100 begingroup? get-tex-group))
-
 (define-condition-type <read-parameter-error> <error> #f)
 
 ;; [token] -> [parameter-token] and [rest token]
@@ -122,7 +119,7 @@
 (define (update-env! ts env global?)
   (let1 env (if global? (last env) (car env))
 	(receive (param body rest)
-		 (grab-macro-definition (cdr ts))
+		 (grab-macro-definition (cdr ts))		 
 		 (if (< (cat (car ts)) 0)
 		     (let ((k (string->symbol (cdar ts)))
 			   (b (cons param body)))
@@ -134,9 +131,90 @@
 
 ;; symbol -> env
 (define (find-macro-definition key env)
-  (cond ((null? env)
+  (cond ((or (not key) (null? env))
 	 #f)
 	((hash-table-get (car env) key #f)
 	 => values)
 	(else
 	 (find-macro-definition key (cdr env)))))
+
+;; [token] -> env -> [expanded token] and [rest]
+(define (eval-macro ts env)
+  (cond
+   ((null? ts)
+    (values '() '()))
+   ((assignment? (car ts))
+    (values '() (assignment! ts env #f)))
+   ((global? (car ts))
+    (values '() (assignment! (cdr ts) env #t)))
+   ((expandafter? (car ts))
+    (receive (expanded rest)
+	     (eval-macro (cddr ts) env)
+	     (values (expand-macro `(,(cadr ts) ,@expanded) env) rest)))
+   ((find-macro-definition (token->symbol (cdar ts)) env)
+    => (lambda (v)
+	 (receive (params rest)
+		  (match-def-parameter (cdr ts) (car v))
+		  (if (null? params)
+		      (values (expand-macro (cdr v) env) rest)
+		      (values (expand-macro
+			       (apply-pattern (cdr v) params env) env) rest)))))
+   (else
+    (values `(,(car ts)) (cdr ts)))))
+
+(define (token->symbol token)
+  (if (string? token) 
+      (string->symbol token)
+      #f))
+
+;; [token] -> [[token]] -> env -> [expanded token]
+(define (apply-pattern body params env)
+  (receive (head rest)
+	   (parameter-token body)
+	   (cond ((null? body)
+		  '())
+		 ((parameter? (car head))
+		  (append (list-ref params (- (x->integer (cdar head)) 1))
+			  (apply-pattern rest params env)))
+		 (else
+		  (cons (car head)
+			(apply-pattern rest params env)))
+		 )))
+
+;; [token] -> env -> bool -> [token]
+(define (assignment! ts env global?)
+  (cond	
+   ((def? (car ts))
+    (update-env! (cdr ts) env global?))
+   ((gdef? (car ts))
+    (update-env! (cdr ts) env #t))
+   ((edef? (car ts))
+    (edef->def ts env))
+   ((xdef? (car ts))
+    `((-1 . "global") ,@(edef->def ts env)))))
+
+(define (edef->def ts env)
+  (receive (param body rest)
+	   (grab-macro-definition (cddr ts))
+	   `((-1 . "def") ,(cadr ts) ,@param 
+	     (1 . #\{) ,@(expand-macro body env) (2 . #\}) 
+	     ,@rest)))
+
+(define (expand-macro ts env)
+  (cond ((null? ts)
+	 '())
+	((not (textoken? (car ts)))
+	 (cons (car ts) (expand-macro (cdr ts) env)))
+	((begingroup? (car ts))
+	 (let1 group (groupen ts)
+	       (append 
+		`((-100 . ,(expand-macro (cdar group) 
+					 (cons (make-hash-table) env))))
+		(expand-macro (cdr group) env))))
+	((= (cat (car ts)) -1)
+	 (receive (expanded rest)
+		  (eval-macro ts env)
+		  (append expanded
+			  (expand-macro rest env))))
+	(else
+	 (cons (car ts) (expand-macro (cdr ts) env)))))

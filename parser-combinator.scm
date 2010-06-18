@@ -9,7 +9,7 @@
 (define (make-token-parser type-name cat-code pred)
   (lambda (ts)
     (cond ((null? ts)
-	   (error <parser-error> "there's no tokens"))
+	   (error <parser-error> "there's no tokens" (perror ts)))
 	  ((or (eq? 'any cat-code)
 	       (and (textoken? (car ts))
 		    (= (cat (car ts)) cat-code)

@@ -9,13 +9,12 @@ tex-modoki
  You can expand tribial tex macros like this.
  
  (tokenlist->string 
-  (driver-loop
+  (output
    (string->tokenlist "\
 \\def\\a{\\b}\
 \\def\\b{A\\def\\a{B\\def\\a{C\\def\\a{\\b}}}}\
 \\def\\puzzle{\\a\\a\\a\\a\\a}\
-\\puzzle") 
-   global-env))
+\\puzzle")))
 
  => "ABCAB" 
 

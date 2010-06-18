@@ -126,6 +126,9 @@
 	   (values `(,(car ls)) (cdr ls))))) ; a token is also a group
  (out-group ls))
 
+(define groupen 
+  (put-specific-code -100 begingroup? get-tex-group))
+
 ;; utils
 (define (tokenlist->string tls)
   (define (restore-command ts)
