@@ -18,6 +18,12 @@
 	  (else
 	   (error <parser-error> (format "it's not a ~a, anyway" type-name))))))
 
+(define any-token
+  (make-token-parser
+   "any"
+   'any
+   textoken?))
+
 (define-syntax parser-or
   (syntax-rules (error)
     ((_ (error m1 ...))
