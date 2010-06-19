@@ -15,10 +15,4 @@
 	      "1234" "abc00"
 	      (parser-many (orothers "digit" 0 1 2 3 4 5 6 7 8 9)) "1234abc00")
 
-(load "if.scm")
-
-(parser-test* "ifnum"
-	      "1<2" "aa"
-	      ifnum-param "1<2aa")
-
 (test-end)

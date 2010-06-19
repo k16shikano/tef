@@ -303,16 +303,20 @@ c"))))
 
 
 (test-section "if")
-(load "if.scm")
 
 (test* "ifnum" 
-       "enough" 
+       "short just over"
        (tokenlist->string 
 	(output
 	 (string->tokenlist "\
-\\def\\balance{100}\
-\\ifnum\\balance<150\\ifnum\\balance>50 enough\\else short\\fi \\fi aaa"))))
-
+\\def\\check#1{\
+  \\ifnum#1>50\
+    \\ifnum#1<200just\
+      \\else over\\fi\
+    \\else short\\fi}\
+\\check{10}
+\\check{100}
+\\check{1000}"))))
 
 (test-end)
 

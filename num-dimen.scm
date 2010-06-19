@@ -109,6 +109,8 @@
   (if (not (= -101 (car ts))) (error "here expects dimensions")
       (cdr ts)))
 
+(define (token->number ts)
+  (string->number (tokenlist->string ts)))
 
 #;(define (get-tex-dimen ts)
   (receive (num-unit rest)

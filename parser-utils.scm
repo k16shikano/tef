@@ -78,9 +78,9 @@
   (syntax-rules ()
     ((_ name str)
      (define (name token)
-       (and (< (car token) 0)
+       (and (textoken? token)
+	    (< (car token) 0)
 	    (string=? str (cdr token)))))))
-
 
 (defpred par? "par")
 (defpred expandafter? "expandafter")
@@ -98,4 +98,21 @@
       (xdef? token)
       ))
 
+(define (if? token)
+  (and (textoken? token)
+       (< (cat token) 0)
+       (member (cdr token) 
+	       '("if" "ifx" "ifcat"
+		 "ifnum" "ifdim" "ifodd" 
+		 "ifvmode" "ifhmode" "ifmmode" "ifinner"
+		 "ifvoid" "ifhbox" "ifvbox"
+		 "ifeof" "iftrue" "iffalse"
+		 "ifcase"))))
+
+(defpred fi? "fi")
+(defpred else? "else")
+
+(define (if-type=? typestr token)
+  (and (< (cat token) 0)
+       (string=? typestr (cdr token))))
 

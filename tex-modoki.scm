@@ -164,6 +164,11 @@
     (lambda ()
       (port-map values read-tex-token))))
 
+(define (token->symbol token)
+  (if (string? token) 
+      (string->symbol token)
+      #f))
+
 (define (port->tokenlist p)
   (port->list read-tex-token p))
 
