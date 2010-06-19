@@ -86,13 +86,15 @@
 (defpred expandafter? "expandafter")
 (defpred global? "global")
 
+(defpred let? "let")
 (defpred def? "def")
 (defpred edef? "edef")
 (defpred gdef? "gdef")
 (defpred xdef? "xdef")
 
 (define (assignment? token)
-  (or (def? token)
+  (or (let? token)
+      (def? token)
       (edef? token)
       (gdef? token)
       (xdef? token)

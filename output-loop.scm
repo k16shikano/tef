@@ -42,7 +42,7 @@
 	((begingroup? (car ts))
 	 (let1 group (groupen ts)
 	       (append 
-		`((-100 . ,(expand-all (cdar group) 
+		`((-100 . ,(expand-all (cdar group)
 					 (cons (make-hash-table) env))))
 		(expand-all (cdr group) env))))
 	((if? (car ts))

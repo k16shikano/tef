@@ -332,5 +332,18 @@ c"))))
 \\isifx\\a\\b
 \\isifx\\d\\e"))))
 
+
+(test* "let" 
+       "A: B: B"
+       (tokenlist->string 
+	(output
+	 (string->tokenlist "\
+\\def\\b{B}\
+{\\def\\a#1.{#1:}\
+\\let\\b\\a\
+\\a{A}.
+\\b{B}.}
+\\b "))))
+
 (test-end)
 

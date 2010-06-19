@@ -1,4 +1,5 @@
 (load "tex-modoki.scm")
+(load "parser-combinator.scm")
 (load "parser-utils.scm")
 
 ;;;; def (usre macro)
@@ -120,7 +121,7 @@
   (let1 env (if global? (last env) (car env))
 	(receive (param body rest)
 		 (grab-macro-definition (cdr ts))		 
-		 (if (< (cat (car ts)) 0)
+		 (if (= (cat (car ts)) -1)
 		     (let ((k (string->symbol (cdar ts)))
 			   (b (cons param body)))
 		       (if (hash-table-exists? env k)
@@ -128,6 +129,21 @@
 			   (hash-table-put! env k b))
 		       rest)
 		     (error "malformed macro definition" (perror ts))))))
+
+(define (let! ts env global?)
+  (let1 lenv (if global? (last env) (car env))
+	(receive (t1 rest)
+		 ((parser-cont (skip tex-space1) any-token) ts)
+		 (receive (e rest)
+			  ((skip (tex-other-char #\= "")) rest)
+			  (receive (t2 rest)
+				   ((parser-cont (skip tex-space1) any-token) rest)
+		     (let ((k (string->symbol (cdar t1)))
+			   (b (find-macro-definition (token->symbol (cdar t2)) env)))
+		       (if (hash-table-exists? lenv k)
+			   (hash-table-update! lenv k (lambda (old) b))
+			   (hash-table-put! lenv k b))
+		       rest))))))
 
 ;; symbol -> env
 (define (find-macro-definition key env)
@@ -155,6 +171,8 @@
 ;; [token] -> env -> bool -> [token]
 (define (assignment! ts env global?)
   (cond	
+   ((let? (car ts))
+    (let! (cdr ts) env global?))
    ((def? (car ts))
     (update-env! (cdr ts) env global?))
    ((gdef? (car ts))
