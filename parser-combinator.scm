@@ -55,6 +55,14 @@
 		      (p rest)
 		      (R (append match m) r))))))
 
+(define (skip p)
+  (lambda (ts)
+    (guard (e
+	    ((<parser-error> e) (values '() '())))
+	   (receive (m r)
+		    (p ts)
+		    (values '() r)))))
+
 (define (parser-many1 p)
   (parser-cont p (parser-many p)))
 

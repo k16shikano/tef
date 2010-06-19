@@ -15,4 +15,8 @@
 	      "1234" "abc00"
 	      (parser-many (orothers "digit" 0 1 2 3 4 5 6 7 8 9)) "1234abc00")
 
+(parser-test* "skip"
+	      "" "1234"
+	      (skip tex-space1) "    1234")
+
 (test-end)
