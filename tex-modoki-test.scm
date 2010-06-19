@@ -318,5 +318,19 @@ c"))))
 \\check{100}
 \\check{1000}"))))
 
+(test* "ifx" 
+       "yes no no "
+       (tokenlist->string 
+	(output
+	 (string->tokenlist "\
+\\def\\a{\\c}\\def\\b{\\d}\
+\\def\\c{\\e}\\def\\d{\\e}\
+\\def\\e{A}\
+\\def\\isifx#1#2{\
+  \\ifx#1#2yes \\else no \\fi}\
+\\isifx\\c\\d
+\\isifx\\a\\b
+\\isifx\\d\\e"))))
+
 (test-end)
 

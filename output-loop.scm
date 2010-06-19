@@ -92,22 +92,23 @@
 ;;;; process-if
 ;; In TeX, conditional statements is processed while its macro expansion.
 
-(define ifnum-param
-  (parser-cont tex-int-num  tex-spaces
-	       (orothers "" #\< #\= #\>) tex-spaces
-	       tex-int-num tex-spaces))
-
 (define-condition-type <read-if-error> <error> #f)
 
 (define (process-if ts env)
+  (define (expand-if test rest env)
+    (if test
+	(expand-true rest env)
+	(expand-false rest env)))    
   (cond ((null? ts)
 	 (values '() '()))
 	((if-type=? "ifnum" (car ts))
 	 (receive (test rest)
 		  (ifnum-test (cdr ts) env)
-		  (if test
-		      (expand-true rest env)
-		      (expand-false rest env))))
+		  (expand-if test rest env)))
+	((if-type=? "ifx" (car ts))
+	 (receive (test rest)
+		  (ifx-test (cdr ts) env)
+		  (expand-if test rest env)))
 	(else
 	 (error <read-if-error> "Unknown Type of if" (perror ts)))))
 
@@ -125,6 +126,16 @@
 					      ((char=? (cdar prod) #\>) (> n1 n2))
 					      (else (error "Unknown predicate for ifnum")))))
 			       (values tf rest))))))
+
+(define (ifx-test condi env)
+  (if (or (null? condi) (null? (cdr condi)))
+      (error <read-if-error> "no prameter for ifx")
+      (let ((t1 (car condi)) (t2 (cadr condi)))
+	(if (= -1 (car t1) (car t2))
+	    (let ((t1 (find-macro-definition (token->symbol (cdr t1)) env))
+		  (t2 (find-macro-definition (token->symbol (cdr t2)) env)))
+	      (values (equal? t1 t2) (cddr condi)))
+	    (values (equal? t1 t2) (cddr condi))))))
 
 (define (seek-else ts env)
   (let R ((ts ts) (body '()))
