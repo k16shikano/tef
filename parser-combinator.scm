@@ -64,7 +64,7 @@
 (define (skip p)
   (lambda (ts)
     (guard (e
-	    ((<parser-error> e) (values '() '())))
+	    ((<parser-error> e) (values '() ts)))
 	   (receive (m r)
 		    (p ts)
 		    (values '() r)))))

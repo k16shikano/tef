@@ -17,10 +17,19 @@
 
 (parser-test* "skip"
 	      "" "1234"
+	      (skip tex-space1) "1234")
+
+(parser-test* "skip"
+	      "" "1234"
 	      (skip tex-space1) "    1234")
 
 (parser-test* "anytoken"
 	      "\\let" "1234"
 	      any-token "\\let1234")
+
+(parser-test* "space and anytoken"
+	      "\\let" "1234"
+	      (parser-cont (skip tex-space1) any-token) "\\let1234")
+
 
 (test-end)
