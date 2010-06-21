@@ -31,5 +31,15 @@
 	      "\\let" "1234"
 	      (parser-cont (skip tex-space1) any-token) "\\let1234")
 
+(load "num-dimen.scm")
+(parser-test* "do parser"
+	      "000" "cc"
+	      (parser-do 
+	        return (begin (display (map tokenlist->string (list a b))) 
+			      (tex-int-num c))
+		in a <- (make-string-parser "42aa")
+		   b <- (make-string-parser "bb")
+		   c <- (parser-many tex-int-num))
+	      "42aabb000cc")
 
 (test-end)

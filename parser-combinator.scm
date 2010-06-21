@@ -51,6 +51,38 @@
 			 ((parser-cont p2 ...) rest-p1)
 			 (values `(,@match-p1 ,@match-p2) rest-p2)))))))
 
+;; You can specify a return-procedure within which the left-sides of <- 
+;; are bounded with the matched token list of the right-sides.
+;; Note that the return-procedure does not necessarily return a tokenlist,
+;; thus the parser-do couldn't be used as a component of a combinator parser.
+(define-syntax parser-do
+  (syntax-rules (<- return in)
+    ((_ return <r>) 
+     (lambda (ts) (values <r> ts)))
+    ((_ return <r> in <x1> <- p1)
+     (lambda (ts)
+       (receive (match-p1 rest-p1)
+		(p1 ts)
+		(let ((<x1> match-p1))
+		  (values <r> rest-p1)))))
+    ((_ return <r> in <x1> <- p1 <x2> <- p2 ...)
+     (lambda (ts)
+       (receive (match-p1 rest-p1)
+		(p1 ts)
+		(let ((<x1> match-p1))
+		  (receive (match-p2 rest-p2)
+			   ((parser-do return <r> in <x2> <- p2 ... ) rest-p1)
+			   (let ((<x2> match-p2))
+			     (values match-p2 rest-p2)))))))))
+
+(define (skip p)
+  (lambda (ts)
+    (guard (e
+	    ((<parser-error> e) (values '() ts)))
+	   (receive (m r)
+		    (p ts)
+		    (values '() r)))))
+
 (define (parser-many p)
   (lambda (ts)
     (let R ((match '())
@@ -60,14 +92,6 @@
 	     (receive (m r)
 		      (p rest)
 		      (R (append match m) r))))))
-
-(define (skip p)
-  (lambda (ts)
-    (guard (e
-	    ((<parser-error> e) (values '() ts)))
-	   (receive (m r)
-		    (p ts)
-		    (values '() r)))))
 
 (define (parser-many1 p)
   (parser-cont p (parser-many p)))
@@ -148,6 +172,4 @@
      (test* (format "<~a>:  rest" ,desc) ,rest-expect
 	    (tokenlist->string
 	     (values-ref (,parser (string->tokenlist ,tokens)) 1)))))
-
-
 
