@@ -16,7 +16,7 @@
 	      (parser-cont (tex-other-char #\") tex-hex-const)
 	      (parser-cont (tex-other-char #\`) char-token)
 	      (error "it's not number"))
-   extra-space1))
+   (skip extra-space1)))
 
 (define tex-oct-digit
   (orothers "octal digit" 0 1 2 3 4 5 6 7))
@@ -39,11 +39,6 @@
    "character"
    'any
    char?))
-
-(define extra-space1
-  (parser-or tex-space1 tex-null))
-(define extra-space
-  (parser-or tex-null (parser-cont tex-space1 extra-space)))
 
 (define sign1
   (parser-or (make-token-parser "plus  sign" 12 (cut char=? #\+ <>))

@@ -257,7 +257,7 @@ c"))))
 	      tex-number "\"ABpt")
 
 (parser-test* "tex-number"
-	      "`a " "hoge"
+	      "`a" "hoge"
 	      tex-number "`a hoge")
 
 (parser-test* "tex-dimen"
@@ -305,15 +305,16 @@ c"))))
 (test-section "if")
 
 (test* "ifnum" 
-       "short just over"
+       "short  just  over "
        (tokenlist->string 
 	(output
 	 (string->tokenlist "\
 \\def\\check#1{\
-  \\ifnum#1>50\
-    \\ifnum#1<200just\
-      \\else over\\fi\
-    \\else short\\fi}\
+  \\ifnum \
+    #1 > 50\
+    \\ifnum  #1< 200\
+      just \\else over \\fi\
+    \\else short \\fi}\
 \\check{10}
 \\check{100}
 \\check{1000}"))))

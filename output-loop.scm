@@ -120,10 +120,10 @@
 	    ((char=? (cdar prod) #\=) (= n1 n2))
 	    ((char=? (cdar prod) #\>) (> n1 n2))
 	    (else (error "Unknown predicate for ifnum")))))
-  ((parser-do 
+  ((parser-do
     return (token-compare n1 n2 prod)
         in n1   <- tex-int-num
-	   prod <- (orothers "" #\< #\= #\>)
+	   prod <- (parser-cont (orothers "" #\< #\= #\>) extra-space)
 	   n2   <- tex-int-num)
     (expand-all condi env)))
 

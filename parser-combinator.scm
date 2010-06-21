@@ -109,6 +109,12 @@
 (define tex-spaces
   (parser-many tex-space1))
 
+(define extra-space1
+  (parser-or tex-space1 tex-null))
+
+(define extra-space
+  (skip tex-space1))
+
 (define (make-char-parser catcode char desc)
   (make-token-parser
    (if (null? desc) 
