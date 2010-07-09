@@ -3,10 +3,10 @@ tex-modoki
  
 * Overview
  A simple parser for tex manuscripts. 
- It requires Gauche scheme interpleter.
+ It requires Gauche scheme interpreter.
 
 * Feature
- You can expand tribial tex macros like this.
+ You can expand trivial tex macros like this.
  
  (tokenlist->string 
   (output
