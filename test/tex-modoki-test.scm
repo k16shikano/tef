@@ -16,7 +16,7 @@
        (with-input-from-string "    d     " 
 	 (lambda () 
 	   (port-map values read-tex-token))))
-
+>
 (test* "tokenlist->string for \"{\\\\hskip 36 pt}{This    is \\\\bf{pen}}\""
        "{\\hskip36 pt}{This is \\bf{pen}}" 
        (with-input-from-string "{\\hskip 36 pt}{This    is \\bf{pen}}" 
