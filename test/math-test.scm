@@ -23,11 +23,5 @@
        (mlist 
 	(output (string->tokenlist "x^{\\hbox{y}}"))))
 
-(test* "for box parameters" 
-       "[x]"
-       (tokenlist->string 
-	(output
-	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}"))))
-
 (test-end)
 
