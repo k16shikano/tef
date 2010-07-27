@@ -1,5 +1,5 @@
 (load "parser-utils.scm")
-(load "parser-combinator.scm")
+(load "parser-combinator/parser-combinator.scm")
 
 (define (get-tex-dimen ts)
   (receive (num-unit rest)
