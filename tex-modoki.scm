@@ -139,6 +139,14 @@
             ; group
 	    ((= -100 (caar ts))
 	     (cons (restore-command (cdar ts)) (restore-command (cdr ts))))
+	    ; box
+	    ((= -102 (caar ts))
+	     (cond ((= 0 (caadar ts)) ; vbox
+		    (cons (list #\[ (restore-command (cdadar ts)) #\])
+			  (restore-command (cdr ts))))
+		   ((= 1 (caadar ts)) ; hbox
+		    (cons (list #\| (restore-command (cdadar ts)) #\|)
+			  (restore-command (cdr ts))))))
 	    (else '())))
 	  ((= -1 (cat (car ts)))
 	   (cons 

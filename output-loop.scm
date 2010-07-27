@@ -18,8 +18,6 @@
 	       '())
 	      ((not (textoken? (car ts))) 
 	       ts)
-	      ((< (cat (car ts)) 0)
-	       (process-primitives ts))
 	      ((= (cat (car ts)) 5) ; skip linebreaks
 	       (output (cdr ts)))
 	      (else
@@ -39,24 +37,36 @@
 	 '())
 	((not (textoken? (car ts)))
 	 (cons (car ts) (expand-all (cdr ts) env)))
+	((if? (car ts))
+	 (receive (expanded rest)
+		  (process-if ts env)
+		  (append expanded
+			  (expand-all rest env))))
+	((box? (car ts))
+	 (let1 boxed (boxen (eval-till-begingroup ts env))
+	       (append (process-box (car boxed))
+		       (expand-all (cdr boxed) env))))
+	((= (cat (car ts)) -1)
+	 (receive (expanded rest)
+		  (eval-macro ts env)
+		  (append expanded
+			  (expand-all rest env))))
 	((begingroup? (car ts))
 	 (let1 group (groupen ts)
 	       (append 
 		`((-100 . ,(expand-all (cdar group)
 					 (cons (make-hash-table) env))))
 		(expand-all (cdr group) env))))
-	((if? (car ts))
-	 (receive (expanded rest)
-		  (process-if ts env)
-		  (append expanded
-			  (expand-all rest env))))
-	((= (cat (car ts)) -1)
-	 (receive (expanded rest)
-		  (eval-macro ts env)
-		  (append expanded
-			  (expand-all rest env))))
 	(else
 	 (cons (car ts) (expand-all (cdr ts) env)))))
+
+(define (eval-till-begingroup ts env)
+  (receive (evaled rest)
+	   (eval-macro ts env)
+	   (if (or (null? rest) (begingroup? (car rest)))
+	       (append evaled rest)
+	       (append evaled (eval-till-begingroup rest env)))))
+
 
 ;; [token] -> env -> [expanded token] and [rest]
 (define (eval-macro ts env)

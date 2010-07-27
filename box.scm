@@ -3,7 +3,7 @@
 (load "num-dimen.scm")
 
 (define (box? token)
-  (and (< (cat token) 0)
+  (and (= (cat token) -1)
        (member (cdr token) 
 	       '("hbox" "vbox" "vtop" "box" "copy" "vsplit" "lastbox" "vcenter"))))
 
@@ -16,14 +16,15 @@
 	 (receive (dimen body)
 		  (orvalues (get-tex-dimen-after "to" (cdr ts))
 			    (get-tex-dimen-after "spread" (cdr ts)))
-		  (values `(,(car ts) ,@dimen ,@(cdar body)) (cdr body))))
+		  (values `(,(car ts) ,@dimen ,(car (groupen body)))
+			  (cdr (groupen body)))))
 	((member (cdar ts) '("box" "copy"))
 	 (receive (oct rest)
-		  (get-tex-dimen (cdr ts))
+		  (tex-int-num (cdr ts))
 		  (values `(,(car ts) ,@oct) rest)))
 	((string=? (cdar ts) "vsplit")
 	 (receive (oct rest)
-		  (get-tex-dimen (cdr ts))
+		  (tex-int-num (cdr ts))
 		  (receive (dimen rest)
 			   (get-tex-dimen-after "to" (cdr ts))
 			   (values `(,(car ts) ,@oct ,@dimen) rest))))	
@@ -40,11 +41,11 @@
 	       (receive (spec body)
 			(if (= -101 (caar rest)) ; has spec as dimen?
 			    (values (token->dimen (car rest)) (cdr rest))
-			    (values '() rest))
+			    (values '() (cdr rest)))
 			(cond ((box-type=? "hbox" type)
-			       `((11 . #\[) ,@body (11 . #\]))) ; just for tt representation
+			       `((-102 (0 ,@body))))
 			      ((box-type=? "vbox" type)
-			       `((11 . #\|) ,@body (11 . #\|))) ; just for tt representation
+			       `((-102 (1 ,@body))))
 			      (else body))))))
 
 
