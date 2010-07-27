@@ -1,7 +1,7 @@
 (use gauche.test)
 
 (test-start "tex-modoki")
-(load "tex-modoki.scm")
+(load "../tex-modoki.scm")
 
 (test-section "parse tex strings")
 
@@ -30,7 +30,7 @@
 	 (string->tokenlist "{This information should be    {centered}}"))))
 
 (test-section "some utilites")
-(load "tex-trim-utils.scm")
+(load "../tex-trim-utils.scm")
 
 (test* "get-args" 
        '(((12 . #\1)) ((12 . #\2)) ((12 . #\3)))
@@ -66,7 +66,7 @@
        (get-comment-line (string->tokenlist "% comment \n")))
 
 (test-section "macro definition")
-(load "def-macro.scm")
+(load "../def-macro.scm")
 
 (test* "parse parameter"
        '(((11 . #\a)) ((-15 . 1) (12 . #\.) (10 . #\space)) ((-15 . 2)))
@@ -96,7 +96,7 @@
 	 1)))
 
 (test-section "macro expantion")
-(load "output-loop.scm")
+(load "../output-loop.scm")
 
 (test* "eval macro: exercise 20.2 of the TeX book" 
        "ABCAB" 
@@ -235,7 +235,7 @@ c"))))
 {\\triple{B}}"))))
 
 (test-section "number and dimension")
-(load "num-dimen.scm")
+(load "../num-dimen.scm")
 
 (test* "get-tex-dimen-after and orvalues"
        "1.0pt"
@@ -265,7 +265,7 @@ c"))))
 	      tex-dimen "54.2em{...}")
 
 (test-section "box")
-(load "box.scm")
+(load "../box.scm")
 
 (test* "box expansion" 
        "[this text is boxed] not boxed"
@@ -332,7 +332,6 @@ c"))))
 \\isifx\\c\\d
 \\isifx\\a\\b
 \\isifx\\d\\e"))))
-
 
 (test* "let" 
        "A: B: B"
