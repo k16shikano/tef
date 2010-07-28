@@ -10,6 +10,7 @@
 (use gauche.collection)
 (load "tex-modoki.scm")
 (load "box.scm")
+(load "parser-utils.scm")
 
 (define (mlist ts)
   (define (loop token result next-field)
@@ -27,7 +28,8 @@
 	   (values (add-new-atom token result) 0))))
 
   (define (add-new-atom token result)
-    (cond ((= -102 (car token))
+    (cond ;; box
+          ((= -102 (car token))
 	   (cons `(,token () ()) result))
 	  (else
 	   (cons `(,(math-atom token) ,(math-field token) () ()) result))))
@@ -54,9 +56,53 @@
 	(else
 	 token)))
 
+;; [token] -> ([token] and [token])
+(define-condition-type <read-math-error> <error> #f)
+(define (get-inline-math ls)
+  (define (in-math ls body)
+    (cond ((null? ls)
+	   (error <read-math-error> "unterminated math $"))
+	  ((box? (car ls))
+	   (let1 boxed (boxen ls)
+		 (in-math (cdr boxed) (cons (car boxed) body))))
+	  ((mathdollar? (car ls))
+	   (values (reverse body) (cdr ls)))
+	  (else
+	   (in-math (cdr ls) (cons (car ls) body)))))
+  (define (out-math ls)
+    (cond ((null? ls)
+	   (values '() '()))
+	  ((mathdollar? (car ls))
+	   (in-math (cdr ls) '()))
+	  ((texspaces? (car ls))
+	   (out-math (cdr ls)))
+	  (else
+	   (error <read-math-error> "the first token shoule have catcode 3"))))
+  (out-math ls))
+
+(define (beginmath? token)
+  (and (textoken? token)
+       (= 3 (cat token))))
+
+(define mathen
+  (put-specific-code 100 beginmath? get-inline-math))
+
+
+(defpred mathord?   "mathord")
+(defpred mathop?    "mathop")
+(defpred mathbin?   "mathbin")
+(defpred mathrel?   "mathrel")
+(defpred mathopen?  "mathopen")
+(defpred mathclose? "mathclose")
+(defpred mathpunct? "mathpunct")
+(defpred mathinner? "mathinner")
+(defpred underline? "underline")
+(defpred overline?  "overline")
+
+
+
 (define (math-atom token)
-  (cond ((ord?   token) 'Ord)
-	(else 'Hoge)))
+  (cond ((ord?   token) 'Ord)))
 ;; 	((op?    token) 'Op)
 ;; 	((bin?   token) 'Bin)
 ;; 	((rel?   token) 'Rel)
@@ -74,5 +120,4 @@
   (and (textoken? token)
        (> (cat token) 10)
        (char-set-contains? #[a-zA-Z0-9] (cdr token))))
-
 

@@ -7,6 +7,7 @@
 (load "parser-utils.scm")
 (load "def-macro.scm")
 (load "box.scm")
+(load "math.scm")
 
 (define global-env
   (list (make-hash-table)))
@@ -16,7 +17,7 @@
   (let1 ts (expand-all ts global-env)
 	(cond ((null? ts)
 	       '())
-	      ((not (textoken? (car ts))) 
+	      ((not (textoken? (car ts)))
 	       ts)
 	      ((= (cat (car ts)) 5) ; skip linebreaks
 	       (output (cdr ts)))
@@ -57,6 +58,11 @@
 		`((-100 . ,(expand-all (cdar group)
 					 (cons (make-hash-table) env))))
 		(expand-all (cdr group) env))))
+	((beginmath? (car ts))
+	 (let1 mathed (mathen ts)
+	       (append 
+		`(,(mlist (expand-all (cdar mathed) env)))
+		(expand-all (cdr mathed) env))))
 	(else
 	 (cons (car ts) (expand-all (cdr ts) env)))))
 
