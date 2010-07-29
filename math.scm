@@ -1,7 +1,9 @@
 ;; math.scm
 
-; (car token) = 100 means the token is a mlist.
- 
+; mlist := [100, noad]
+; noad  := [atom description, nuclear, supscript, subscript]
+; nuclear,supscript,subscript := mathchar | mlist | box
+
 ; The representation of mathchar is not same as that of TeX82.
 ; Every mathchar is a unicode character.
 ; (eventually we omit some TeX features such as \fam.)
@@ -25,36 +27,66 @@
 	  ((= 2 next-field)
 	   (values (set-subscr token result) 0))
 	  (else
-	   (values (add-new-atom token result) 0))))
+	   (values (make-noad token result) 0))))
 
-  (define (add-new-atom token result)
-    (cond ;; box
+  (define (make-noad token result)
+    (cond ;; group
+	  ((= -100 (car token))
+	   (cons `(,(mlist (cdr token)) () ()) result))
+	  ;; box (shouldn't use expand-box here. to be fixed)
           ((= -102 (car token))
-	   (cons `(,token () ()) result))
+	   (cons (expand-box token `(,(make-hash-table))) result))
 	  (else
-	   (cons `(,(math-atom token) ,(math-field token) () ()) result))))
+	   (cons `(,(select-atom token) ,token () ()) result))))
 
-  (define (set-supscr token result)
+  (define (set-subscr token result)
     (let1 head (car result)
-	  (let1 token (math-field token)
+	  (let1 token (make-noad token '())
 		(cons `(,(first head) ,(second head) ,(third head) ,token) 
 		      (cdr result)))))
 
   (define (set-supscr token result)
     (let1 head (car result)
-	  (let1 token (math-field token)
+	  (let1 token (make-noad token '())
 		(cons `(,(first head) ,(second head) ,token ,(fourth head)) 
 		      (cdr result)))))
 
   (cons 100 (reverse (fold2 loop '() 0 ts))))
 
-(define (math-field token)
-  (cond ((= -100 (car token))
-	 (mlist (cdr token)))
-	((= -102 (car token))
-	 token)
-	(else
-	 token)))
+(define (select-atom token)
+  (cond ((ord?   token) 'Ord)))
+;; 	((op?    token) 'Op)
+;; 	((bin?   token) 'Bin)
+;; 	((rel?   token) 'Rel)
+;; 	((open?  token) 'Open)
+;; 	((close? token) 'Close)
+;; 	((punct? token) 'Punct)
+;; 	((inner? token) 'Inner)
+;; 	((over?  token) 'Over)
+;; 	((under? token) 'Under)
+;; 	((acc?   token) 'Acc)
+;; 	((rad?   token) 'Rad)
+;; 	((vcent? token) 'Vcent)))
+
+(define (ord? token)
+  (and (textoken? token)
+       (> (cat token) 10)
+       (char-set-contains? #[a-zA-Z0-9] (cdr token))))
+
+(defpred mathord?   "mathord")
+(defpred mathop?    "mathop")
+(defpred mathbin?   "mathbin")
+(defpred mathrel?   "mathrel")
+(defpred mathopen?  "mathopen")
+(defpred mathclose? "mathclose")
+(defpred mathpunct? "mathpunct")
+(defpred mathinner? "mathinner")
+(defpred underline? "underline")
+(defpred overline?  "overline")
+
+
+
+
 
 ;; [token] -> ([token] and [token])
 (define-condition-type <read-math-error> <error> #f)
@@ -87,37 +119,4 @@
 (define mathen
   (put-specific-code 100 beginmath? get-inline-math))
 
-
-(defpred mathord?   "mathord")
-(defpred mathop?    "mathop")
-(defpred mathbin?   "mathbin")
-(defpred mathrel?   "mathrel")
-(defpred mathopen?  "mathopen")
-(defpred mathclose? "mathclose")
-(defpred mathpunct? "mathpunct")
-(defpred mathinner? "mathinner")
-(defpred underline? "underline")
-(defpred overline?  "overline")
-
-
-
-(define (math-atom token)
-  (cond ((ord?   token) 'Ord)))
-;; 	((op?    token) 'Op)
-;; 	((bin?   token) 'Bin)
-;; 	((rel?   token) 'Rel)
-;; 	((open?  token) 'Open)
-;; 	((close? token) 'Close)
-;; 	((punct? token) 'Punct)
-;; 	((inner? token) 'Inner)
-;; 	((over?  token) 'Over)
-;; 	((under? token) 'Under)
-;; 	((acc?   token) 'Acc)
-;; 	((rad?   token) 'Rad)
-;; 	((vcent? token) 'Vcent)))
-
-(define (ord? token)
-  (and (textoken? token)
-       (> (cat token) 10)
-       (char-set-contains? #[a-zA-Z0-9] (cdr token))))
 

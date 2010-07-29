@@ -1,3 +1,5 @@
+;; box := [-102, type, dimen, body] 
+
 (load "tex-modoki.scm")
 (load "parser-utils.scm")
 (load "num-dimen.scm")
@@ -16,7 +18,7 @@
 	 (receive (dimen body)
 		  (orvalues (get-tex-dimen-after "to" (cdr ts))
 			    (get-tex-dimen-after "spread" (cdr ts)))
-		  (values `(,(car ts) ,@dimen ,(car (groupen body)))
+		  (values `(,(car ts) ,@dimen ,@(cdar (groupen body)))
 			  (cdr (groupen body)))))
 	((member (cdar ts) '("box" "copy"))
 	 (receive (oct rest)
@@ -34,7 +36,7 @@
 (define boxen
   (put-specific-code -102 box? get-box-parameter))
 
-(define (process-box box)
+(define (expand-box box env)
   (if (not (= -102 (car box))) (error "here expects a tex box.")
       (receive (type rest)
 	       (values (cadr box) (cddr box))
@@ -42,12 +44,13 @@
 			(if (= -101 (caar rest)) ; has spec as dimen?
 			    (values (token->dimen (car rest)) (cdr rest))
 			    (values '() (cdr rest)))
-			(cond ((box-type=? "hbox" type)
-			       `((-102 (0 ,@body))))
-			      ((box-type=? "vbox" type)
-			       `((-102 (1 ,@body))))
-			      (else body))))))
-
-
-
-
+			(let1 body
+			      (expand-all body (cons (make-hash-table) env))
+			      (let1 body (if (= -100 (caar body)) 
+					     (cdar body) 
+					     body)
+				    (cond ((box-type=? "hbox" type)
+					   `((-102 (0 ,@body))))
+					  ((box-type=? "vbox" type)
+					   `((-102 (1 ,@body))))
+					  (else body))))))))

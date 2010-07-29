@@ -24,14 +24,6 @@
 	      (else
 	       (cons (car ts) (output (cdr ts)))))))
 
-;; primitive processors
-(define (process-primitives ts)
-  (cond ((box? (car ts))
-	 (let1 boxed (boxen ts)
-	       (append (process-box (car boxed)) (cdr boxed))))
-	(else
-	 (cons (car ts) (output (cdr ts))))))
-
 ;; [ts] -> env -> [ts]
 (define (expand-all ts env)
   (cond ((null? ts)
@@ -45,8 +37,12 @@
 			  (expand-all rest env))))
 	((box? (car ts))
 	 (let1 boxed (boxen (eval-till-begingroup ts env))
-	       (append (process-box (car boxed))
-		       (expand-all (cdr boxed) env))))
+	       (append
+#;		(process-box `(-102 ,(cadar boxed) ,(caddar boxed)
+			,@(expand-all (cdddar boxed)
+				      (cons (make-hash-table) env))))
+		(expand-box (car boxed) env)
+		(expand-all (cdr boxed) env))))
 	((= (cat (car ts)) -1)
 	 (receive (expanded rest)
 		  (eval-macro ts env)
@@ -72,7 +68,6 @@
 	   (if (or (null? rest) (begingroup? (car rest)))
 	       (append evaled rest)
 	       (append evaled (eval-till-begingroup rest env)))))
-
 
 ;; [token] -> env -> [expanded token] and [rest]
 (define (eval-macro ts env)
