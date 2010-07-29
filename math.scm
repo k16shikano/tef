@@ -30,26 +30,32 @@
 	   (values (make-noad token result) 0))))
 
   (define (make-noad token result)
-    (cond ;; group
+    (cond ((null? token)
+	   (cons '(() () ()) result))
+	  ;; group
 	  ((= -100 (car token))
-	   (cons `(,(mlist (cdr token)) () ()) result))
+	   (cons `(,(mlist (cdr token))) result))
 	  ;; box (shouldn't use expand-box here. to be fixed)
           ((= -102 (car token))
-	   (cons (expand-box token `(,(make-hash-table))) result))
+	   (cons `(Box ,(expand-box token `(,(make-hash-table))) () ()) result))
 	  (else
 	   (cons `(,(select-atom token) ,token () ()) result))))
 
   (define (set-subscr token result)
-    (let1 head (car result)
+    (if (null? result)
+	`((Nil () () ,(make-noad token '())))
+	(let1 head (car result)
 	  (let1 token (make-noad token '())
 		(cons `(,(first head) ,(second head) ,(third head) ,token) 
-		      (cdr result)))))
+		      (cdr result))))))
 
   (define (set-supscr token result)
-    (let1 head (car result)
-	  (let1 token (make-noad token '())
-		(cons `(,(first head) ,(second head) ,token ,(fourth head)) 
-		      (cdr result)))))
+    (if (null? result)
+	`((Nil () ,(make-noad token '()) ()))
+	(let1 head (car result)
+	      (let1 token (make-noad token '())
+		    (cons `(,(first head) ,(second head) ,token ,(fourth head)) 
+			  (cdr result))))))
 
   (cons 100 (reverse (fold2 loop '() 0 ts))))
 

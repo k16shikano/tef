@@ -147,6 +147,10 @@
 		   ((= 1 (caadar ts)) ; hbox
 		    (cons (list #\| (restore-command (cdadar ts)) #\|)
 			  (restore-command (cdr ts))))))
+	    ; math
+	    ((= 100 (caar ts))
+	     (cons (print-math (cdar ts))
+		   (restore-command (cdr ts))))
 	    (else '())))
 	  ((= -1 (cat (car ts)))
 	   (cons 
@@ -162,7 +166,7 @@
 	   ((and (= (cat (car ts)) 12)
 		 (char-set-contains? #[$%&#_] (cdar ts)))
 	    (cons (string-append "\\" (x->string (cdar ts)))
-		  (restore-command (cdr ts))))
+		  (restore-command (cdr ts))))	    
 	   (else
 	    (cons (cdar ts) (restore-command (cdr ts))))))
   (tree->string (restore-command tls)))
@@ -181,3 +185,31 @@
   (port->list read-tex-token p))
 
 
+
+(use text.html-lite)
+
+(define (print-math ts)
+  (cond ((null? ts)
+	 '())
+	((null? (cdar ts))
+	 (html:span :style "font-style:normal" (tokenlist->string (car ts))))
+	((eq? 'Nil (caar ts))
+	 (cons
+	  (html:i ""
+		  (html:sup (print-math (third (car ts))))
+		  (html:sub (print-math (fourth (car ts)))))
+	  (print-math (cdr ts))))
+	((eq? 'Ord (caar ts))
+	 (cons
+	  (html:i (cdr (second (car ts)))
+		  (html:sup (print-math (third (car ts))))
+		  (html:sub (print-math (fourth (car ts)))))
+	  (print-math (cdr ts))))
+	((eq? 'Box (caar ts))
+	 (cons 
+	  (html:span :style "font-style:normal" 
+		     (tokenlist->string (second (car ts)))
+		     (html:sup (print-math (third (car ts))))
+		     (html:sub (print-math (fourth (car ts)))))
+	  (print-math (cdr ts))))
+	(else ts)))
