@@ -1,12 +1,12 @@
 (use gauche.test)
 
 (test-start "tex-modoki")
-(load "../tex-modoki.scm")
-(load "../output-loop.scm")
+(load "tex-modoki.scm")
+(load "output-loop.scm")
 
 (test-section "parse math list")
-(load "../math.scm")
-(load "../box.scm")
+(load "math.scm")
+(load "box.scm")
 
 (test* "math text" 
        "<i>x<sup><span style=\"font-style:normal\"><span style=\"font-style:normal\">[y]<sup></sup\n><sub></sub\n></span\n></span\n></sup\n><sub><i>u<sup></sup\n><sub></sub\n></i\n></sub\n></i\n>"
@@ -14,7 +14,7 @@
 	(output
 	 (string->tokenlist "$x^{\\hbox{y}}_u$"))))
 
-#;(with-output-to-file 
+(with-output-to-file 
     "result.html"
   (lambda ()
     (display 
