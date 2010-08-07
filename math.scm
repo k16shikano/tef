@@ -75,23 +75,14 @@
 ;; 	((vcent? token) 'Vcent)))
 
 (define (ord? token)
-  (and (textoken? token)
-       (> (cat token) 10)
-       (char-set-contains? #[a-zA-Z0-9] (cdr token))))
+  (or 
+   (and (textoken? token)
+	(> (cat token) 10)
+	(char-set-contains? #[a-zA-Z0-9] (cdr token)))
+   (= 0 (mathclass token))))
 
-(defpred mathord?   "mathord")
-(defpred mathop?    "mathop")
-(defpred mathbin?   "mathbin")
-(defpred mathrel?   "mathrel")
-(defpred mathopen?  "mathopen")
-(defpred mathclose? "mathclose")
-(defpred mathpunct? "mathpunct")
-(defpred mathinner? "mathinner")
-(defpred underline? "underline")
-(defpred overline?  "overline")
-
-
-
+(define (op? token)
+  (= 1 (mathclass token)))
 
 
 ;; [token] -> ([token] and [token])
@@ -126,3 +117,42 @@
   (put-specific-code 100 beginmath? get-inline-math))
 
 
+;; A math token is list of a number whose top hexadecimal represents 
+;; the class and the rest is the unicode encoding.
+;; We omit the mechanisim of the math font family in TeX82.
+
+(define mathclass-table
+  ; vari won't used. 
+  (zip '(mathord mathop mathbin mathrel mathopen mathclose mathpunct vari)
+       '(0 1 2 3 4 5 6 7)))
+
+(define (mathtoken class char)
+  (list
+   (+ (* 65536 (if (number? class) class
+		   (cadr (assoc class mathclass-table))))
+      (if (number? char) char (char->ucs char)))))
+
+(define (mathclass token)
+  (if (textoken? token) 0
+      (floor (/ (car token) #xffff))))
+
+; example of \intop
+; (mathtoken 'mathop #x222b) ;=> (#x1222b)
+
+
+;;pred
+
+(defpred mathord?   "mathord")
+(defpred mathop?    "mathop")
+(defpred mathbin?   "mathbin")
+(defpred mathrel?   "mathrel")
+(defpred mathopen?  "mathopen")
+(defpred mathclose? "mathclose")
+(defpred mathpunct? "mathpunct")
+(defpred mathinner? "mathinner")
+(defpred underline? "underline")
+(defpred overline?  "overline")
+
+(define mathprim?
+  (or mathord? mathop? mathbin? mathrel?
+      mathopen? mathclose? mathpunct?))
