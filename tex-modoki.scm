@@ -134,6 +134,9 @@
   (define (restore-command ts)
     (cond ((null? ts)
 	   '())
+          ; math charcode
+	  ((integer? (car ts))
+	   (cons #`"&#,(mathchar (list (car ts)));" (restore-command (cdr ts))))
 	  ((not (textoken? (car ts)))
 	   (cond
             ; group
@@ -189,27 +192,37 @@
 (use text.html-lite)
 
 (define (print-math ts)
+  (define (sup ts r)
+    (html:sup :style #`"font-size: ,|r|;\
+	              vertical-align:super"
+	      (print-math (third (car ts)))))
+  (define (sub ts r)
+    (html:sub :style #`"font-size: ,|r|;\
+	              vertical-align:sub"
+	      (print-math (fourth (car ts)))))
+
   (cond ((null? ts)
 	 '())
 	((null? (cdar ts))
 	 (html:span :style "font-style:normal" (tokenlist->string (car ts))))
 	((eq? 'Nil (caar ts))
 	 (cons
-	  (html:i ""
-		  (html:sup (print-math (third (car ts))))
-		  (html:sub (print-math (fourth (car ts)))))
+	  (html:i "" (sup ts "60%") (sub ts "60%"))
 	  (print-math (cdr ts))))
 	((eq? 'Ord (caar ts))
 	 (cons
 	  (html:i (cdr (second (car ts)))
-		  (html:sup (print-math (third (car ts))))
-		  (html:sub (print-math (fourth (car ts)))))
+		  (sup ts "60%") (sub ts "60%"))
+	  (print-math (cdr ts))))
+	((eq? 'Op (caar ts))
+	 (cons
+	  (html:span :style "font-size: 150%" (tokenlist->string (second (car ts)))
+		     (sup ts "40%") (sub ts "40%"))
 	  (print-math (cdr ts))))
 	((eq? 'Box (caar ts))
 	 (cons 
 	  (html:span :style "font-style:normal" 
 		     (tokenlist->string (second (car ts)))
-		     (html:sup (print-math (third (car ts))))
-		     (html:sub (print-math (fourth (car ts)))))
+		     (sup ts "60%") (sub ts "60%"))
 	  (print-math (cdr ts))))
-	(else ts)))
+	(else (cdr ts))))

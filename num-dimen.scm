@@ -18,14 +18,22 @@
 	      (error "it's not number"))
    (skip extra-space1)))
 
+(define (tex-int->integer ts)
+  (define (p radix ts)
+    (string->number (list->string (map cdr ts)) radix))
+  (cond ((char=? #\` (cdar ts)) (char->integer (cdadr ts)))
+	((char=? #\" (cdar ts)) (p 16 (cdr ts)))
+	((char=? #\' (cdar ts)) (p 8  (cdr ts)))
+	(else                   (p 10 ts))))
+
 (define tex-oct-digit
   (orothers "octal digit" 0 1 2 3 4 5 6 7))
 (define tex-digit
   (orothers "digit" 0 1 2 3 4 5 6 7 8 9))
 (define tex-hex-digit
   (parser-or
-   (orothers "" 0 1 2 3 4 5 6 7 8 9 #\A #\B #\C #\D #\E #\F)
-   (oralpha  "" #\A #\B #\C #\D #\E #\F)
+   (orothers "" 0 1 2 3 4 5 6 7 8 9 #\A #\B #\C #\D #\E #\F #\a #\b #\c #\d #\e #\f)
+   (oralpha  "" #\A #\B #\C #\D #\E #\F #\a #\b #\c #\d #\e #\f)
    (error "it's not hexadecimal digit")))
 
 (define tex-int-const

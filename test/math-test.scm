@@ -8,19 +8,21 @@
 (load "math.scm")
 (load "box.scm")
 
-(test* "math text" 
-       "<i>x<sup><span style=\"font-style:normal\"><span style=\"font-style:normal\">[y]<sup></sup\n><sub></sub\n></span\n></span\n></sup\n><sub><i>u<sup></sup\n><sub></sub\n></i\n></sub\n></i\n>"
-       (tokenlist->string
-	(output
-	 (string->tokenlist "$x^{\\hbox{y}}_u$"))))
-
 (with-output-to-file 
     "result.html"
   (lambda ()
     (display 
      (tokenlist->string
       (output
-       (string->tokenlist "$x^{\\hbox{y}}_u$"))))))
+       (string->tokenlist 
+	"\\def\\intop{\\mathchar\"1222b}\
+         $\\intop_{-1}^{1}x^2dx$"))))))
+
+#;(test* "math text" 
+       "<i>x<sup><span style=\"font-style:normal\"><span style=\"font-style:normal\">[y]<sup></sup\n><sub></sub\n></span\n></span\n></sup\n><sub><i>u<sup></sup\n><sub></sub\n></i\n></sub\n></i\n>"
+       (tokenlist->string
+	(output
+	 (string->tokenlist "$x^{\\hbox{y}}_u$"))))
 
 #;(test* "make mlist" 
        '(100 (Ord (11 . #\x) (100 (Ord (11 . #\y) (12 . #\2) ())) ()))
@@ -32,6 +34,13 @@
        (output
 	(string->tokenlist "x$x y$")))
 
-(test-end)
+#;(output (string->tokenlist "$\\mathchar1222b$"))
 
+(test-section "math token")
+
+(test* "\intop"
+       '(#x1222b)
+       (mathtoken 'mathop #x222b))
+
+(test-end)
 

@@ -13,21 +13,31 @@
 (load "tex-modoki.scm")
 (load "box.scm")
 (load "parser-utils.scm")
+(load "parser-combinator/parser-combinator.scm")
 
 (define (mlist ts)
   (define (loop token result next-field)
-    (cond ;; supscr
-	  ((= 7 (car token))
-	   (values result 1))
-	  ((= 1 next-field)
-	   (values (set-supscr token result) 0))
-	  ;; subscr
-	  ((= 8 (car token))
-	   (values result 2))
-	  ((= 2 next-field)
-	   (values (set-subscr token result) 0))
-	  (else
-	   (values (make-noad token result) 0))))
+    (cond 
+     ;; supscr
+     ((= 7 (car token))
+      (values result -1))
+     ((= -1 next-field)
+      (values (set-supscr token result) 0))
+     ;; subscr
+     ((= 8 (car token))
+      (values result -2))
+     ((= -2 next-field)
+      (values (set-subscr token result) 0))
+     ;; mathprim
+     ((mathprim? token)
+      (values result (classname->num (cdr t))))
+     ((> next-field 0)
+      (values 
+       (make-noad 
+	(by-mathprim next-field (cdr (or (get-mathcode token) token))) result)
+       0))
+     (else
+      (values (make-noad token result) 0))))
 
   (define (make-noad token result)
     (cond ((null? token)
@@ -57,11 +67,14 @@
 		    (cons `(,(first head) ,(second head) ,token ,(fourth head)) 
 			  (cdr result))))))
 
+  (define (by-mathprim classnum t)
+    (if classnum (mathtoken classnum (mathchar t)) t))
+
   (cons 100 (reverse (fold2 loop '() 0 ts))))
 
 (define (select-atom token)
-  (cond ((ord?   token) 'Ord)))
-;; 	((op?    token) 'Op)
+  (cond ((ord?   token) 'Ord)
+ 	((op?    token) 'Op)
 ;; 	((bin?   token) 'Bin)
 ;; 	((rel?   token) 'Rel)
 ;; 	((open?  token) 'Open)
@@ -72,19 +85,22 @@
 ;; 	((under? token) 'Under)
 ;; 	((acc?   token) 'Acc)
 ;; 	((rad?   token) 'Rad)
-;; 	((vcent? token) 'Vcent)))
+;; 	((vcent? token) 'Vcent)
+))
+
+(define (asis-mathchar? token)
+  (and (textoken? token)
+       (> (cat token) 10)
+       (char-set-contains? #[a-zA-Z0-9] (cdr token))))
 
 (define (ord? token)
-  (or 
-   (and (textoken? token)
-	(> (cat token) 10)
-	(char-set-contains? #[a-zA-Z0-9] (cdr token)))
-   (= 0 (mathclass token))))
+  (or (asis-mathchar? token)
+      (= 0 (mathclass token))))
 
 (define (op? token)
   (= 1 (mathclass token)))
 
-
+;;;; getter used by output-loop
 ;; [token] -> ([token] and [token])
 (define-condition-type <read-math-error> <error> #f)
 (define (get-inline-math ls)
@@ -116,6 +132,11 @@
 (define mathen
   (put-specific-code 100 beginmath? get-inline-math))
 
+(define (get-mathchar ts)
+  (receive (num rest)
+	   (tex-int-num ts)
+	   (values (list (tex-int->integer num)) rest)))
+
 
 ;; A math token is list of a number whose top hexadecimal represents 
 ;; the class and the rest is the unicode encoding.
@@ -126,18 +147,32 @@
   (zip '(mathord mathop mathbin mathrel mathopen mathclose mathpunct vari)
        '(0 1 2 3 4 5 6 7)))
 
+(define (classname->num x)
+  (let1 x (cond ((symbol? x) x)
+		((string? x) (string->symbol x))
+		(else (error "expecting class name, but got " x)))
+	(cadr (assoc x mathclass-table))))
+
 (define (mathtoken class char)
   (list
    (+ (* 65536 (if (number? class) class
-		   (cadr (assoc class mathclass-table))))
+		   (classname->num class)))
       (if (number? char) char (char->ucs char)))))
+
+(define (mathchar mathtoken)
+  (remainder (car mathtoken) #x10000))
 
 (define (mathclass token)
   (if (textoken? token) 0
       (floor (/ (car token) #xffff))))
 
-; example of \intop
-; (mathtoken 'mathop #x222b) ;=> (#x1222b)
+(define (get-mathcode t)
+  (assoc (cdr t) mathcodes))
+
+(define mathcodes
+  (list
+   '(#\< . #x313c)
+   '(#\* . #x2203)))
 
 
 ;;pred
@@ -156,3 +191,5 @@
 (define mathprim?
   (or mathord? mathop? mathbin? mathrel?
       mathopen? mathclose? mathpunct?))
+
+(defpred mathchar? "mathchar")
