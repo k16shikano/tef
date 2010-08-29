@@ -24,15 +24,15 @@
 	(output
 	 (string->tokenlist "$x^{\\hbox{y}}_u$"))))
 
-#;(test* "make mlist" 
-       '(100 (Ord (11 . #\x) (100 (Ord (11 . #\y) (12 . #\2) ())) ()))
-	(output 
-	 (string->tokenlist "$x^{y^2}$")))
+(test* "make mlist" 
+       '((100 (Ord (11 . #\x) (((100 (Ord (11 . #\y) ((Ord (12 . #\2) () ())) ())))) ())))
+       (output 
+	(string->tokenlist "$x^{y^2}$")))
 
-#;(test* "make mlist" 
-       '((100 (Ord (11 . #\x) (12 . #\2) ())))
+(test* "make mlist" 
+       '((101 ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ()))))
        (output
-	(string->tokenlist "x$x y$")))
+	(string->tokenlist "$x\\over y$")))
 
 #;(output (string->tokenlist "$\\mathchar1222b$"))
 

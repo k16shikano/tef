@@ -16,28 +16,32 @@
 (load "parser-combinator/parser-combinator.scm")
 
 (define (mlist ts)
-  (define (loop token result next-field)
+  (define (loop token result next-field fracnoad?)
     (cond 
+     ;; fraction noad
+     ((fraction? token)
+      (values `(,result) next-field #t))
      ;; supscr
      ((= 7 (car token))
-      (values result -1))
+      (values result -1 fracnoad?))
      ((= -1 next-field)
-      (values (set-supscr token result) 0))
+      (values (set-supscr token result) 0 fracnoad?))
      ;; subscr
      ((= 8 (car token))
-      (values result -2))
+      (values result -2 fracnoad?))
      ((= -2 next-field)
-      (values (set-subscr token result) 0))
+      (values (set-subscr token result) 0 fracnoad?))
      ;; mathprim
      ((mathprim? token)
-      (values result (classname->num (cdr t))))
+      (values result (classname->num (cdr t)) fracnoad?))
      ((> next-field 0)
       (values 
        (make-noad 
 	(by-mathprim next-field (cdr (or (get-mathcode token) token))) result)
-       0))
+       0
+       fracnoad?))
      (else
-      (values (make-noad token result) 0))))
+      (values (make-noad token result) 0 fracnoad?))))
 
   (define (make-noad token result)
     (cond ((null? token)
@@ -70,7 +74,12 @@
   (define (by-mathprim classnum t)
     (if classnum (mathtoken classnum (mathchar t)) t))
 
-  (cons 100 (reverse (fold2 loop '() 0 ts))))
+  (receive (result next-field fracnoad?)
+	   (fold3 loop '() 0 #f ts)
+	   (let1 result (reverse result)
+		 (if fracnoad? 
+		     (list 101 (car result) (cdr result))
+		     (cons 100 result)))))
 
 (define (select-atom token)
   (cond ((ord?   token) 'Ord)
@@ -189,7 +198,19 @@
 (defpred overline?  "overline")
 
 (define mathprim?
-  (or mathord? mathop? mathbin? mathrel?
-      mathopen? mathclose? mathpunct?))
+  (orp mathord? mathop? mathbin? mathrel?
+       mathopen? mathclose? mathpunct?))
 
 (defpred mathchar? "mathchar")
+
+(defpred overwithdelims?  "overwithdelims")
+(defpred atopwithdelims?  "atopwithdelims")
+(defpred abovewithdelims? "abovewithdelims")
+(defpred over?            "over")
+(defpred atop?            "atop")
+(defpred above?           "above")
+
+(define fraction?
+  (orp overwithdelims? atopwithdelims? abovewithdelims?
+       over? atop? above?))
+

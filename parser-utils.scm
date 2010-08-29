@@ -30,6 +30,12 @@
     ((_ v1 v2 ...) 
      (if (not (cdar (values-ref v1 0))) (orvalues v2 ...) v1))))
 
+(define-syntax orp
+  (syntax-rules ()
+    ((_) #t)
+    ((_ p1) (lambda (x) (p1 x)))
+    ((_ p1 ...) (lambda (x) (or (p1 x) ...)))))
+
 
 ;; predicates
 
