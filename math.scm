@@ -16,32 +16,32 @@
 (load "parser-combinator/parser-combinator.scm")
 
 (define (mlist ts)
-  (define (loop token result next-field fracnoad?)
+  (define (loop token result next-field fracspec)
     (cond 
      ;; fraction noad
-     ((fraction? token)
-      (values `(,result) next-field #t))
+     ((fracspec? token)
+      (values `(,result) next-field token))
      ;; supscr
      ((= 7 (car token))
-      (values result -1 fracnoad?))
+      (values result -1 fracspec))
      ((= -1 next-field)
-      (values (set-supscr token result) 0 fracnoad?))
+      (values (set-supscr token result) 0 fracspec))
      ;; subscr
      ((= 8 (car token))
-      (values result -2 fracnoad?))
+      (values result -2 fracspec))
      ((= -2 next-field)
-      (values (set-subscr token result) 0 fracnoad?))
+      (values (set-subscr token result) 0 fracspec))
      ;; mathprim
      ((mathprim? token)
-      (values result (classname->num (cdr t)) fracnoad?))
+      (values result (classname->num (cdr t)) fracspec))
      ((> next-field 0)
       (values 
        (make-noad 
 	(by-mathprim next-field (cdr (or (get-mathcode token) token))) result)
        0
-       fracnoad?))
+       fracspec))
      (else
-      (values (make-noad token result) 0 fracnoad?))))
+      (values (make-noad token result) 0 fracspec))))
 
   (define (make-noad token result)
     (cond ((null? token)
@@ -74,12 +74,32 @@
   (define (by-mathprim classnum t)
     (if classnum (mathtoken classnum (mathchar t)) t))
 
-  (receive (result next-field fracnoad?)
+  (define (make-fraction spec numerator denominator)
+    (list
+     (cons 'Fraction
+	   (cond ((over? (car spec))
+		  `(default-code ,numerator ,denominator () ()))
+		 ((atop? (car spec))
+		  `(() ,numerator ,denominator () ()))
+		 ((above? (car spec))
+		  `(,(second spec) ,numerator ,denominator () ()))
+		 ((overwithdelims? (car spec))
+		  `(default-code ,numerator ,denominator 
+		     ,(third spec) ,(fourth spec)))
+		 ((atopwithdelims? (car spec))
+		  `(() ,numerator ,denominator 
+		    ,(third spec) ,(fourth spec)))
+		 ((abovewithdelims? (car spec))
+		  `(,(second spec) ,numerator ,denominator 
+		    ,(third spec) ,(fourth spec)))))))
+  
+  (receive (result next-field fracspec)
 	   (fold3 loop '() 0 #f ts)
-	   (let1 result (reverse result)
-		 (if fracnoad? 
-		     (list 101 (car result) (cdr result))
-		     (cons 100 result)))))
+	   (cons 100 
+		 (let1 result (reverse result)
+		       (if fracspec
+			   (make-fraction fracspec (car result) (cdr result))
+			   result)))))
 
 (define (select-atom token)
   (cond ((ord?   token) 'Ord)
@@ -146,13 +166,34 @@
 	   (tex-int-num ts)
 	   (values (list (tex-int->integer num)) rest)))
 
+(define (get-delimiter ts)
+  (receive (num rest)
+	   (tex-int-num ts)
+	   (values (list (tex-int->integer num)) rest)))
+
+(define (get-fracspec ts)
+  (cond (((orp over? atop?) (car ts))
+	 (values (list (car ts)) (cdr ts)))
+	(((orp overwithdelims? atopwithdelims?) (car ts))
+	 (values (list (car ts) (cadr ts) (caddr ts)) (cdddr ts)))
+	((above? (car ts))
+	 (receive (dimen rest)
+		  (get-tex-dimen (cdr ts))
+		  (values (list (car ts) 
+				(dimen->sp (car dimen))) rest)))
+	((abovewithdelimes? (car ts))
+	 (receive (dimen rest)
+		  (get-tex-dimen (cdddr ts))
+		  (values (list (car ts) (cadr ts) (caddr ts) 
+				(dimen-sp (car dimen))) rest)))))
+
 
 ;; A math token is list of a number whose top hexadecimal represents 
 ;; the class and the rest is the unicode encoding.
 ;; We omit the mechanisim of the math font family in TeX82.
 
 (define mathclass-table
-  ; vari won't used. 
+  ; vari won't be used. 
   (zip '(mathord mathop mathbin mathrel mathopen mathclose mathpunct vari)
        '(0 1 2 3 4 5 6 7)))
 
@@ -178,13 +219,13 @@
 (define (get-mathcode t)
   (assoc (cdr t) mathcodes))
 
-(define mathcodes
+#;(define mathcodes
   (list
    '(#\< . #x313c)
    '(#\* . #x2203)))
 
 
-;;pred
+;; preds
 
 (defpred mathord?   "mathord")
 (defpred mathop?    "mathop")
@@ -202,6 +243,7 @@
        mathopen? mathclose? mathpunct?))
 
 (defpred mathchar? "mathchar")
+(defpred delimiter? "delimiter")
 
 (defpred overwithdelims?  "overwithdelims")
 (defpred atopwithdelims?  "atopwithdelims")
@@ -214,3 +256,8 @@
   (orp overwithdelims? atopwithdelims? abovewithdelims?
        over? atop? above?))
 
+(define (fracspec? token)
+  (if (and (pair? (car token)) 
+	   (textoken? (car token)))
+      (fraction? (car token))
+      #f))
