@@ -21,7 +21,8 @@
 (define (tex-int->integer ts)
   (define (p radix ts)
     (string->number (list->string (map cdr ts)) radix))
-  (cond ((char=? #\` (cdar ts)) (char->integer (cdadr ts)))
+  (cond ((char=? #\- (cdar ts)) (* -1 (tex-int->integer (cdr ts))))
+	((char=? #\` (cdar ts)) (char->integer (cdadr ts)))
 	((char=? #\" (cdar ts)) (p 16 (cdr ts)))
 	((char=? #\' (cdar ts)) (p 8  (cdr ts)))
 	(else                   (p 10 ts))))
@@ -108,9 +109,21 @@
 	(get-tex-dimen dimen)
 	(values '((-101 . #f)) ts))))
 
-(define (token->dimen ts)
+(define (dimen->sp ts)
   (if (not (= -101 (car ts))) (error "here expects dimensions")
-      (cdr ts)))
+      (let* ((dimstr (cdr ts))
+	     (true   (string-scan dimstr "true"))
+	     (ratio  (car (filter car
+		      (map 
+		       (lambda (x)
+			 (cons (string-scan dimstr (car x)) (cdr x)))
+		       (zip '("pt" "in" "pc" "cm" "mm" "bp" "dd" "cc" "sp")
+			    `(1 7227/100 12/1 7227/254 7227/2540 
+				7227/7200 1238/1157 14856/1157 65536)))))))
+	(cons -101
+	      (* (tex-int->integer 
+		  (string->tokenlist (string-take dimstr (or true (car ratio)))))
+		 (cadr ratio))))))
 
 (define (token->number ts)
   (string->number (tokenlist->string ts)))
