@@ -49,9 +49,9 @@
 	  ;; group
 	  ((= -100 (car token))
 	   (cons `(,(mlist (cdr token))) result))
-	  ;; box (shouldn't use expand-box here. to be fixed)
+	  ;; box
           ((= -102 (car token))
-	   (cons `(Box ,(expand-box token `(,(make-hash-table))) () ()) result))
+	   (cons `(Box ,(expand-box token) () ()) result))
 	  (else
 	   (cons `(,(select-atom token) ,token () ()) result))))
 

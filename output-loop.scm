@@ -38,7 +38,9 @@
 	((box? (car ts))
 	 (let1 boxed (boxen (eval-till-begingroup ts env))
 	       (append
-		(expand-box (car boxed) env)
+		(expand-box 
+		 `(,(caar boxed) ,(cadar boxed) ,(caddar boxed)
+		   ,@(expand-all (cdddar boxed) env)))
 		(expand-all (cdr boxed) env))))
 	((mathchar? (car ts))
 	 (receive (mathcharcode rest)
