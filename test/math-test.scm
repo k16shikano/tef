@@ -4,6 +4,7 @@
 (load "read.scm")
 (load "show.scm")
 (load "output-loop.scm")
+(load "tokenlist-utils.scm")
 
 (test-section "parse math list")
 (load "math.scm")
@@ -17,7 +18,7 @@
       (output
        (string->tokenlist 
 	"\\def\\intop{\\mathchar\"1222b}\
-         $\\intop_{-1}^{1}x^2dx$"))))))
+         $\\intop_{-1}^{1}\\intop_{-{1\\over 2}}^{1\\over2}K{x_1^2 + x_2^{1/2} \\over c^2 -1} dx_1dx_2$"))))))
 
 (test* "make mlist" 
        '((100 (Ord (11 . #\x) (((100 (Ord (11 . #\y) ((Ord (12 . #\2) () ())) ())))) ())))

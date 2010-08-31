@@ -84,26 +84,28 @@
 		  `(,(second spec) ,numerator ,denominator () ()))
 		 ((overwithdelims? (car spec))
 		  `(default-code ,numerator ,denominator 
-		     ,(third spec) ,(fourth spec)))
+		     (,(second spec)) (,(third spec))))
 		 ((atopwithdelims? (car spec))
 		  `(() ,numerator ,denominator 
-		    ,(third spec) ,(fourth spec)))
+		    (,(second spec)) (,(third spec))))
 		 ((abovewithdelims? (car spec))
-		  `(,(second spec) ,numerator ,denominator 
-		    ,(third spec) ,(fourth spec)))))))
+		  `(,(fourth spec) ,numerator ,denominator 
+		    (,(second spec)) (,(third spec))))))))
   
   (receive (result next-field fracspec)
 	   (fold3 loop '() 0 #f ts)
 	   (cons 100 
 		 (let1 result (reverse result)
 		       (if fracspec
-			   (make-fraction fracspec (car result) (cdr result))
+			   (make-fraction fracspec 
+					  (reverse (car result)) 
+					  (reverse (cdr result)))
 			   result)))))
 
 (define (select-atom token)
   (cond ((ord?   token) 'Ord)
  	((op?    token) 'Op)
-;; 	((bin?   token) 'Bin)
+ 	((bin?   token) 'Bin)
 ;; 	((rel?   token) 'Rel)
 ;; 	((open?  token) 'Open)
 ;; 	((close? token) 'Close)
@@ -121,12 +123,22 @@
        (> (cat token) 10)
        (char-set-contains? #[a-zA-Z0-9] (cdr token))))
 
+(define (asis-binchar? token)
+  (and (textoken? token)
+       (> (cat token) 10)
+       (char-set-contains? #[+\-] (cdr token))))
+
 (define (ord? token)
-  (or (asis-mathchar? token)
-      (= 0 (mathclass token))))
+  (and (not (asis-binchar? token))
+       (or (asis-mathchar? token)
+	   (= 0 (mathclass token)))))
 
 (define (op? token)
   (= 1 (mathclass token)))
+
+(define (bin? token)
+  (or (asis-binchar? token)
+      (= 2 (mathclass token))))
 
 ;;;; getter used by output-loop
 ;; [token] -> ([token] and [token])
@@ -180,11 +192,11 @@
 		  (get-tex-dimen (cdr ts))
 		  (values (list (car ts) 
 				(dimen->sp (car dimen))) rest)))
-	((abovewithdelimes? (car ts))
+	((abovewithdelims? (car ts))
 	 (receive (dimen rest)
 		  (get-tex-dimen (cdddr ts))
 		  (values (list (car ts) (cadr ts) (caddr ts) 
-				(dimen-sp (car dimen))) rest)))))
+				(dimen->sp (car dimen))) rest)))))
 
 
 ;; A math token is list of a number whose top hexadecimal represents 
