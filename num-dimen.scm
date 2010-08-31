@@ -1,4 +1,4 @@
-(load "parser-utils.scm")
+(load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 
 (define (get-tex-dimen ts)

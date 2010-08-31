@@ -1,8 +1,7 @@
 ;;;; A simple parser combinator for tex-modoki.
 ;;;; parser := [token] -> [matched token] and [rest token]
 
-(load "parser-utils.scm")
-(load "tex-modoki.scm")
+(load "tokenlist-utils.scm")
 
 (define-condition-type <parser-error> <error> #f)
 

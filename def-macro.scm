@@ -1,6 +1,6 @@
-(load "tex-modoki.scm")
+(load "group.scm")
+(load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
-(load "parser-utils.scm")
 
 ;;;; def (usre macro)
 

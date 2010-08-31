@@ -1,7 +1,17 @@
-;;;; utilities for parser
+;;;; utilities for tex-modoki parser
+
+(define (perror ls)
+  (if (<= (length ls) 20)
+      (tokenlist->string ls)
+      (string-append (tokenlist->string (take ls 20)) "...")))
 
 (define (string+char str . char)
   (string-append str (apply string char)))
+
+(define (token->symbol token)
+  (if (string? token) 
+      (string->symbol token)
+      #f))
 
 ;; [token] -> [token] -> [token] or #f
 (define (match-head ls pattern) 

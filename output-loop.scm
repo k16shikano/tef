@@ -1,13 +1,13 @@
-;;;; Evaluator for TeX macros.
+;;;; Expand a token list.
 ;;;; env is a list of hash-tables having macro definitions. 
 ;;;; its key is the name of macros in symbol, 
 ;;;; and its value is [[parameter token] . [body token]].
 
-(load "tex-modoki.scm")
-(load "parser-utils.scm")
 (load "def-macro.scm")
+(load "group.scm")
 (load "box.scm")
 (load "math.scm")
+(load "tokenlist-utils.scm")
 
 (define global-env
   (list (make-hash-table)))

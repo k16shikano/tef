@@ -1,7 +1,8 @@
 (use gauche.test)
 
 (test-start "tex-modoki math related features")
-(load "tex-modoki.scm")
+(load "read.scm")
+(load "show.scm")
 (load "output-loop.scm")
 
 (test-section "parse math list")

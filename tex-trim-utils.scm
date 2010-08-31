@@ -1,4 +1,5 @@
-(load "tex-modoki.scm")
+(load "read.scm")
+(load "group.scm")
 
 ;;;; utils for triming tex manusctipts.
 ;;;; this is not the part of the tex-modoki in itself.

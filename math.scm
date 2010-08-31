@@ -10,9 +10,8 @@
 
 (use srfi-1)
 (use gauche.collection)
-(load "tex-modoki.scm")
 (load "box.scm")
-(load "parser-utils.scm")
+(load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 
 (define (mlist ts)
