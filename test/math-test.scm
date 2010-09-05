@@ -16,17 +16,25 @@
     (display 
      (tokenlist->string
       (output
-       (string->tokenlist 
+       (string->tokenlist
 	"\\def\\intop{\\mathchar\"1222b}\
-         $\\intop_{-1}^{1}\\intop_{-{1\\over 2}}^{1\\over2}K{x_1^2 + x_2^{1/2} \\over c^2 -1} dx_1dx_2$"))))))
+         \\def\\infty{\\mathchar\"1221e}\
+         \\def\\sqrt{\\radical\"2221a}\
+         $\\intop_{-\\infty}^\\infty {x\\over y\\sqrt{z}i} dx$"))))))
 
 (test* "make mlist" 
-       '((100 (Ord (11 . #\x) (((100 (Ord (11 . #\y) ((Ord (12 . #\2) () ())) ())))) ())))
+       '((100 (Ord (11 . #\x) ((Inner (100 (Ord (11 . #\y) () ())) () ())) ((Ord (12 . #\2) () ())))))
+       (output 
+	(string->tokenlist "$x^{y}_2$")))
+
+
+(test* "make mlist" 
+       '((100 (Ord (11 . #\x) ((Inner (100 (Ord (11 . #\y) ((Ord (12 . #\2) () ())) ())) () ())) ())))
        (output 
 	(string->tokenlist "$x^{y^2}$")))
-
+ 
 (test* "math with box" 
-       '((100 (Ord (11 . #\x) (((100 (Box ((-102 (0 (11 . #\y)))) () ())))) ((Ord (11 . #\u) () ())))))
+       '((100 (Ord (11 . #\x) ((Inner (100 (Box ((-102 (0 (11 . #\y)))) () ())) () ())) ((Ord (11 . #\u) () ())))))
        (output
 	(string->tokenlist "$x^{\\hbox{y}}_u$")))
 

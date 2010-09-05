@@ -15,60 +15,74 @@
 (load "parser-combinator/parser-combinator.scm")
 
 (define (mlist ts)
-  (define (loop token result next-field fracspec)
+  (define (loop token result next-field spec)
     (cond 
      ;; fraction noad
      ((fracspec? token)
       (values `(,result) next-field token))
+     ;; radical noad
+     ((radicalspec? token)
+      (values result -3 (cons token spec)))
+     ((= -3 next-field)
+      (values (make-radical-noad token (car spec) result) 0 (cdr spec)))
      ;; supscr
      ((= 7 (car token))
-      (values result -1 fracspec))
+      (values result -1 spec))
      ((= -1 next-field)
-      (values (set-supscr token result) 0 fracspec))
+      (values (set-supscr token result) 0 spec))
      ;; subscr
      ((= 8 (car token))
-      (values result -2 fracspec))
+      (values result -2 spec))
      ((= -2 next-field)
-      (values (set-subscr token result) 0 fracspec))
+      (values (set-subscr token result) 0 spec))
      ;; mathprim
      ((mathprim? token)
-      (values result (classname->num (cdr t)) fracspec))
+      (values result (classname->num (cdr token)) spec))
      ((> next-field 0)
       (values 
        (make-noad 
 	(by-mathprim next-field (cdr (or (get-mathcode token) token))) result)
        0
-       fracspec))
+       spec))
      (else
-      (values (make-noad token result) 0 fracspec))))
+      (values (make-noad token result) 0 spec))))
 
   (define (make-noad token result)
     (cond ((null? token)
 	   (cons '(() () ()) result))
 	  ;; group
 	  ((= -100 (car token))
-	   (cons `(,(mlist (cdr token))) result))
+	   (cons `(Inner ,(mlist (cdr token)) () ()) result))
 	  ;; box
           ((= -102 (car token))
 	   (cons `(Box ,(expand-box token) () ()) result))
 	  (else
 	   (cons `(,(select-atom token) ,token () ()) result))))
 
+  (define (make-radical-noad token spec result)
+    (cons `(Rad ,(mlist (cdr token)) () () ,(cadr spec)) result))
+
   (define (set-subscr token result)
     (if (null? result)
 	`((Nil () () ,(make-noad token '())))
 	(let1 head (car result)
 	  (let1 token (make-noad token '())
-		(cons `(,(first head) ,(second head) ,(third head) ,token) 
-		      (cdr result))))))
+		(cons 
+		 (if (eq? 'Rad (first head))
+		     `(Rad ,(second head) ,(third head) ,token (fifth head))
+		     `(,(first head) ,(second head) ,(third head) ,token))
+		 (cdr result))))))
 
   (define (set-supscr token result)
     (if (null? result)
 	`((Nil () ,(make-noad token '()) ()))
 	(let1 head (car result)
-	      (let1 token (make-noad token '())
-		    (cons `(,(first head) ,(second head) ,token ,(fourth head)) 
-			  (cdr result))))))
+	  (let1 token (make-noad token '())
+		(cons
+		 (if (eq? 'Rad (first head))
+		     `(Rad ,(second head) ,token ,(fourth head) ,(fifth head))
+		     `(,(first head) ,(second head) ,token ,(fourth head)))
+		 (cdr result))))))
 
   (define (by-mathprim classnum t)
     (if classnum (mathtoken classnum (mathchar t)) t))
@@ -91,15 +105,16 @@
 		 ((abovewithdelims? (car spec))
 		  `(,(fourth spec) ,numerator ,denominator 
 		    (,(second spec)) (,(third spec))))))))
+
   
-  (receive (result next-field fracspec)
+  (receive (result next-field spec)
 	   (fold3 loop '() 0 #f ts)
 	   (cons 100 
 		 (let1 result (reverse result)
-		       (if fracspec
-			   (make-fraction fracspec 
+		       (if spec
+			   (make-fraction spec 
 					  (reverse (car result)) 
-					  (reverse (cdr result)))
+					  (cdr result))
 			   result)))))
 
 (define (select-atom token)
@@ -198,7 +213,6 @@
 		  (values (list (car ts) (cadr ts) (caddr ts) 
 				(dimen->sp (car dimen))) rest)))))
 
-
 ;; A math token is list of a number whose top hexadecimal represents 
 ;; the class and the rest is the unicode encoding.
 ;; We omit the mechanisim of the math font family in TeX82.
@@ -271,4 +285,12 @@
   (if (and (pair? (car token)) 
 	   (textoken? (car token)))
       (fraction? (car token))
+      #f))
+
+(defpred radical? "radical")
+
+(define (radicalspec? token)
+  (if (and (pair? (car token)) 
+	   (textoken? (car token)))
+      (radical? (car token))
       #f))

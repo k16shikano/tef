@@ -50,15 +50,6 @@
 
 
 (define (print-math ts)
-  (define (sup ts r)
-    (html:sup :style #`"font-size: ,|r|;\
-	              vertical-align:super"
-	      (print-math (third (car ts)))))
-  (define (sub ts r)
-    (html:sub :style #`"font-size: ,|r|;\
-	              vertical-align:sub"
-	      (print-math (fourth (car ts)))))
-
   (cond ((null? ts)
 	 (html:span :style "display:inline-block;width:0px" "&nbsp;"))
 	((null? (cdar ts))
@@ -107,6 +98,30 @@
 		     (tokenlist->string (second (car ts)))
 		     (sup ts "60%") (sub ts "60%"))
 	  (print-math (cdr ts))))
+	((eq? 'Inner (caar ts))
+	 (cons
+	  (html:span 
+	   (print-math (list (list (second (car ts)))))
+	   (html:span :style 
+		      "display:inline-block;w text-align:center;\
+		       vertical-align:middle; font-size:60%"
+		      (html:div (print-math (third (car ts))))
+		      (html:div (print-math (fourth (car ts))))))
+	  (print-math (cdr ts))))
+	((eq? 'Rad (caar ts))
+	 (list
+	  (html:span :style "width:20%" "&nbsp;")
+	  (html:span :style "font-size:130%"
+		     (print-math (list (list (fifth (car ts))))))
+	  (html:span :style #`"border-top:1pt solid"
+		     (print-math (list (list (second (car ts)))))
+		     (html:span :style 
+				"display:inline-block;text-align:center;\
+			         vertical-align:middle;font-size:60%"
+				(html:div (print-math (third (car ts))))
+				(html:div (print-math (fourth (car ts))))))
+	  (html:span :style "width:20%" "&nbsp;")
+	  (print-math (cdr ts))))
 	((eq? 'Fraction (caar ts))
 	 (let1 border (format "~apx" (if (pair? (second (car ts)))
 					 (cdr (second (car ts)))
@@ -120,7 +135,7 @@
 		      "display:inline-block; text-align:center;\
 		       vertical-align:middle; font-size:80%"		       
 		      (html:div :style
-				#`"border-bottom:,border solid"
+				#`"border-bottom:,border solid; margin:10%"
 				(print-math (third (car ts))))
 		      (html:div (print-math (fourth (car ts)))))
 	   (html:span :style "font-size:150%; vertical-align:middle"
