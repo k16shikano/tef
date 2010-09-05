@@ -18,6 +18,8 @@ tex-modoki
 
  => "ABCAB" 
 
+ You can also get mathematical formula in HTML/CSS. See http://wiki.github.com/k16shikano/tex-modoki/ .
+
  You can find other examples in tex-modoki-test.scm.
 
 * Change Log
