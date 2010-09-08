@@ -9,8 +9,9 @@
     (cond ((null? ts)
 	   '())
           ; math charcode
-	  ((integer? (car ts))
-	   (cons #`"&#,(mathchar (list (car ts)));" (restore-command (cdr ts))))
+	  ((and (null? (cdar ts)) (integer? (caar ts)))
+	   (cons #`"&#,(mathchar (list (caar ts)));" 
+		 (restore-command (cdr ts))))
 	  ((not (textoken? (car ts)))
 	   (cond
             ; group
@@ -60,10 +61,12 @@
 	  (html:i "" (sup ts "60%") (sub ts "60%"))
 	  (print-math (cdr ts))))
 	((eq? 'Ord (caar ts))
-	 (let1 style (if (= 11 (cat (second (car ts)))) "italic" "normal")
+	 (let1 style (if (and (textoken? (second (car ts)))
+			      (= 11 (cat (second (car ts)))))
+			 "italic" "normal")
 	       (cons
 		(html:span :style #`"font-style:,style"
-		  (print-math (list (second (car ts))))
+		  (tokenlist->string (list (second (car ts))))
 		  (html:span :style 
 			     "display:inline-block; text-align:center;\
 			      vertical-align:middle; font-size:60%"
@@ -78,7 +81,7 @@
 		     (html:div :style "font-size:60%;vertical-align:bottom"
 				(print-math (third (car ts))))
 		     (html:div :style "font-size:200%"
-				(tokenlist->string (second (car ts))))
+				(tokenlist->string (list (second (car ts)))))
 		     (html:div :style "font-size:60%;vertical-align:top"
 				(print-math (fourth (car ts)))))
 	  (html:span :style "width:20%" "&nbsp;")
@@ -89,7 +92,16 @@
 	  (html:span :style
 		     "display:inline-block; text-align:center;\
 		      vertical-align:middle; font-size:110%;"
-		     (cdr (second (car ts))))
+		     (tokenlist->string (list (second (car ts)))))
+	  (html:span :style "width:20%" "&nbsp;")
+	  (print-math (cdr ts))))
+	((eq? 'Rel (caar ts))
+	 (list
+	  (html:span :style "width:20%" "&nbsp;")
+	  (html:span :style
+		     "display:inline-block; text-align:center;\
+		      vertical-align:middle; font-size:110%;"
+		     (tokenlist->string (list (second (car ts)))))
 	  (html:span :style "width:20%" "&nbsp;")
 	  (print-math (cdr ts))))
 	((eq? 'Box (caar ts))

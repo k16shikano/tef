@@ -123,7 +123,7 @@
   (cond ((ord?   token) 'Ord)
  	((op?    token) 'Op)
  	((bin?   token) 'Bin)
-;; 	((rel?   token) 'Rel)
+ 	((rel?   token) 'Rel)
 ;; 	((open?  token) 'Open)
 ;; 	((close? token) 'Close)
 ;; 	((punct? token) 'Punct)
@@ -138,17 +138,21 @@
 (define (asis-mathchar? token)
   (and (textoken? token)
        (> (cat token) 10)
-       (char-set-contains? #[a-zA-Z0-9] (cdr token))))
+       (char-set-contains? #[a-zA-Z0-9!] (cdr token))))
 
 (define (asis-binchar? token)
   (and (textoken? token)
        (> (cat token) 10)
        (char-set-contains? #[+\-] (cdr token))))
 
+(define (asis-relchar? token)
+  (and (textoken? token)
+       (> (cat token) 10)
+       (char-set-contains? #[=><] (cdr token))))
+
 (define (ord? token)
-  (and (not (asis-binchar? token))
-       (or (asis-mathchar? token)
-	   (= 0 (mathclass token)))))
+  (or (asis-mathchar? token)
+      (= 0 (mathclass token))))
 
 (define (op? token)
   (= 1 (mathclass token)))
@@ -156,6 +160,10 @@
 (define (bin? token)
   (or (asis-binchar? token)
       (= 2 (mathclass token))))
+
+(define (rel? token)
+  (or (asis-relchar? token)
+      (= 3 (mathclass token))))
 
 ;;;; getter used by output-loop
 ;; [token] -> ([token] and [token])
@@ -240,7 +248,7 @@
   (remainder (car mathtoken) #x10000))
 
 (define (mathclass token)
-  (if (textoken? token) 0
+  (if (textoken? token) 7
       (floor (/ (car token) #xffff))))
 
 (define (get-mathcode t)
