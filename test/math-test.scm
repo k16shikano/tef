@@ -10,18 +10,6 @@
 (load "math.scm")
 (load "box.scm")
 
-(with-output-to-file 
-    "result.html"
-  (lambda ()
-    (display 
-     (tokenlist->string
-      (output
-       (string->tokenlist
-	"\\def\\intop{\\mathchar\"1222b}\
-         \\def\\infty{\\mathchar\"1221e}\
-         \\def\\sqrt{\\radical\"2221a}\
-         $\\intop_{-\\infty}^\\infty {x\\over y\\sqrt{z}i} dx$"))))))
-
 (test* "make mlist" 
        '((100 (Ord (11 . #\x) ((Inner (100 (Ord (11 . #\y) () ())) () ())) ((Ord (12 . #\2) () ())))))
        (output 
@@ -52,7 +40,32 @@
 
 (test* "\intop"
        '(#x1222b)
-       (mathtoken 'mathop #x222b))
+       (char->mathtoken 'mathop #x222b))
 
 (test-end)
 
+(with-output-to-file 
+    "result.html"
+  (lambda ()
+    (display 
+     (tokenlist->string
+      (output
+       (string->tokenlist
+	"\\mathchardef\\infty = \"0221e\
+         \\mathchardef\\sum = \"103a3\
+         \\mathchardef\\cdotp = \"000b7\
+         \\def\\cdots{\\mathinner{\\cdotp\\cdotp\\cdotp}}\
+         $\\sum_{n=0}^{\\infty} {x^n \\over n!} = \
+          {x^1\\over 1!} + {x^2\\over 2!}+ \\cdots = e^x$"))))))
+
+(with-output-to-file 
+    "result.html"
+  (lambda ()
+    (display 
+     (tokenlist->string
+      (output
+       (string->tokenlist
+	"\\mathchardef\\intop=\"1222b\
+         \\mathchardef\\infty=\"221e\
+         \\def\\sqrt{\\radical\"2221a}\
+         $\\intop_{-\\infty}^\\infty \\sqrt{x\\over y\\sqrt{z}i} dx$"))))))

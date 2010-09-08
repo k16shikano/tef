@@ -50,7 +50,8 @@
 ;; predicates
 
 (define (textoken? t)
-  (and (dotted-list? t)
+  (and (pair? t)
+       (dotted-list? t)
        (number? (car t))))
 
 (define (cat token)

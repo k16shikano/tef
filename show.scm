@@ -52,7 +52,7 @@
 
 (define (print-math ts)
   (cond ((null? ts)
-	 (html:span :style "display:inline-block;width:0px" "&nbsp;"))
+	 (html:span :style "display:inline-block;width:0px;" "&nbsp;"))
 	((null? (cdar ts))
 	 (cons (tokenlist->string (car ts))
 	       (print-math (cdr ts))))
@@ -80,29 +80,48 @@
 		      vertical-align:middle;"
 		     (html:div :style "font-size:60%;vertical-align:bottom"
 				(print-math (third (car ts))))
-		     (html:div :style "font-size:200%"
+		     (html:div :style "font-size:200%;line-height:80%"
 				(tokenlist->string (list (second (car ts)))))
 		     (html:div :style "font-size:60%;vertical-align:top"
 				(print-math (fourth (car ts)))))
-	  (html:span :style "width:20%" "&nbsp;")
+	  (html:span :style "font-size:20%" "&nbsp;")
 	  (print-math (cdr ts))))
 	((eq? 'Bin (caar ts))
 	 (list
-	  (html:span :style "width:20%" "&nbsp;")
+	  (html:span :style "font-size:100%" "&nbsp;")
 	  (html:span :style
 		     "display:inline-block; text-align:center;\
 		      vertical-align:middle; font-size:110%;"
 		     (tokenlist->string (list (second (car ts)))))
-	  (html:span :style "width:20%" "&nbsp;")
+	  (html:span :style "font-size:100%" "&nbsp;")
 	  (print-math (cdr ts))))
 	((eq? 'Rel (caar ts))
 	 (list
-	  (html:span :style "width:20%" "&nbsp;")
+	  (html:span :style "font-size:100%" "&nbsp;")
 	  (html:span :style
 		     "display:inline-block; text-align:center;\
 		      vertical-align:middle; font-size:110%;"
 		     (tokenlist->string (list (second (car ts)))))
-	  (html:span :style "width:20%" "&nbsp;")
+	  (html:span :style "font-size:100%" "&nbsp;")
+	  (print-math (cdr ts))))
+	((eq? 'Open (caar ts))
+	 (list
+	  (html:span :style
+		     "font-size:110%;"
+		     (tokenlist->string (list (second (car ts)))))
+	  (print-math (cdr ts))))
+	((eq? 'Close (caar ts))
+	 (list
+	  (html:span :style
+		     "font-size:110%;"
+		     (tokenlist->string (list (second (car ts)))))
+	  (print-math (cdr ts))))
+	((eq? 'Punct (caar ts))
+	 (list
+	  (html:span :style
+		     "font-size:110%;"
+		     (tokenlist->string (list (second (car ts)))))
+	  (html:span :style "font-size:150%" "&nbsp;")
 	  (print-math (cdr ts))))
 	((eq? 'Box (caar ts))
 	 (cons 
@@ -115,24 +134,25 @@
 	  (html:span 
 	   (print-math (list (list (second (car ts)))))
 	   (html:span :style 
-		      "display:inline-block;w text-align:center;\
+		      "display:inline-block; text-align:center;\
 		       vertical-align:middle; font-size:60%"
 		      (html:div (print-math (third (car ts))))
 		      (html:div (print-math (fourth (car ts))))))
 	  (print-math (cdr ts))))
 	((eq? 'Rad (caar ts))
 	 (list
-	  (html:span :style "width:20%" "&nbsp;")
-	  (html:span :style "font-size:130%"
-		     (print-math (list (list (fifth (car ts))))))
-	  (html:span :style #`"border-top:1pt solid"
+	  (html:span :style "font-size:20%" "&nbsp;")
+	  (html:span :style "font-size:130%;vertical-align:middle"
+		     (print-math (list (list (list (fifth (car ts)))))))
+	  (html:span :style "display:inline-block; border-top:1pt solid;\
+		             vertical-align:middle"
 		     (print-math (list (list (second (car ts)))))
 		     (html:span :style 
 				"display:inline-block;text-align:center;\
-			         vertical-align:middle;font-size:60%"
+				 vertical-align:middle;font-size:60%"
 				(html:div (print-math (third (car ts))))
 				(html:div (print-math (fourth (car ts))))))
-	  (html:span :style "width:20%" "&nbsp;")
+	  (html:span :style "font-size:20%" "&nbsp;")
 	  (print-math (cdr ts))))
 	((eq? 'Fraction (caar ts))
 	 (let1 border (format "~apx" (if (pair? (second (car ts)))
@@ -140,20 +160,21 @@
 					 1))
 	 (append
 	  (list
-	   (html:span :style "width:20%" "&nbsp;")
+	   (html:span :style "font-size:20%" "&nbsp;")
 	   (html:span :style "font-size:150%; vertical-align:middle"
 		      (tokenlist->string (fifth (car ts))))
 	   (html:span :style 
 		      "display:inline-block; text-align:center;\
-		       vertical-align:middle; font-size:80%"		       
+		       vertical-align:middle; font-size:80%;"		       
 		      (html:div :style
 				#`"border-bottom:,border solid; margin:10%"
 				(print-math (third (car ts))))
 		      (html:div (print-math (fourth (car ts)))))
 	   (html:span :style "font-size:150%; vertical-align:middle"
 		      (tokenlist->string (sixth (car ts))))
-	   (html:span :style "width:20%" "&nbsp;"))
+	   (html:span :style "font-size:20%" "&nbsp;"))
 	  (print-math (cdr ts)))))
 	((textoken? (car ts))
 	 (if (= 10 (cat (car ts))) (cdr ts) (cons (cdar ts) (cdr ts))))
 	(else (cons (cdar ts) (cdr ts)))))
+

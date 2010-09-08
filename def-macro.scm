@@ -184,7 +184,7 @@
 	    (cddr ts))
 	   `((-1 . "def") ,(cadr ts) 
 	     (1 . #\{) (-1 . "mathchar") 
-	     ,(tokenlist->string texcharint) (2 . #\})
+	     ,@texcharint (2 . #\})
 	     ,@rest)))
 
 ;; [token] -> env -> bool -> [token]

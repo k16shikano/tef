@@ -192,11 +192,11 @@ c"))))
 	  "\\def\\newtoken#1{\\def#1=##1{a##1b##1c}}\\newtoken\\ss\\ss={012}"))))
 
 (test* "for inner definition" 
-       "11"
+       "0011"
        (tokenlist->string 
 	(output
 	 (string->tokenlist 
-	  "\\def\\a{11}{\\def\\a{00}}\\a"))))
+	  "\\def\\a{11}{\\def\\a{00}\\a}\\a"))))
 
 (test* "for global definition" 
        "12"
