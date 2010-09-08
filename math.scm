@@ -17,6 +17,8 @@
 (define (mlist ts)
   (define (loop token result next-field spec)
     (cond 
+     ((and (textoken? token) (= 10 (cat token)))
+      (values result next-field spec))
      ;; fraction noad
      ((fracspec? token)
       (values `(,result) next-field token))

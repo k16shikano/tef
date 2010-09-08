@@ -107,6 +107,7 @@
 (defpred edef? "edef")
 (defpred gdef? "gdef")
 (defpred xdef? "xdef")
+(defpred mathchardef? "mathchardef")
 
 (define (assignment? token)
   (or (let? token)
@@ -114,6 +115,7 @@
       (edef? token)
       (gdef? token)
       (xdef? token)
+      (mathchardef? token)
       ))
 
 (define (if? token)

@@ -14,7 +14,7 @@
 
 ;; [token] -> env -> [expanded token]
 (define (output ts)
-  (let1 ts (expand-all ts global-env)
+  (let1 ts (expand-all ts (list (make-hash-table)))
 	(cond ((null? ts)
 	       '())
 	      ((not (textoken? (car ts)))
@@ -109,13 +109,6 @@
 			       (apply-pattern (cdr v) params env) env) rest)))))
    (else
     (values `(,(car ts)) (cdr ts)))))
-
-(define (edef->def ts env)
-  (receive (param body rest)
-	   (grab-macro-definition (cddr ts))
-	   `((-1 . "def") ,(cadr ts) ,@param 
-	     (1 . #\{) ,@(expand-all body env) (2 . #\}) 
-	     ,@rest)))
 
 ;;;; process-if
 ;; In TeX, conditional statements is processed while its macro expansion.
