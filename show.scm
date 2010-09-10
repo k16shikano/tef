@@ -52,10 +52,10 @@
 
 (define (print-math ts)
   (cond ((null? ts)
-	 (html:span :style "display:inline-block;width:0px;" "&nbsp;"))
+	 (html:span :style "display:inline-block;width:0px;line-height:0px" "&nbsp;"))
 	((null? (cdar ts))
-	 (cons (tokenlist->string (car ts))
-	       (print-math (cdr ts))))
+	 (tokenlist->string (car ts)))
+;	       (print-math (cdr ts))))
 	((eq? 'Nil (caar ts))
 	 (cons
 	  (html:i "" (sup ts "60%") (sub ts "60%"))
@@ -70,8 +70,8 @@
 		  (html:span :style 
 			     "display:inline-block; text-align:center;\
 			      vertical-align:middle; font-size:60%"
-			     (html:div (print-math (third (car ts))))
-			     (html:div (print-math (fourth (car ts))))))
+			     (html:div :style "position: relative;bottom: 0.5em;" (print-math (third (car ts))))
+			     (html:div :style "position: relative;top: 0.5em;" (print-math (fourth (car ts))))))
 		(print-math (cdr ts)))))
 	((eq? 'Op (caar ts))
 	 (list
@@ -131,7 +131,7 @@
 	  (print-math (cdr ts))))
 	((eq? 'Inner (caar ts))
 	 (cons
-	  (html:span 
+	  (html:span
 	   (print-math (list (list (second (car ts)))))
 	   (html:span :style 
 		      "display:inline-block; text-align:center;\

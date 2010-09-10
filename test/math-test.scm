@@ -55,8 +55,9 @@
          \\mathchardef\\sum = \"103a3\
          \\mathchardef\\cdotp = \"000b7\
          \\def\\cdots{\\mathinner{\\cdotp\\cdotp\\cdotp}}\
-         $\\sum_{n=0}^{\\infty} {x^n \\over n!} = \
-          {x^1\\over 1!} + {x^2\\over 2!}+ \\cdots = e^x$"))))))
+         Napier number 
+         $e^x = \\sum_{n=0}^{\\infty} {x^n \\over n!} = \
+          {x^1\\over 1!} + {x^2\\over 2!}+ \\cdots$ ."))))))
 
 (with-output-to-file 
     "result.html"
