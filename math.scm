@@ -37,6 +37,9 @@
       (values result -2 spec))
      ((= -2 next-field)
       (values (set-subscr token result) 0 spec))
+     ;; minus
+     ((minus-symbol? token)
+      (values (make-minus-noad token result) 0 spec))
      ;; mathprim
      ((mathprim? token)
       (values result (classname->num (cdr token)) spec))
@@ -61,6 +64,17 @@
 	  (else
 	   (cons `(,(select-atom token) ,token () ())
 		 result))))
+
+  (define (minus-symbol? token)
+    (and (textoken? token) 
+	 (= 12 (cat token)) 
+	 (char=? #\- (cdr token))))
+
+  (define (make-minus-noad t result)
+    (if (or (null? result) (null? (car result)) 
+	    (not (memq (caar result) '(Ord Inner Close))))
+	(cons `(Ord ,(find-mathcode t) () ()) result)
+	(cons `(Bin ,(find-mathcode t) () ()) result)))
 
   (define (make-radical-noad token spec result)
     (cons `(Rad ,(mlist (cdr token)) () () ,(cadr spec)) result))
