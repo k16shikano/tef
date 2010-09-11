@@ -64,13 +64,12 @@
 	"\\mathchardef\\infty = \"0221e\
          \\mathchardef\\sum = \"103a3\
          \\mathchardef\\cdotp = \"000b7\
-         \\mathcode`!=\"21\
          \\def\\cdots{\\mathinner{\\cdotp\\cdotp\\cdotp}}\
-         Napier number 
+         The exponential function
          $e^x = \\sum_{n=0}^{\\infty} {x^n \\over n!} = \
           {x^1\\over 1!} + {x^2\\over 2!}+ \\cdots$ ."))))))
 
-#;(with-output-to-file 
+(with-output-to-file 
     "result.html"
   (lambda ()
     (display 
@@ -81,3 +80,33 @@
          \\mathchardef\\infty=\"221e\
          \\def\\sqrt{\\radical\"2221a}\
          $\\intop_{-\\infty}^\\infty \\sqrt{x\\over y\\sqrt{z}i} dx$"))))))
+
+(with-output-to-file 
+    "result.html"
+  (lambda ()
+    (display 
+     (tokenlist->string
+      (output
+       (string->tokenlist
+	"$a_0+{1\\over a_1+{1\\over a_2+{1\\over a_3+{1\\over a_4}}}}$"))))))
+
+(with-output-to-file 
+    "result.html"
+  (lambda ()
+    (display 
+     (tokenlist->string
+      (output
+       (string->tokenlist
+	"$_nC_{k/2} = {n\\atopwithdelims() {k\\over 2}}$"))))))
+
+(with-output-to-file 
+    "result.html"
+  (lambda ()
+    (display 
+     (tokenlist->string
+      (output
+       (string->tokenlist
+	"\\def\\sqrt{\\radical\"2221a}\
+         \\mathchardef\\plusminus=\"200b1\
+         Roots of the quadratic equation $ax^2+bx+c=0$ is
+         $x={-b\\plusminus\\sqrt{b^2 - 4ac} \\over 2a}$"))))))

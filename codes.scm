@@ -45,7 +45,7 @@
    '(#\= . #x3d)
    '(#\> . #x3e)))
 
-(define default-mathcodes 
+(define default-mathcodes
   (list (alist->hash-table default-mathcodes-list)))
 
 (define (find-mathcode t tbls)

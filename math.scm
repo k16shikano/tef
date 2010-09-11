@@ -80,8 +80,8 @@
   (define (make-minus-noad t result)
     (if (or (null? result) (null? (car result)) 
 	    (not (memq (caar result) '(Ord Inner Close))))
-	(cons `(Ord ,(find-mathcode t) () ()) result)
-	(cons `(Bin ,(find-mathcode t) () ()) result)))
+	(cons `(Ord ,(find-mathcode t codetbl) () ()) result)
+	(cons `(Bin ,(find-mathcode t codetbl) () ()) result)))
 
   (define (make-radical-noad token spec result)
     (cons `(Rad ,(mlist (cdr token) codetbl) () () ,(cadr spec)) result))
@@ -114,14 +114,14 @@
 	   (cond ((over? (car spec))
 		  `(default-code ,numerator ,denominator () ()))
 		 ((atop? (car spec))
-		  `(() ,numerator ,denominator () ()))
+		  `((0) ,numerator ,denominator () ()))
 		 ((above? (car spec))
 		  `(,(second spec) ,numerator ,denominator () ()))
 		 ((overwithdelims? (car spec))
 		  `(default-code ,numerator ,denominator 
 		     (,(second spec)) (,(third spec))))
 		 ((atopwithdelims? (car spec))
-		  `(() ,numerator ,denominator 
+		  `((0) ,numerator ,denominator 
 		    (,(second spec)) (,(third spec))))
 		 ((abovewithdelims? (car spec))
 		  `(,(fourth spec) ,numerator ,denominator 

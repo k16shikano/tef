@@ -58,20 +58,30 @@
 ;	       (print-math (cdr ts))))
 	((eq? 'Nil (caar ts))
 	 (cons
-	  (html:i "" (sup ts "60%") (sub ts "60%"))
-	  (print-math (cdr ts))))
+	  (html:span :style #`"display:inline-block;"
+	    ""
+	    (html:span :style 
+		       "display:inline-block; text-align:left;\
+		        vertical-align:middle; font-size:60%"
+		       (html:div :style "position: relative;bottom: 0.3em;" 
+				 (print-math (third (car ts))))
+		       (html:div :style "position: relative;top: 0.3em;" 
+				 (print-math (fourth (car ts))))))
+		(print-math (cdr ts))))
 	((eq? 'Ord (caar ts))
 	 (let1 style (if (and (textoken? (second (car ts)))
 			      (= 11 (cat (second (car ts)))))
 			 "italic" "normal")
 	       (cons
-		(html:span :style #`"font-style:,style"
+		(html:span :style #`"display:inline-block;font-style:,style"
 		  (tokenlist->string (list (second (car ts))))
 		  (html:span :style 
-			     "display:inline-block; text-align:center;\
+			     "display:inline-block; text-align:left;\
 			      vertical-align:middle; font-size:60%"
-			     (html:div :style "position: relative;bottom: 0.5em;" (print-math (third (car ts))))
-			     (html:div :style "position: relative;top: 0.5em;" (print-math (fourth (car ts))))))
+			     (html:div :style "position: relative;bottom: 0.3em;" 
+				       (print-math (third (car ts))))
+			     (html:div :style "position: relative;top: 0.3em;" 
+				       (print-math (fourth (car ts))))))
 		(print-math (cdr ts)))))
 	((eq? 'Op (caar ts))
 	 (list
