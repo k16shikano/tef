@@ -54,7 +54,7 @@
 	  ((char=? #\\ c)
 	   (read-char p) ; spend a backslash
 	   (let ((x (peek-char p)))
-	     (cond ((char-set-contains? #[{}$&#^_%~] x)
+	     (cond ((char-set-contains? #[{}$&#^_%~<>|] x)
 		    (cons 12 (read-char p)))
 		   (else
 		    (in-ctrl-seq x "" p)))))

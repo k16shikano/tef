@@ -10,11 +10,13 @@
 
 (use srfi-1)
 (use gauche.collection)
+(use util.list)
 (load "box.scm")
+(load "codes.scm")
 (load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 
-(define (mlist ts)
+(define (mlist ts codetbl)
   (define (loop token result next-field spec)
     (cond 
      ((and (textoken? token) (= 10 (cat token)))
@@ -44,7 +46,7 @@
      ((mathprim? token)
       (values result (classname->num (cdr token)) spec))
      ((> next-field 0)
-      (let* ((token (or (get-mathcode token) token))
+      (let* ((token (or (find-mathcode token codetbl) token))
 	     (noad  (cons (cons (select-atom next-field)
 				(cdar (make-noad token result))) 
 			  result)))
@@ -57,12 +59,17 @@
 	   (cons '(() () ()) result))
 	  ;; group
 	  ((= -100 (car token))
-	   (cons `(Inner ,(mlist (cdr token)) () ()) result))
+	   (cons `(Inner 
+		   ,(mlist (cdr token) (cons (make-hash-table) codetbl))
+		   () ())
+		 result))
 	  ;; box
           ((= -102 (car token))
 	   (cons `(Box ,(expand-box token) () ()) result))
 	  (else
-	   (cons `(,(select-atom token) ,token () ())
+	   (cons `(,(select-atom token) 
+		   ,(or (find-mathcode token codetbl) token)
+		   () ())
 		 result))))
 
   (define (minus-symbol? token)
@@ -77,7 +84,7 @@
 	(cons `(Bin ,(find-mathcode t) () ()) result)))
 
   (define (make-radical-noad token spec result)
-    (cons `(Rad ,(mlist (cdr token)) () () ,(cadr spec)) result))
+    (cons `(Rad ,(mlist (cdr token) codetbl) () () ,(cadr spec)) result))
 
   (define (set-subscr token result)
     (if (null? result)
@@ -295,13 +302,7 @@
 	(else
 	 (floor (/ (car token) #xffff)))))
 
-;; mathcode is not supported yet. these are to be fixed.
-(define (get-mathcode t)
-  (assoc (cdr t) mathcodes))
-(define mathcodes
-  (list
-   '(#\< . #x313c)
-   '(#\* . #x2203)))
+
 
 
 ;; preds

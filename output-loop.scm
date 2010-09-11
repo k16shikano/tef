@@ -4,13 +4,11 @@
 ;;;; and its value is [[parameter token] . [body token]].
 
 (load "def-macro.scm")
+(load "codes.scm")
 (load "group.scm")
 (load "box.scm")
 (load "math.scm")
 (load "tokenlist-utils.scm")
-
-(define global-env
-  (list (make-hash-table)))
 
 ;; [token] -> env -> [expanded token]
 (define (output ts)
@@ -30,6 +28,17 @@
 	 '())
 	((not (textoken? (car ts)))
 	 (cons (car ts) (expand-all (cdr ts) env)))
+  	((catcode? (car ts))
+	 (receive (num newcode rest)
+		  (get-codename (cdr ts))
+		  (begin (update-code! (integer->char num) newcode env)
+			 (expand-all rest env))))
+  	((mathcode? (car ts))
+	 (receive (num newcode rest)
+		  (get-codename (cdr ts))
+		  (begin (update-code! (integer->char num) 
+				       newcode default-mathcodes)
+			 (expand-all rest env))))
 	((if? (car ts))
 	 (receive (expanded rest)
 		  (process-if ts env)
@@ -64,7 +73,7 @@
 		  (append expanded
 			  (expand-all rest env))))
 	((begingroup? (car ts))
-	 (let1 group (groupen ts)
+	 (let1 group (groupen ts (cons (make-hash-table) env))
 	       (append 
 		`((-100 . ,(expand-all (cdar group)
 					 (cons (make-hash-table) env))))
@@ -72,8 +81,12 @@
 	((beginmath? (car ts))
 	 (let1 mathed (mathen ts)
 	       (append 
-		`(,(mlist (expand-all (cdar mathed) env)))
+		`(,(mlist (expand-all (cdar mathed) env)
+			  default-mathcodes))
 		(expand-all (cdr mathed) env))))
+	((find-catcode (car ts) env)
+	 => (lambda (v)
+	      (expand-all (cons (cons v (cdar ts)) (cdr ts)) env)))
 	(else
 	 (cons (car ts) (expand-all (cdr ts) env)))))
 
@@ -97,8 +110,6 @@
     (receive (expanded rest)
 	     (eval-macro (cddr ts) env)
 	     (values (expand-all `(,(cadr ts) ,@expanded) env) rest)))
-;   ((mathchardef? (car ts))
-;    (values '() (set-mathtoken! ts env)))
    ((find-macro-definition (token->symbol (cdar ts)) env)
     => (lambda (v)
 	 (receive (params rest)

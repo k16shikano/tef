@@ -137,3 +137,7 @@
   (and (< (cat token) 0)
        (string=? typestr (cdr token))))
 
+(defpred catcode?  "catcode")
+(defpred mathcode? "mathcode")
+
+(define codename? (orp catcode? mathcode?))

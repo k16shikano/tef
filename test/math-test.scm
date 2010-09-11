@@ -36,11 +36,21 @@
        (output
 	(string->tokenlist "$x\\above-'120pt y$")))
 
+
 (test-section "math token")
 
 (test* "\intop"
        '(#x1222b)
        (char->mathtoken 'mathop #x222b))
+
+(test-section "mathcode")
+
+(test* "mathcode" 
+       '((100 (Ord (12 . #\1) . #0=(() ())) (Ord (33) . #0#)))
+       (output
+	(string->tokenlist "\\mathcode`!=\"21 $1!$")))
+
+
 
 (test-end)
 
@@ -54,8 +64,9 @@
 	"\\mathchardef\\infty = \"0221e\
          \\mathchardef\\sum = \"103a3\
          \\mathchardef\\cdotp = \"000b7\
+         \\mathcode`!=\"21\
          \\def\\cdots{\\mathinner{\\cdotp\\cdotp\\cdotp}}\
-         The exponetial function
+         Napier number 
          $e^x = \\sum_{n=0}^{\\infty} {x^n \\over n!} = \
           {x^1\\over 1!} + {x^2\\over 2!}+ \\cdots$ ."))))))
 
