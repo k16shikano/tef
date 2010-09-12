@@ -11,27 +11,27 @@
 (load "box.scm")
 
 (test* "make mlist" 
-       '((100 (Ord (11 . #\x) ((Inner (100 (Ord (11 . #\y) () ())) () ())) ((Ord (12 . #\2) () ())))))
+       '((200 (Ord (11 . #\x) ((Inner (200 (Ord (11 . #\y) () ())) () ())) ((Ord (12 . #\2) () ())))))
        (output
 	(string->tokenlist "$x^{y}_2$")))
 
 (test* "make mlist" 
-       '((100 (Ord (11 . #\x) ((Inner (100 (Ord (11 . #\y) ((Ord (12 . #\2) () ())) ())) () ())) ())))
+       '((200 (Ord (11 . #\x) ((Inner (200 (Ord (11 . #\y) ((Ord (12 . #\2) () ())) ())) () ())) ())))
        (output 
 	(string->tokenlist "$x^{y^2}$")))
  
 (test* "math with box" 
-       '((100 (Ord (11 . #\x) ((Inner (100 (Box ((-102 (0 (11 . #\y)))) () ())) () ())) ((Ord (11 . #\u) () ())))))
+       '((200 (Ord (11 . #\x) ((Inner (200 (Box ((-102 (0 (11 . #\y)))) () ())) () ())) ((Ord (11 . #\u) () ())))))
        (output
 	(string->tokenlist "$x^{\\hbox{y}}_u$")))
 
 (test* "math with fraction" 
-       '((100 (Fraction default-code ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
+       '((200 (Fraction default-code ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
        (output
 	(string->tokenlist "$x\\over y$")))
 
 (test* "math with fraction" 
-       '((100 (Fraction (-101 . -80) ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
+       '((200 (Fraction (-101 . -80) ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
        (output
 	(string->tokenlist "$x\\above-'120pt y$")))
 
@@ -45,11 +45,12 @@
 (test-section "mathcode")
 
 (test* "mathcode" 
-       '((100 (Ord (12 . #\1) . #0=(() ())) (Ord (33) . #0#)))
+       '((200 (Ord (12 . #\1) . #0=(() ())) (Ord (33) . #0#)))
        (output
 	(string->tokenlist "\\mathcode`!=\"21 $1!$")))
 
 (test-end)
+
 
 (with-output-to-file 
     "result.html"
