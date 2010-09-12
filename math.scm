@@ -1,6 +1,6 @@
 ;; math.scm
 
-; mlist := [100, noad]
+; mlist := [100, noad] (display style) or [200, noad] (text style)
 ; noad  := [atom description, nuclear, supscript, subscript]
 ; nuclear,supscript,subscript := mathchar | mlist | box
 
@@ -16,7 +16,7 @@
 (load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 
-(define (mlist ts codetbl)
+(define (mlist ts codetbl limit)
   (define (loop token result next-field spec)
     (cond 
      ((and (textoken? token) (= 10 (cat token)))
@@ -60,7 +60,7 @@
 	  ;; group
 	  ((= -100 (car token))
 	   (cons `(Inner 
-		   ,(mlist (cdr token) (cons (make-hash-table) codetbl))
+		   ,(mlist (cdr token) (cons (make-hash-table) codetbl) limit)
 		   () ())
 		 result))
 	  ;; box
@@ -84,7 +84,7 @@
 	(cons `(Bin ,(find-mathcode t codetbl) () ()) result)))
 
   (define (make-radical-noad token spec result)
-    (cons `(Rad ,(mlist (cdr token) codetbl) () () ,(cadr spec)) result))
+    (cons `(Rad ,(mlist (cdr token) codetbl limit) () () ,(cadr spec)) result))
 
   (define (set-subscr token result)
     (if (null? result)
@@ -129,7 +129,7 @@
   
   (receive (result next-field spec)
 	   (fold3 loop '() 0 #f ts)
-	   (cons 100 
+	   (cons (* 100 limit) 
 		 (let1 result (reverse result)
 		       (if spec
 			   (make-fraction spec 

@@ -12,9 +12,8 @@
 
 (test* "make mlist" 
        '((100 (Ord (11 . #\x) ((Inner (100 (Ord (11 . #\y) () ())) () ())) ((Ord (12 . #\2) () ())))))
-       (output 
+       (output
 	(string->tokenlist "$x^{y}_2$")))
-
 
 (test* "make mlist" 
        '((100 (Ord (11 . #\x) ((Inner (100 (Ord (11 . #\y) ((Ord (12 . #\2) () ())) ())) () ())) ())))
@@ -50,15 +49,13 @@
        (output
 	(string->tokenlist "\\mathcode`!=\"21 $1!$")))
 
-
-
 (test-end)
 
 (with-output-to-file 
     "result.html"
   (lambda ()
     (display 
-     (tokenlist->string
+     (tokenlist->html
       (output
        (string->tokenlist
 	"\\mathchardef\\infty = \"0221e\
@@ -69,14 +66,15 @@
          $e^x = \\sum_{n=0}^{\\infty} {x^n \\over n!} = \
           {x^1\\over 1!} + {x^2\\over 2!}+ \\cdots$ ."))))))
 
+
 (with-output-to-file 
     "result.html"
   (lambda ()
-    (display 
-     (tokenlist->string
-      (output
-       (string->tokenlist
-	"\\mathchardef\\intop=\"1222b\
+   (display 
+    (tokenlist->html
+     (output
+      (string->tokenlist
+       "\\mathchardef\\intop=\"1222b\
          \\mathchardef\\infty=\"221e\
          \\def\\sqrt{\\radical\"2221a}\
          $\\intop_{-\\infty}^\\infty \\sqrt{x\\over y\\sqrt{z}i} dx$"))))))
@@ -85,7 +83,7 @@
     "result.html"
   (lambda ()
     (display 
-     (tokenlist->string
+     (tokenlist->html
       (output
        (string->tokenlist
 	"$a_0+{1\\over a_1+{1\\over a_2+{1\\over a_3+{1\\over a_4}}}}$"))))))
@@ -94,7 +92,7 @@
     "result.html"
   (lambda ()
     (display 
-     (tokenlist->string
+     (tokenlist->html
       (output
        (string->tokenlist
 	"$_nC_{k/2} = {n\\atopwithdelims() {k\\over 2}}$"))))))
@@ -103,10 +101,10 @@
     "result.html"
   (lambda ()
     (display 
-     (tokenlist->string
+     (tokenlist->html
       (output
        (string->tokenlist
 	"\\def\\sqrt{\\radical\"2221a}\
-         \\mathchardef\\plusminus=\"200b1\
-         Roots of the quadratic equation $ax^2+bx+c=0$ is
+         \\mathchardef\\plusminus=\"300b1\
+         Roots of the quadratic equation $ax^2+bx+c=0$ are
          $x={-b\\plusminus\\sqrt{b^2 - 4ac} \\over 2a}$"))))))
