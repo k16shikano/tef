@@ -76,9 +76,15 @@
      (output
       (string->tokenlist
        "\\mathchardef\\intop=\"1222b\
-         \\mathchardef\\infty=\"221e\
+         \\mathchardef\\infty=\"1221e\
+         \\mathchardef\\pi=\"003c0\
+         \\mathchardef\\sigma=\"003c3\
+         \\mathchardef\\mu=\"003bc\
          \\def\\sqrt{\\radical\"2221a}\
-         $\\intop_{-\\infty}^\\infty \\sqrt{x\\over y\\sqrt{z}i} dx$"))))))
+         \\def\\int{\\intop\\nolimits}\
+         $\\int_{-\\infty}^\\infty \
+             {1 \\over \\sqrt{2\\pi\\sigma^2}}\
+             \\hbox{exp}(- {{(x-\\mu)}^2\\over 2\\sigma^2}) dx$"))))))
 
 (with-output-to-file 
     "result.html"

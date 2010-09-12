@@ -51,6 +51,13 @@
 				(cdar (make-noad token result))) 
 			  result)))
 	(values noad 0 spec)))
+     ;; limit
+     ((nolimits? token)
+      (set! limit 1)
+      (values result 0 spec))
+     ((limits? token)
+      (set! limit 2)
+      (values result 0 spec))
      (else
       (values (make-noad token result) 0 spec))))
 
@@ -349,3 +356,6 @@
 	   (textoken? (car token)))
       (radical? (car token))
       #f))
+
+(defpred nolimits? "nolimits")
+(defpred limits? "limits")

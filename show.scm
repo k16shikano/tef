@@ -19,10 +19,10 @@
 	     (cons (restore-command (cdar ts)) (restore-command (cdr ts))))
 	    ; box
 	    ((= -102 (caar ts))
-	     (cond ((= 0 (caadar ts)) ; vbox
+	     (cond ((= 0 (caadar ts)) ; hbox
 		    (cons (list #\[ (restore-command (cdadar ts)) #\])
 			  (restore-command (cdr ts))))
-		   ((= 1 (caadar ts)) ; hbox
+		   ((= 1 (caadar ts)) ; vbox
 		    (cons (list #\| (restore-command (cdadar ts)) #\|)
 			  (restore-command (cdr ts))))))
 	    ; math
@@ -55,7 +55,7 @@
 
   (define (print-nolimit-supsub t)
     (html:span 
-     :class "nolimit"
+     :class "noad"
      (html:div 
       :class "sub" 
       (print-math (third t) limit))
@@ -65,18 +65,26 @@
 
   (define (print-nolimit t . class)
     (let1 class (if (null? class) 
-		    (if (and (textoken? (second t)) (= 11 (cat (second t))))
-			"italic" "normal")
+		    (if (and (textoken? (second t)) (= 12 (cat (second t))))
+			"normal" "italic")
 		    (car class))
 	  (html:span 
 	   :class class 
-	   (if (null? (second t)) ""
-	       (tokenlist->string (list (second t))))
+	   (cond ((null? (second t)) "")
+		 ((and (pair? (car (second t))) (= -102 (caar (second t))))
+		  (tokenlist->string (second t)))
+		 (else (tokenlist->string (list (second t)))))
 	   (print-nolimit-supsub t))))
 
-  (define (print-limit t)
+  (define (print-nolimit-op t)
     (html:span 
-     :class "limit" 
+     :class "op" 
+      (tokenlist->string (list (second t)))
+      (print-nolimit-supsub t)))
+
+  (define (print-limit-op t)
+    (html:span 
+     :class "op"
      (html:div :class "sup"
 	       (print-math (third t) limit))
      (html:div :class "nuc"
@@ -116,7 +124,9 @@
 	  (print-math (cdr ts) limit)))
 	((eq? 'Op (caar ts))
 	 (list
-	  (print-limit (car ts))
+	  (if (= 200 limit)
+	      (print-limit-op (car ts))
+	      (print-nolimit-op (car ts)))
 	  (padding 20)
 	  (print-math (cdr ts) limit)))
 	((eq? 'Bin (caar ts))
@@ -145,8 +155,9 @@
 	  (padding 150)
 	  (print-math (cdr ts) limit)))
 	((eq? 'Box (caar ts))
-	 (print-nolimit (car ts) "box")
-	 (print-math (cdr ts) limit))
+	 (cons
+	  (print-nolimit (car ts) "box")
+	  (print-math (cdr ts) limit)))
 	((eq? 'Inner (caar ts))
 	 (cons
 	  (print-inner (car ts) "inner")
@@ -164,15 +175,15 @@
 					 1))
 	       (append
 		(list
-		 (padding 20)
 		 (print-mathtoken (fifth (car ts)) "fracdelim")
-		 (html:span :class "fraction"			    
+		 (padding 10)
+		 (html:span :class "fraction"
 		      (html:div :style
-				#`"border-bottom:,border solid; margin:10%"
+				#`"border-bottom:,border solid;"
 				(print-math (third (car ts)) limit))
 		      (html:div (print-math (fourth (car ts)) limit)))
+		 (padding 10)
 		 (print-mathtoken (sixth (car ts)) "fracdelim")
-		 (padding 20)
 		 (print-math (cdr ts) limit)))))
 	((textoken? (car ts))
 	 (if (= 10 (cat (car ts))) (cdr ts) (cons (cdar ts) (cdr ts))))
@@ -183,15 +194,18 @@
    (string-join 
     (list 
     "<!--"
-    "span.nolimit {display:inline-block;text-align:left;vertical-align:middle;font-size:60%}"
-    "span.nolimit div.sub {position: relative;bottom: 0.3em;}"
-    "span.nolimit div.sup {position: relative;top: 0.3em;}"
+    "span.noad {display:inline-block;text-align:left;vertical-align:middle;font-size:60%}"
+    "span.noad div.sub {position:relative;bottom:0.4em;}"
+    "span.noad div.sup {position:relative;top:0.4em;}"
     "span.italic {font-style:italic}" 
     "span.normal {font-style:normal}" 
-    "span.limit {display:inline-block; text-align:center; vertical-align:middle;font-size:100%}"
-    "span.limit div.sup {font-size:60%;vertical-align:bottom}"
-    "span.limit div.sub {font-size:60%;vertical-align:top}"
-    "span.limit div.nuc {font-size:200%;line-height:80%}" 
+    "span.op {display:inline-block; text-align:center; vertical-align:middle;font-size:200%}"
+    "span.op span.noad {font-size:60%}"
+    "span.op span.noad div.sub {position:relative;bottom:1em}"
+    "span.op span.noad div.sup {position:relative;top:1em}"
+    "span.op div.sup {font-size:30%;vertical-align:bottom}"
+    "span.op div.sub {font-size:30%;vertical-align:bottom}"
+    "span.op div.nuc {font-size:100%;line-height:80%}" 
     "span.null {display:inline-block;width:0px;line-height:0px}"
     "span.binrel {display:inline-block;text-align:center;vertical-align:middle;font-size:110%;}"
     "span.box {font-style:normal; vertical-align:middle}" 
