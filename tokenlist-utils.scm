@@ -29,7 +29,7 @@
 		     (if (null? env)
 			 (getter ls)
 			 (getter ls (car env)))
-		     (cons `(,code . ,group) unseen))
+		     (cons (if (null? group) '() `(,code . ,group)) unseen))
 	    ls))))
 
 ;; are there any values whose first value is not null?
@@ -137,3 +137,7 @@
   (and (< (cat token) 0)
        (string=? typestr (cdr token))))
 
+(defpred catcode?  "catcode")
+(defpred mathcode? "mathcode")
+
+(define codename? (orp catcode? mathcode?))

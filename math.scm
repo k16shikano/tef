@@ -1,6 +1,6 @@
 ;; math.scm
 
-; mlist := [100, noad]
+; mlist := [100, noad] (display style) or [200, noad] (text style)
 ; noad  := [atom description, nuclear, supscript, subscript]
 ; nuclear,supscript,subscript := mathchar | mlist | box
 
@@ -10,11 +10,13 @@
 
 (use srfi-1)
 (use gauche.collection)
+(use util.list)
 (load "box.scm")
+(load "codes.scm")
 (load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 
-(define (mlist ts)
+(define (mlist ts codetbl limit)
   (define (loop token result next-field spec)
     (cond 
      ((and (textoken? token) (= 10 (cat token)))
@@ -37,15 +39,25 @@
       (values result -2 spec))
      ((= -2 next-field)
       (values (set-subscr token result) 0 spec))
+     ;; minus
+     ((minus-symbol? token)
+      (values (make-minus-noad token result) 0 spec))
      ;; mathprim
      ((mathprim? token)
       (values result (classname->num (cdr token)) spec))
      ((> next-field 0)
-      (let* ((token (or (get-mathcode token) token))
+      (let* ((token (or (find-mathcode token codetbl) token))
 	     (noad  (cons (cons (select-atom next-field)
 				(cdar (make-noad token result))) 
 			  result)))
 	(values noad 0 spec)))
+     ;; limit
+     ((nolimits? token)
+      (set! limit 1)
+      (values result 0 spec))
+     ((limits? token)
+      (set! limit 2)
+      (values result 0 spec))
      (else
       (values (make-noad token result) 0 spec))))
 
@@ -54,16 +66,32 @@
 	   (cons '(() () ()) result))
 	  ;; group
 	  ((= -100 (car token))
-	   (cons `(Inner ,(mlist (cdr token)) () ()) result))
+	   (cons `(Inner 
+		   ,(mlist (cdr token) (cons (make-hash-table) codetbl) limit)
+		   () ())
+		 result))
 	  ;; box
           ((= -102 (car token))
 	   (cons `(Box ,(expand-box token) () ()) result))
 	  (else
-	   (cons `(,(select-atom token) ,token () ())
+	   (cons `(,(select-atom token) 
+		   ,(or (find-mathcode token codetbl) token)
+		   () ())
 		 result))))
 
+  (define (minus-symbol? token)
+    (and (textoken? token) 
+	 (= 12 (cat token)) 
+	 (char=? #\- (cdr token))))
+
+  (define (make-minus-noad t result)
+    (if (or (null? result) (null? (car result)) 
+	    (not (memq (caar result) '(Ord Inner Close))))
+	(cons `(Ord ,(find-mathcode t codetbl) () ()) result)
+	(cons `(Bin ,(find-mathcode t codetbl) () ()) result)))
+
   (define (make-radical-noad token spec result)
-    (cons `(Rad ,(mlist (cdr token)) () () ,(cadr spec)) result))
+    (cons `(Rad ,(mlist (cdr token) codetbl limit) () () ,(cadr spec)) result))
 
   (define (set-subscr token result)
     (if (null? result)
@@ -93,14 +121,14 @@
 	   (cond ((over? (car spec))
 		  `(default-code ,numerator ,denominator () ()))
 		 ((atop? (car spec))
-		  `(() ,numerator ,denominator () ()))
+		  `((0) ,numerator ,denominator () ()))
 		 ((above? (car spec))
 		  `(,(second spec) ,numerator ,denominator () ()))
 		 ((overwithdelims? (car spec))
 		  `(default-code ,numerator ,denominator 
 		     (,(second spec)) (,(third spec))))
 		 ((atopwithdelims? (car spec))
-		  `(() ,numerator ,denominator 
+		  `((0) ,numerator ,denominator 
 		    (,(second spec)) (,(third spec))))
 		 ((abovewithdelims? (car spec))
 		  `(,(fourth spec) ,numerator ,denominator 
@@ -108,7 +136,7 @@
   
   (receive (result next-field spec)
 	   (fold3 loop '() 0 #f ts)
-	   (cons 100 
+	   (cons (* 100 limit) 
 		 (let1 result (reverse result)
 		       (if spec
 			   (make-fraction spec 
@@ -281,13 +309,7 @@
 	(else
 	 (floor (/ (car token) #xffff)))))
 
-;; mathcode is not supported yet. these are to be fixed.
-(define (get-mathcode t)
-  (assoc (cdr t) mathcodes))
-(define mathcodes
-  (list
-   '(#\< . #x313c)
-   '(#\* . #x2203)))
+
 
 
 ;; preds
@@ -334,3 +356,6 @@
 	   (textoken? (car token)))
       (radical? (car token))
       #f))
+
+(defpred nolimits? "nolimits")
+(defpred limits? "limits")

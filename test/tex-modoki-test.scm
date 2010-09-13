@@ -347,5 +347,11 @@ c"))))
 \\b{B}.}
 \\b "))))
 
+(test-section "codename")
+ 
+(test* "catcode"
+       "a<"
+       (tokenlist->string (output (string->tokenlist "{\\catcode`\\<=1 <a}}<"))))
+
 (test-end)
 
