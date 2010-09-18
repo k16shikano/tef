@@ -8,6 +8,7 @@
 (load "group.scm")
 (load "box.scm")
 (load "math.scm")
+(load "align.scm")
 (load "tokenlist-utils.scm")
 
 ;; [token] -> env -> [expanded token]
@@ -51,6 +52,15 @@
 		 `(,(caar boxed) ,(cadar boxed) ,(caddar boxed)
 		   ,@(expand-all (cdddar boxed) env)))
 		(expand-all (cdr boxed) env))))
+	((halign? (car ts))
+	 (let1 haligned (haligning (eval-till-begingroup ts env))
+	       (append
+		`((-103 . ,(align-map 
+			    (lambda (content) (expand-all content env))
+			    (cdar (expand-halign
+				   (caddar haligned)
+				   (expand-all (cdddar haligned) env))))))
+		(expand-all (cdr haligned) env))))
 	((mathchar? (car ts))
 	 (receive (mathcharcode rest)
 		  (get-mathchar (cdr ts))
@@ -86,12 +96,7 @@
 			    (cddr (mathen (cdr ts))) (cdr gots))))
 	   (append 
 	    `(,(mlist (expand-all math env) default-mathcodes limit))
-	    (expand-all rest env)))
-#;	   (let1 mathed (mathen ts)
-	       (append 
-		`(,(mlist (expand-all (cdar mathed) env)
-			  default-mathcodes 1))
-		(expand-all (cdr mathed) env))))
+	    (expand-all rest env))))
 	((find-catcode (car ts) env)
 	 => (lambda (v)
 	      (expand-all (cons (cons v (cdar ts)) (cdr ts)) env)))

@@ -73,6 +73,9 @@
 	  ;; box
           ((= -102 (car token))
 	   (cons `(Box ,(expand-box token) () ()) result))
+	  ;; align
+          ((= -103 (car token))
+	   (cons `(Inner ,token () ()) result))
 	  (else
 	   (cons `(,(select-atom token) 
 		   ,(or (find-mathcode token codetbl) token)

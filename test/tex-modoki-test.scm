@@ -347,6 +347,11 @@ c"))))
 \\b{B}.}
 \\b "))))
 
+(test* "align"
+       '((-103 (((200 (Ord (11 . #\a) () ()))) ((12 . #\2) (11 . #\b)) ((200 (Ord (11 . #\c) () ()))) ((12 . #\2) (11 . #\d)))) (11 . #\g) (11 . #\g))
+       (output 
+	(string->tokenlist "\\halign{&$#$&2#\\cr a&b&c&d\\cr}gg")))
+
 (test-section "codename")
  
 (test* "catcode"

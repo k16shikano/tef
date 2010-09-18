@@ -5,7 +5,8 @@
 (load "group.scm")
 
 (define (box? token)
-  (and (= (cat token) -1)
+  (and (textoken? token)
+       (= (cat token) -1)
        (member (cdr token) 
 	       '("hbox" "vbox" "vtop" "box" "copy" "vsplit" "lastbox" "vcenter"))))
 

@@ -25,6 +25,10 @@
 		   ((= 1 (caadar ts)) ; vbox
 		    (cons (list #\| (restore-command (cdadar ts)) #\|)
 			  (restore-command (cdr ts))))))
+	    ; align
+	    ((= -103 (caar ts))
+	     (cons (print-align (cdar ts))
+		   (restore-command (cdr ts))))
 	    ; math
 	    ((or (= 100 (caar ts)) (= 200 (caar ts)))
 	     (cons (print-math (cdar ts) (caar ts))
@@ -221,3 +225,12 @@
    (html:html 
     (css) 
     (html:body (tokenlist->string ts)))))
+
+(define (print-align align)
+  (html:table
+   (map (lambda (row)
+	  (html:tr 
+	   (map (lambda (col)
+		  (html:td (tokenlist->string col)))
+		row)))
+	align)))
