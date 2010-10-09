@@ -86,7 +86,7 @@
 		  (cons (cons (car ts) radicalspec) rest)))
 	((or (= (cat (car ts)) -1) (= (cat (car ts)) 13))
 	 (receive (expanded rest)
-		  (eval-macro ts env)
+		  (eval-control-sequence ts env)
 		  (append expanded
 			  (expand-all rest env))))
 	((begingroup? (car ts))
@@ -118,7 +118,7 @@
 	       (append evaled (eval-till-begingroup rest env)))))
 
 ;; [token] -> env -> [expanded token] and [rest]
-(define (eval-macro ts env)
+(define (eval-control-sequence ts env)
   (cond
    ((null? ts)
     (values '() '()))
@@ -126,14 +126,23 @@
     (values '() (assignment! ts env #f)))
    ((global? (car ts))
     (values '() (assignment! (cdr ts) env #t)))
+   (else
+    (eval-macro ts env))))
+
+(define (eval-macro ts env)
+  (cond
    ((expandafter? (car ts))
     (receive (expanded rest)
 	     (eval-macro (cddr ts) env)
 	     (values (expand-all `(,(cadr ts) ,@expanded) env) rest)))
+   ((noexpand? (car ts))
+    (values
+     `(,(cons (or (find-catcode (cadr ts) env) (cat (cadr ts))) (cdadr ts)))
+     (cddr ts)))
    ((or
      (and (= -1 (cat (car ts)))
 	  (find-macro-definition (token->symbol (cdar ts)) env))
-     (and (= 13 (cat (car ts)))
+     (and (= 13 (or (find-catcode (car ts) env) (cat (car ts))))
 	  (find-activechar-definition (token->symbol (cdar ts)) env)))
     => (lambda (v)
 	 (if (and (textoken? (car v)) (< 0 (cat (car v)))) 
@@ -169,7 +178,11 @@
 		  (expand-if test rest)))
 	((if-type=? "if" (car ts))
 	 (receive (test rest)
-		  (ifx-test (cdr ts) env)
+		  (ifchar-test (cdr ts) 'char env)
+		  (expand-if test rest)))
+	((if-type=? "ifcat" (car ts))
+	 (receive (test rest)
+		  (ifchar-test (cdr ts) 'cat env)
 		  (expand-if test rest)))
 	(else
 	 (error <read-if-error> "Unknown Type of if" (perror ts)))))
@@ -199,6 +212,32 @@
 	      (values (equal? t1 t2) (cddr condi)))
 	    (values (equal? t1 t2) (cddr condi))))))
 
+(define (expand-for-two ts env)
+  (receive (expanded rest)
+	   (eval-macro ts env)
+	   (cond ((<= 2 (length expanded))
+		  (append expanded rest))
+		 ((null? expanded)
+		  (expand-for-two rest env))
+		 (else
+		  (append expanded 
+			  (call-with-values (lambda () (eval-macro rest env))
+			    append))))))
+
+(define (ifchar-test condi type env)
+  (let* ((ts (expand-for-two condi env))
+	 (t1 (and (not (null? ts)) (car ts)))
+	 (t2 (and t1 (not (null? (cdr ts))) (cadr ts))))
+    (values 
+     (cond ((eq? 'char type)
+	    (or (= -1 (cat t1) (cat t2))
+		(char=? (cdr t1) (cdr t2))))
+	   ((eq? 'cat type)
+	    (= (cat t1) (cat t2)))
+	   (else
+	    (error "Unknown if type")))
+     (expand-all (cddr ts) env))))
+
 (define (seek-else ts)
   (let R ((ts ts) (body '()))
     (cond ((null? ts)
@@ -206,7 +245,7 @@
 	  ((if? (car ts))
 	   (process-if ts))
 	  ((fi? (car ts))
-	   (values #f (cons body ts)))
+	   (values #f (cdr ts)))
 	  ((else? (car ts))
 	   (values (reverse body) (cdr ts)))
 	  (else

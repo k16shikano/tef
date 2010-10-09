@@ -256,8 +256,6 @@ c"))))
 \\b "))))
 
 
-
-
 (test-section "number and dimension")
 (load "num-dimen.scm")
 
@@ -356,6 +354,40 @@ c"))))
 \\isifx\\c\\d
 \\isifx\\a\\b
 \\isifx\\d\\e"))))
+
+(test* "if"
+       "yes1yes3"
+       (tokenlist->string
+	(output
+	 (string->tokenlist "\
+\\def\\a{*}\
+\\let\\b=*\
+\\def\\c{/}\
+\\if*\\a yes1\\fi
+\\if\\a\\c yes2\\fi
+\\if\\par\\let yes3\\fi"))))
+
+(test* "if"
+       "zyes"
+       (tokenlist->string
+	(output
+	 (string->tokenlist "\
+\\def\\a{xx}\
+\\def\\b{z}\
+\\if\\a\\b yes\\else no \\fi"))))
+
+(test* "ifcat"
+       "yes1yes2no3"
+       (tokenlist->string
+	(output
+	 (string->tokenlist "\
+\\catcode`[=13 \\catcode`]=13 \\def[{*}\
+\\ifcat[*yes1\\else no1\\fi\
+\\ifcat\\noexpand[\\noexpand]yes2\\else no2\\fi\
+\\ifcat\\noexpand[*yes3\\else no3\\fi"))))
+
+
+(test-section "alignment")
 
 (test* "align"
        '((-103 (((200 (Ord (11 . #\a) () ()))) ((12 . #\2) (11 . #\b)) ((200 (Ord (11 . #\c) () ()))) ((12 . #\2) (11 . #\d)))) (11 . #\g) (11 . #\g))

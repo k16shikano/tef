@@ -104,6 +104,7 @@
 
 (defpred par? "par")
 (defpred expandafter? "expandafter")
+(defpred noexpand? "noexpand")
 (defpred global? "global")
 
 (defpred let? "let")
