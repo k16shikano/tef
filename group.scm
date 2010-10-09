@@ -1,12 +1,13 @@
 (load "tokenlist-utils.scm")
 (load "codes.scm")
+(load "eqtb.scm")
 
 ;; this gets the head group from a token list,
 ;; returning the group and the rest of the string in multivalues as tokenlists.
 ;; [token] -> ([token] and [token])
 (define-condition-type <read-group-error> <error> #f)
 (define (get-tex-group ls . env)
-  (define localenv (if (null? env) (list (make-hash-table)) (car env)))
+  (define localenv (if (null? env) (list (make-eqtb)) (car env)))
   (define (in-group ls body i)
     (cond ((null? ls)
 	   (error <read-group-error> "unterminated tex group" 
@@ -14,7 +15,7 @@
 	  ((codename? (car ls))
 	   (receive (num newcode rest)
 		    (get-codename (cdr ls))
-		    (begin (update-code! (integer->char num) newcode 
+		    (begin (update-catcode! (integer->char num) newcode 
 					    localenv)
 			   (in-group rest body i))))
 	  ((find-catcode (car ls) localenv)

@@ -13,6 +13,7 @@
 (use util.list)
 (load "box.scm")
 (load "codes.scm")
+(load "eqtb.scm")
 (load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 
@@ -67,7 +68,7 @@
 	  ;; group
 	  ((= -100 (car token))
 	   (cons `(Inner 
-		   ,(mlist (cdr token) (cons (make-hash-table) codetbl) limit)
+		   ,(mlist (cdr token) (cons (make-eqtb) codetbl) limit)
 		   () ())
 		 result))
 	  ;; box

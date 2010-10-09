@@ -1,19 +1,27 @@
 ;;;; Expand a token list.
-;;;; env is a list of hash-tables having macro definitions. 
+;;;; env is a list of eqtb having macro definitions. 
 ;;;; its key is the name of macros in symbol, 
 ;;;; and its value is [[parameter token] . [body token]].
 
+(use util.list)
 (load "def-macro.scm")
 (load "codes.scm")
+(load "eqtb.scm")
 (load "group.scm")
 (load "box.scm")
 (load "math.scm")
 (load "align.scm")
 (load "tokenlist-utils.scm")
 
+(define (init-eqtb)
+  (let1 tb (make-eqtb)
+    (hash-table-update!
+     tb 'mathcode (lambda (old) (alist->hash-table default-mathcodes-list)))
+    tb))
+
 ;; [token] -> env -> [expanded token]
 (define (output ts)
-  (let1 ts (expand-all ts (list (make-hash-table)))
+  (let1 ts (expand-all ts (list (init-eqtb)))
 	(cond ((null? ts)
 	       '())
 	      ((not (textoken? (car ts)))
@@ -32,13 +40,12 @@
   	((catcode? (car ts))
 	 (receive (num newcode rest)
 		  (get-codename (cdr ts))
-		  (begin (update-code! (integer->char num) newcode env)
+		  (begin (update-catcode! (integer->char num) newcode env)
 			 (expand-all rest env))))
   	((mathcode? (car ts))
 	 (receive (num newcode rest)
 		  (get-codename (cdr ts))
-		  (begin (update-code! (integer->char num) 
-				       newcode default-mathcodes)
+		  (begin (update-mathcode! (integer->char num) newcode env)
 			 (expand-all rest env))))
 	((if? (car ts))
 	 (receive (expanded rest)
@@ -83,10 +90,10 @@
 		  (append expanded
 			  (expand-all rest env))))
 	((begingroup? (car ts))
-	 (let1 group (groupen ts (cons (make-hash-table) env))
+	 (let1 group (groupen ts (cons (make-eqtb) env))
 	       (append 
 		`((-100 . ,(expand-all (cdar group)
-					 (cons (make-hash-table) env))))
+					 (cons (make-eqtb) env))))
 		(expand-all (cdr group) env))))
 	((beginmath? (car ts))
 	 (let* ((gots   (mathen ts))
@@ -95,7 +102,7 @@
 		(rest   (if (null? (car gots))
 			    (cddr (mathen (cdr ts))) (cdr gots))))
 	   (append 
-	    `(,(mlist (expand-all math env) default-mathcodes limit))
+	    `(,(mlist (expand-all math env) env limit))
 	    (expand-all rest env))))
 	((find-catcode (car ts) env)
 	 => (lambda (v)
@@ -130,7 +137,7 @@
 		  (if (null? params)
 		      (values (expand-all (cdr v) env) rest)
 		      (values (expand-all
-			       (apply-pattern (cdr v) params env) env) rest)))))
+			       (apply-pattern (cdr v) params) env) rest)))))
    (else
     (values `(,(car ts)) (cdr ts)))))
 
@@ -140,20 +147,20 @@
 (define-condition-type <read-if-error> <error> #f)
 
 (define (process-if ts env)
-  (define (expand-if test rest env)
+  (define (expand-if test rest)
     (if test
-	(expand-true rest env)
-	(expand-false rest env)))
+	(expand-true rest)
+	(expand-false rest)))
   (cond ((null? ts)
 	 (values '() '()))
 	((if-type=? "ifnum" (car ts))
 	 (receive (test rest)
 		  (ifnum-test (cdr ts) env)
-		  (expand-if test rest env)))
+		  (expand-if test rest)))
 	((if-type=? "ifx" (car ts))
 	 (receive (test rest)
 		  (ifx-test (cdr ts) env)
-		  (expand-if test rest env)))
+		  (expand-if test rest)))
 	(else
 	 (error <read-if-error> "Unknown Type of if" (perror ts)))))
 
@@ -182,12 +189,12 @@
 	      (values (equal? t1 t2) (cddr condi)))
 	    (values (equal? t1 t2) (cddr condi))))))
 
-(define (seek-else ts env)
+(define (seek-else ts)
   (let R ((ts ts) (body '()))
     (cond ((null? ts)
 	   (error <read-if-error> "Unterminated if"))
 	  ((if? (car ts))
-	   (process-if ts env))
+	   (process-if ts))
 	  ((fi? (car ts))
 	   (values #f (cons body ts)))
 	  ((else? (car ts))
@@ -195,30 +202,30 @@
 	  (else
 	   (R (cdr ts) (cons (car ts) body))))))
 
-(define (seek-fi ts env)
+(define (seek-fi ts)
   (let R ((ts ts) (body '()))
     (cond ((null? ts)
 	   (error <read-if-error> "Unterminated if"))
 	  ((if? (car ts))
-	   (process-if ts env))
+	   (process-if ts))
 	  ((fi? (car ts))
 	   (values (reverse body) (cdr ts)))
 	  (else
 	   (R (cdr ts) (cons (car ts) body))))))
 
-(define (expand-true ts env)
+(define (expand-true ts)
   (receive (true rest)
-	   (seek-else ts env)
+	   (seek-else ts)
 	   (if true
 	       (receive (false rest)
-			(seek-fi rest env)
+			(seek-fi rest)
 			(values true rest))
-	       (seek-fi ts env))))
+	       (seek-fi ts))))
 
-(define (expand-false ts env)
+(define (expand-false ts)
   (receive (true rest)
-	   (seek-else ts env)
+	   (seek-else ts)
 	   (if true 
-	       (seek-fi rest env)
+	       (seek-fi rest)
 	       (values '() rest))))
 

@@ -4,6 +4,9 @@
 ;; integer and character, while it is just a integer in TeX82. 
 
 (use util.list)
+(load "eqtb.scm")
+(load "tokenlist-utils.scm")
+(load "parser-combinator/parser-combinator.scm")
 
 (define (get-codename ts)
   (receive (num rest)
@@ -21,22 +24,27 @@
 			    (tex-int->integer alt)
 			    rest))))
 
-(define (update-code! char newcode env)
-  (let1 env (car env)
-	(if (hash-table-exists? env char)
-	    (hash-table-update! env char (lambda (old) newcode))
-	    (hash-table-put! env char newcode))))
+(define (update-catcode! char newcode env)
+  (eqtb-update! (car env) 'catcode char newcode))
 
-;; catcode
+(define (update-mathcode! char newcode env)
+  (eqtb-update! (car env) 'mathcode char newcode))
+
 (define (find-catcode t env)
   (cond ((or (not (textoken? t)) (not t) (null? env))
 	 #f)
-	((hash-table-get (car env) (cdr t) #f)
+	((eqtb-get (car env) 'catcode  (cdr t))
 	 => (lambda (v) (if (= (car t) v) #f v)))
 	(else
 	 (find-catcode t (cdr env)))))
 
-;; mathcode
+(define (find-mathcode t env)
+  (cond ((null? env) #f)
+	((eqtb-get (car env) 'mathcode (cdr t))
+	 => (cut list <>))
+	(else 
+	 (find-mathcode t (cdr env)))))
+
 (define default-mathcodes-list
   (list
    '(#\+ . #x2b)
@@ -44,14 +52,4 @@
    '(#\< . #x3c)
    '(#\= . #x3d)
    '(#\> . #x3e)))
-
-(define default-mathcodes
-  (list (alist->hash-table default-mathcodes-list)))
-
-(define (find-mathcode t tbls)
-  (cond ((null? tbls) #f)
-	((hash-table-get (car tbls) (cdr t) #f)
-	 => (cut list <>))
-	(else 
-	 (find-mathcode t (cdr tbls)))))
 
