@@ -136,12 +136,14 @@
      (and (= 13 (cat (car ts)))
 	  (find-activechar-definition (token->symbol (cdar ts)) env)))
     => (lambda (v)
-	 (receive (params rest)
-		  (match-def-parameter (cdr ts) (car v))
-		  (if (null? params)
-		      (values (expand-all (cdr v) env) rest)
-		      (values (expand-all
-			       (apply-pattern (cdr v) params) env) rest)))))
+	 (if (and (textoken? (car v)) (< 0 (cat (car v)))) 
+	     (values v (cdr ts))
+	     (receive (params rest)
+		      (match-def-parameter (cdr ts) (car v))
+		      (if (null? params)
+			  (values (expand-all (cdr v) env) rest)
+			  (values (expand-all
+				   (apply-pattern (cdr v) params) env) rest))))))
    (else
     (values `(,(car ts)) (cdr ts)))))
 
@@ -162,6 +164,10 @@
 		  (ifnum-test (cdr ts) env)
 		  (expand-if test rest)))
 	((if-type=? "ifx" (car ts))
+	 (receive (test rest)
+		  (ifx-test (cdr ts) env)
+		  (expand-if test rest)))
+	((if-type=? "if" (car ts))
 	 (receive (test rest)
 		  (ifx-test (cdr ts) env)
 		  (expand-if test rest)))
@@ -188,8 +194,8 @@
       (error <read-if-error> "no prameter for ifx")
       (let ((t1 (car condi)) (t2 (cadr condi)))
 	(if (= -1 (car t1) (car t2))
-	    (let ((t1 (find-macro-definition (token->symbol (cdr t1)) env))
-		  (t2 (find-macro-definition (token->symbol (cdr t2)) env)))
+	    (let ((t1 (find-definition (token->symbol (cdr t1)) env))
+		  (t2 (find-definition (token->symbol (cdr t2)) env)))
 	      (values (equal? t1 t2) (cddr condi)))
 	    (values (equal? t1 t2) (cddr condi))))))
 

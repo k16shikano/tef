@@ -142,8 +142,8 @@
 	(receive (t2 rest)
 	    ((parser-cont (skip tex-space1) any-token) rest)
 	  (let ((k (token->symbol (cdar t1)))
-		(b (or (find-macro-definition (token->symbol (cdar t2)) env)
-		       (find-activechar-definition (token->symbol (cdar t2)) env))))
+		(b (or (find-definition (token->symbol (cdar t2)) env) 
+		       t2)))
 	    (cond ((= (cat (car ts)) -1)
 		   (eqtb-update! tb 'control-sequence k b))
 		  ((= (cat (car ts)) 13)
@@ -169,6 +169,10 @@
 	 => values)
 	(else
 	 (find-activechar-definition key (cdr env)))))
+
+(define (find-definition key env)
+  (or (find-macro-definition key env)
+      (find-activechar-definition key env)))
 
 ;; [token] -> [[token]] -> [expanded token]
 (define (apply-pattern body params)

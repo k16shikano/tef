@@ -236,6 +236,28 @@ c"))))
  \\triple{A}}\
 {\\triple{B}}"))))
 
+(test-section "\\let")
+
+(test* "trivial let"
+       "*"
+       (tokenlist->string
+	(output (string->tokenlist "\\let\\b=*\\b"))))
+
+(test* "let" 
+       "A: B: B"
+       (tokenlist->string 
+	(output
+	 (string->tokenlist "\
+\\def\\b{B}\
+{\\def\\a#1.{#1:}\
+\\let\\b\\a\
+\\a{A}.
+\\b{B}.}
+\\b "))))
+
+
+
+
 (test-section "number and dimension")
 (load "num-dimen.scm")
 
@@ -334,18 +356,6 @@ c"))))
 \\isifx\\c\\d
 \\isifx\\a\\b
 \\isifx\\d\\e"))))
-
-(test* "let" 
-       "A: B: B"
-       (tokenlist->string 
-	(output
-	 (string->tokenlist "\
-\\def\\b{B}\
-{\\def\\a#1.{#1:}\
-\\let\\b\\a\
-\\a{A}.
-\\b{B}.}
-\\b "))))
 
 (test* "align"
        '((-103 (((200 (Ord (11 . #\a) () ()))) ((12 . #\2) (11 . #\b)) ((200 (Ord (11 . #\c) () ()))) ((12 . #\2) (11 . #\d)))) (11 . #\g) (11 . #\g))
