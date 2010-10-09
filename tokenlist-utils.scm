@@ -9,9 +9,12 @@
   (string-append str (apply string char)))
 
 (define (token->symbol token)
-  (if (string? token) 
-      (string->symbol token)
-      #f))
+  (cond ((string? token) 
+	 (string->symbol token))
+	((char? token)
+	 (string->symbol (string token)))
+	(else
+	 #f)))
 
 ;; [token] -> [token] -> [token] or #f
 (define (match-head ls pattern) 

@@ -122,11 +122,11 @@
   (let1 tb (if global? (last env) (car env))
     (receive (param body rest)
 	(grab-macro-definition (cdr ts))		 
-      (let ((k (string->symbol (cdar ts)))
+      (let ((k (token->symbol (cdar ts)))
 	    (b (cons param body)))
 	(cond ((= (cat (car ts)) -1)
 	       (eqtb-update! tb 'control-sequence k b))
-	      ((= (cat (car ts)) 13)
+	      ((= (or (find-catcode (car ts) env) (cat (car ts))) 13)
 	       (eqtb-update! tb 'active-character k b))
 	      (else
 	       (error "malformed macro definition" (perror ts))))
@@ -141,8 +141,9 @@
 	  ((skip (tex-other-char #\= "")) rest)
 	(receive (t2 rest)
 	    ((parser-cont (skip tex-space1) any-token) rest)
-	  (let ((k (string->symbol (cdar t1)))
-		(b (find-macro-definition (token->symbol (cdar t2)) env)))
+	  (let ((k (token->symbol (cdar t1)))
+		(b (or (find-macro-definition (token->symbol (cdar t2)) env)
+		       (find-activechar-definition (token->symbol (cdar t2)) env))))
 	    (cond ((= (cat (car ts)) -1)
 		   (eqtb-update! tb 'control-sequence k b))
 		  ((= (cat (car ts)) 13)
@@ -155,11 +156,19 @@
 (define (find-macro-definition key env)
   (cond ((or (not key) (null? env))
 	 #f)
-	((or (eqtb-get (car env) 'control-sequence key)
-	     (eqtb-get (car env) 'active-character key))
+	((eqtb-get (car env) 'control-sequence key)
 	 => values)
 	(else
 	 (find-macro-definition key (cdr env)))))
+
+;; symbol -> env
+(define (find-activechar-definition key env)
+  (cond ((or (not key) (null? env))
+	 #f)
+	((eqtb-get (car env) 'active-character key)
+	 => values)
+	(else
+	 (find-activechar-definition key (cdr env)))))
 
 ;; [token] -> [[token]] -> [expanded token]
 (define (apply-pattern body params)

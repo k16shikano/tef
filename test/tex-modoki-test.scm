@@ -356,7 +356,13 @@ c"))))
  
 (test* "catcode"
        "a<"
-       (tokenlist->string (output (string->tokenlist "{\\catcode`\\<=1 <a}}<"))))
+       (tokenlist->string
+	(output (string->tokenlist "{\\catcode`\\<=1 <a}}<"))))
+
+(test* "active char"
+       "*"
+       (tokenlist->string
+	(output (string->tokenlist "\\catcode`[=13\\def[{*}["))))
 
 (test-end)
 

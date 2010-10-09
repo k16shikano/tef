@@ -84,7 +84,7 @@
 	 (receive (radicalspec rest)
 		  (get-delimiter (expand-all (cdr ts) env))
 		  (cons (cons (car ts) radicalspec) rest)))
-	((= (cat (car ts)) -1)
+	((or (= (cat (car ts)) -1) (= (cat (car ts)) 13))
 	 (receive (expanded rest)
 		  (eval-macro ts env)
 		  (append expanded
@@ -130,7 +130,11 @@
     (receive (expanded rest)
 	     (eval-macro (cddr ts) env)
 	     (values (expand-all `(,(cadr ts) ,@expanded) env) rest)))
-   ((find-macro-definition (token->symbol (cdar ts)) env)
+   ((or
+     (and (= -1 (cat (car ts)))
+	  (find-macro-definition (token->symbol (cdar ts)) env))
+     (and (= 13 (cat (car ts)))
+	  (find-activechar-definition (token->symbol (cdar ts)) env)))
     => (lambda (v)
 	 (receive (params rest)
 		  (match-def-parameter (cdr ts) (car v))
