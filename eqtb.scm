@@ -8,7 +8,12 @@
     `(active-character . ,(make-hash-table))
     `(control-sequence . ,(make-hash-table))
     `(catcode  . ,(make-hash-table))
-    `(mathcode . ,(make-hash-table))))
+    `(mathcode . ,(make-hash-table))
+    `(count-base  . ,(make-hash-table))
+    `(dimen-base  . ,(make-hash-table))
+    `(skip-base   . ,(make-hash-table))
+    `(muskip-base . ,(make-hash-table))
+    ))
 
 (define (eqtb-get tb base key)
   (hash-table-get 

@@ -9,6 +9,7 @@
 (load "eqtb.scm")
 (load "group.scm")
 (load "box.scm")
+(load "register.scm")
 (load "math.scm")
 (load "align.scm")
 (load "tokenlist-utils.scm")
@@ -47,6 +48,20 @@
 		  (get-codename (cdr ts))
 		  (begin (update-mathcode! (integer->char num) newcode env)
 			 (expand-all rest env))))
+  	((register? (car ts))
+	 (receive (num val rest)
+		  (get-register-value (cdr ts))
+		  (cond (val
+			 (eqtb-update! 
+			  (car env) 
+			  (string->symbol #`",(cdar ts)-base")
+			  num val)
+			 (expand-all rest env))
+			(else
+			 (append
+			  (list (find-register-definition 
+				 (string->symbol #`",(cdar ts)-base") num env))
+			  (expand-all rest env))))))
 	((if? (car ts))
 	 (receive (expanded rest)
 		  (process-if ts env)

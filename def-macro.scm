@@ -221,4 +221,7 @@
    ((xdef? (car ts))
     `((-1 . "global") ,@(edef->def ts env)))
    ((mathchardef? (car ts))
-    (mathchardef->def ts))))
+    (mathchardef->def ts))
+;   ((countdef? (car ts))
+;    (countdef->def ts))
+   ))

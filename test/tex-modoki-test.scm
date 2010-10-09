@@ -406,5 +406,10 @@ c"))))
        (tokenlist->string
 	(output (string->tokenlist "\\catcode`[=13\\def[{*}["))))
 
-(test-end)
+(test-section "registers")
 
+(test* "count register"
+       '(1)
+       (output (string->tokenlist "\\count20=1\\count20")))
+
+(test-end)

@@ -145,3 +145,10 @@
 (defpred mathcode? "mathcode")
 
 (define codename? (orp catcode? mathcode?))
+
+(defpred count? "count")
+(defpred dimen? "dimen")
+(defpred skip? "skip")
+(defpred muskip? "muskip")
+
+(define register? (orp count? dimen? skip? muskip?))
