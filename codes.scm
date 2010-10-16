@@ -5,12 +5,13 @@
 
 (use util.list)
 (load "eqtb.scm")
+(load "register.scm")
 (load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 
-(define (get-codename ts)
+(define (get-codename ts env)
   (receive (num rest)
-	   (tex-int-num ts)
+	   ((get-tex-int-num env) ts)
 	   (receive (alt rest)
 		    ((parser-many
 		      (parser-do return altnum
@@ -18,10 +19,10 @@
 					       (skip tex-space1)
 					       (orothers "" #\=)
 					       (skip tex-space1))
-				    altnum <- tex-int-num))
+				    altnum <- (get-tex-int-num env)))
 		     rest)
-		    (values (tex-int->integer num) 
-			    (tex-int->integer alt)
+		    (values num
+			    alt
 			    rest))))
 
 (define (update-catcode! char newcode env)

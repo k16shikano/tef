@@ -17,7 +17,7 @@
 	      (parser-cont (tex-other-char #\`) char-token)
 	      (error "it's not number"))
    (skip extra-space1)))
-
+			
 (define (tex-int->integer ts)
   (define (p radix ts)
     (string->number (list->string (map cdr ts)) radix))

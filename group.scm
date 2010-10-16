@@ -14,7 +14,7 @@
 		  (perror (reverse body))))
 	  ((codename? (car ls))
 	   (receive (num newcode rest)
-		    (get-codename (cdr ls))
+		    (get-codename (cdr ls) env)
 		    (begin (update-catcode! (integer->char num) newcode 
 					    localenv)
 			   (in-group rest body i))))

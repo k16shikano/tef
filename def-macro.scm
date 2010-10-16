@@ -195,16 +195,16 @@
 	     (1 . #\{) ,@(expand-all body env) (2 . #\}) 
 	     ,@rest)))
 
-(define (mathchardef->def ts)
+(define (mathchardef->def ts env)
   (receive (texcharint rest)
 	   ((parser-cont (skip tex-space1)
 			 (skip (tex-other-char #\= ""))
 			 (skip tex-space1)
-			 tex-int-num)
+			 (get-tex-int-num env))
 	    (cddr ts))
 	   `((-1 . "def") ,(cadr ts) 
 	     (1 . #\{) (-1 . "mathchar") 
-	     ,@texcharint (2 . #\})
+	     ,@(string->tokenlist (x->string texcharint)) (2 . #\})
 	     ,@rest)))
 
 ;; [token] -> env -> bool -> [token]
@@ -221,7 +221,7 @@
    ((xdef? (car ts))
     `((-1 . "global") ,@(edef->def ts env)))
    ((mathchardef? (car ts))
-    (mathchardef->def ts))
+    (mathchardef->def ts env))
 ;   ((countdef? (car ts))
 ;    (countdef->def ts))
    ))

@@ -409,7 +409,7 @@ c"))))
 (test-section "registers")
 
 (test* "count register"
-       '(1)
-       (output (string->tokenlist "\\count20=1\\count20")))
+       '(20)
+       (output (string->tokenlist "\\count20=100\\count\\count20=20\\count100")))
 
 (test-end)

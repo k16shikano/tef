@@ -226,12 +226,12 @@
 ;;;; getter used by output-loop
 ;; [token] -> ([token] and [token])
 (define-condition-type <read-math-error> <error> #f)
-(define (get-inline-math ls)
+(define (get-inline-math ls env)
   (define (in-math ls body)
     (cond ((null? ls)
 	   (error <read-math-error> "unterminated math $"))
 	  ((box? (car ls))
-	   (let1 boxed (boxen ls)
+	   (let1 boxed (boxen ls env)
 		 (in-math (cdr boxed) (cons (car boxed) body))))
 	  ((mathdollar? (car ls))
 	   (values (reverse body) (cdr ls)))
@@ -255,15 +255,15 @@
 (define mathen
   (put-specific-code 100 beginmath? get-inline-math))
 
-(define (get-mathchar ts)
+(define (get-mathchar ts env)
   (receive (num rest)
-	   (tex-int-num ts)
-	   (values (list (tex-int->integer num)) rest)))
+	   ((get-tex-int-num env) ts)
+	   (values (list num) rest)))
 
-(define (get-delimiter ts)
+(define (get-delimiter ts env)
   (receive (num rest)
-	   (tex-int-num ts)
-	   (values (list (tex-int->integer num)) rest)))
+	   ((get-tex-int-num env) ts)
+	   (values (list num) rest)))
 
 (define (get-fracspec ts)
   (cond (((orp over? atop?) (car ts))
