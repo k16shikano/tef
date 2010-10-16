@@ -27,6 +27,7 @@
 	(else
 	 (find-register-value type num (cdr env)))))
 
+;; env -> ([tokenlist] -> integer)
 (define (get-tex-int-num env)
   (lambda (ts)
     (guard (e
@@ -40,7 +41,7 @@
 			       (values 
 				(find-register-value 
 				 (string->symbol (cdar type)) n env) rest))))
-	    (else (error)))
+	    (else (error "parse failed" (perror ts))))
 	   (receive (n rest)
 		    (tex-int-num ts)
 		    (values (tex-int->integer n) rest)))))
