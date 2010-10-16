@@ -265,21 +265,19 @@
 	   ((get-tex-int-num env) ts)
 	   (values (list num) rest)))
 
-(define (get-fracspec ts)
+(define (get-fracspec ts env)
   (cond (((orp over? atop?) (car ts))
 	 (values (list (car ts)) (cdr ts)))
 	(((orp overwithdelims? atopwithdelims?) (car ts))
 	 (values (list (car ts) (cadr ts) (caddr ts)) (cdddr ts)))
 	((above? (car ts))
 	 (receive (dimen rest)
-		  (get-tex-dimen (cdr ts))
-		  (values (list (car ts) 
-				(dimen->sp (car dimen))) rest)))
+		  ((get-tex-dimen env) (cdr ts))
+		  (values (list (car ts) dimen) rest)))
 	((abovewithdelims? (car ts))
 	 (receive (dimen rest)
-		  (get-tex-dimen (cdddr ts))
-		  (values (list (car ts) (cadr ts) (caddr ts) 
-				(dimen->sp (car dimen))) rest)))))
+		  ((get-tex-dimen env) (cdddr ts))
+		  (values (list (car ts) (cadr ts) (caddr ts) dimen) rest)))))
 
 ;; A math token is list of a number whose top hexadecimal represents 
 ;; the class and the rest is the unicode encoding.

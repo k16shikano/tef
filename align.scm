@@ -13,15 +13,15 @@
 (define (align-slot? token)
   (and (textoken? token) (= 6 (cat token))))
 
-(define (get-halign ts)
+(define (get-halign ts env)
   (receive (dimen rest)
-	   (orvalues (get-tex-dimen-after "to" (cdr ts))
-		     (get-tex-dimen-after "spread" (cdr ts)))
+	   (orvalues (get-tex-dimen-after "to" (cdr ts) env)
+		     (get-tex-dimen-after "spread" (cdr ts) env))
 	   (let* ((body  (cdar (groupen rest)))
 		  (rest  (cdr (groupen rest)))
 		  (preamble (take-while (lambda (t) (not (cr? t))) body))
 		  (rows  (drop-while (lambda (t) (not (cr? t))) body)))
-	     (values `(,@dimen ,preamble ,@rows)
+	     (values `(,dimen ,preamble ,@rows)
 		     rest))))
 
 (define haligning

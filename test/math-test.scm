@@ -31,7 +31,7 @@
 	(string->tokenlist "$x\\over y$")))
 
 (test* "math with fraction" 
-       '((200 (Fraction (-101 . -80) ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
+       '((200 (Fraction -5242880 ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
        (output
 	(string->tokenlist "$x\\above-'120pt y$")))
 

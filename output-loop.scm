@@ -49,9 +49,9 @@
 		  (begin (update-mathcode! (integer->char num) newcode env)
 			 (expand-all rest env))))
   	((register? (car ts))
-	 (receive (num val rest)
-		  (get-register-value (cdr ts) env)
-		  (let1 base (string->symbol #`",(cdar ts)")
+	 (let1 base (string->symbol #`",(cdar ts)")
+	   (receive (num val rest)
+		    (get-register-value base (cdr ts) env)
 		    (cond (val
 			   (eqtb-update! (car env) base num val)
 			   (expand-all rest env))
@@ -72,7 +72,7 @@
 		   ,@(expand-all (cdddar boxed) env)))
 		(expand-all (cdr boxed) env))))
 	((halign? (car ts))
-	 (let1 haligned (haligning (eval-till-begingroup ts env))
+	 (let1 haligned (haligning (eval-till-begingroup ts env) env)
 	       (append
 		`((-103 . ,(align-map 
 			    (lambda (content) (expand-all content env))
@@ -90,7 +90,7 @@
 		  (expand-all (append (list delcode) rest) env)))
 	((fraction? (car ts))
 	 (receive (fracspec rest)
-		  (get-fracspec (cons (car ts) (expand-all (cdr ts) env)))
+		  (get-fracspec (cons (car ts) (expand-all (cdr ts) env)) env)
 		  (cons fracspec rest)))
 	((radical? (car ts))
 	 (receive (radicalspec rest)

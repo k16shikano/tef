@@ -38,10 +38,10 @@
 ;; are there any values whose first value is not null?
 (define-syntax orvalues
   (syntax-rules ()
-    ((_) (values '(-101 . #f) '()))
+    ((_) (values #f '()))
     ((_ v1) v1)
     ((_ v1 v2 ...) 
-     (if (not (cdar (values-ref v1 0))) (orvalues v2 ...) v1))))
+     (if (not (values-ref v1 0)) (orvalues v2 ...) v1))))
 
 (define-syntax orp
   (syntax-rules ()

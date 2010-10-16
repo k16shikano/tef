@@ -260,15 +260,14 @@ c"))))
 (load "num-dimen.scm")
 
 (test* "get-tex-dimen-after and orvalues"
-       "1.0pt"
-       (tokenlist->string
-	(let ((ts (string->tokenlist "spread1.0pt{...}")))
-	  (orvalues (get-tex-dimen-after "to" ts)
-		    (get-tex-dimen-after "spread" ts)))))
+       65536.0
+       (let ((ts (string->tokenlist "spread1.0pt{...}")))
+	 (orvalues (get-tex-dimen-after "to" ts `(,(make-eqtb)))
+		   (get-tex-dimen-after "spread" ts `(,(make-eqtb))))))
 
 (parser-test* "tex-dimen"
 	      "3pt" "{x}"
-	      get-tex-dimen "3pt{x}")
+	      tex-dimen "3pt{x}")
 
 (parser-test* "dimen-unit"
 	      "pt" ""
@@ -409,7 +408,11 @@ c"))))
 (test-section "registers")
 
 (test* "count register"
-       '(20)
-       (output (string->tokenlist "\\count20=100\\count\\count20=20\\count100")))
+       '(100)
+       (output (string->tokenlist "\\count20=100\\count\\count20=\\count20\\count100")))
+
+(test* "dimen register"
+       '(655360)
+       (output (string->tokenlist "\\count20=10\\dimen100=\\count20pt\\dimen100")))
 
 (test-end)
