@@ -153,3 +153,4 @@
 
 (define register? (orp count? dimen? skip? muskip?))
 
+(defpred advance? "advance")

@@ -415,4 +415,9 @@ c"))))
        '(655360)
        (output (string->tokenlist "\\count20=10\\dimen100=\\count20pt\\dimen100")))
 
+(test* "advance counter"
+       '(200)
+       (output (string->tokenlist "\\count10=100\\advance\\count10 by \\count10\\count10")))
+
 (test-end)
+

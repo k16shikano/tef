@@ -59,6 +59,14 @@
 			   (append
 			    (list (find-register-value base num env))
 			    (expand-all rest env)))))))
+	((advance? (car ts))
+	 (let1 rest (cons 
+		     (or (and (= -1 (caar (cdr ts)))
+			      (find-macro-definition 
+			       (token->symbol (cdadr ts)) env))
+			 (cadr ts))
+		     (cddr ts))
+	       (expand-all (register-advance! rest env) env)))
 	((if? (car ts))
 	 (receive (expanded rest)
 		  (process-if ts env)

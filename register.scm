@@ -75,3 +75,29 @@
 	   (receive (num-unit rest)
 		    (tex-dimen ts)
 		    (values (dimen->sp num-unit) rest)))))
+
+(define (register-advance! ts env)
+  (cond ((count? (car ts))
+	 (register-advance-with get-tex-int-num ts env))
+	((dimen? (car ts))
+	 (register-advance-with get-tex-dimen ts env))
+	(else
+	 (error "not implemented" (perror ts)))))
+
+(define-syntax register-advance-with
+  (syntax-rules ()
+    ((_ p ts env)
+     (let1 base (string->symbol #`",(cdar ts)")
+       (receive (void rest)
+		((parser-do return 
+			      (let1 old (find-register-value base num env)
+				(eqtb-update! (car env) base num (+ old val))
+				#t)
+			    in num <- (p env)
+			       by  <- (parser-cont
+				       (skip tex-space1)
+				       (make-string-parser "by")
+				       (skip tex-space1))
+			       val <- (p env))
+		 (cdr ts))
+		rest)))))
