@@ -32,6 +32,19 @@
 	(else
 	 (find-register-value type num (cdr env)))))
 
+(define (register! ts env global?)
+  (let1 base (string->symbol #`",(cdar ts)")
+	(receive (num val rest)
+		 (get-register-value base (cdr ts) env)
+		 (cond (val
+			(eqtb-update! (if global? (last env) (car env))
+				      base num val)
+			rest)
+		       (else
+			(append
+			 (list (find-register-value base num env))
+			 rest))))))
+
 ;; env -> ([tokenlist] -> integer)
 (define (get-tex-int-num env)
   (lambda (ts)
@@ -76,22 +89,33 @@
 		    (tex-dimen ts)
 		    (values (dimen->sp num-unit) rest)))))
 
-(define (register-advance! ts env)
+
+(define (advance! ts env global?)
+  (let1 rest (cons 
+	      (or (and (= -1 (caar (cdr ts)))
+		       (find-macro-definition 
+			(token->symbol (cdadr ts)) env))
+		  (cadr ts))
+	      (cddr ts))
+	(do-advance! rest env global?)))
+
+(define (do-advance! ts env global?)
   (cond ((count? (car ts))
-	 (register-advance-with get-tex-int-num ts env))
+	 (register-advance-with get-tex-int-num ts env global?))
 	((dimen? (car ts))
-	 (register-advance-with get-tex-dimen ts env))
+	 (register-advance-with get-tex-dimen ts env global?))
 	(else
 	 (error "not implemented" (perror ts)))))
 
 (define-syntax register-advance-with
   (syntax-rules ()
-    ((_ p ts env)
+    ((_ p ts env global?)
      (let1 base (string->symbol #`",(cdar ts)")
        (receive (void rest)
 		((parser-do return 
 			      (let1 old (find-register-value base num env)
-				(eqtb-update! (car env) base num (+ old val))
+				(eqtb-update! (if global? (last env) (car env))
+					      base num (+ old val))
 				#t)
 			    in num <- (get-tex-int-num env)
 			       by  <- (parser-cont

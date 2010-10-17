@@ -48,25 +48,6 @@
 		  (get-codename (cdr ts) env)
 		  (begin (update-mathcode! (integer->char num) newcode env)
 			 (expand-all rest env))))
-  	((register? (car ts))
-	 (let1 base (string->symbol #`",(cdar ts)")
-	   (receive (num val rest)
-		    (get-register-value base (cdr ts) env)
-		    (cond (val
-			   (eqtb-update! (car env) base num val)
-			   (expand-all rest env))
-			  (else
-			   (append
-			    (list (find-register-value base num env))
-			    (expand-all rest env)))))))
-	((advance? (car ts))
-	 (let1 rest (cons 
-		     (or (and (= -1 (caar (cdr ts)))
-			      (find-macro-definition 
-			       (token->symbol (cdadr ts)) env))
-			 (cadr ts))
-		     (cddr ts))
-	       (expand-all (register-advance! rest env) env)))
 	((if? (car ts))
 	 (receive (expanded rest)
 		  (process-if ts env)
@@ -144,8 +125,18 @@
     (values '() '()))
    ((assignment? (car ts))
     (values '() (assignment! ts env #f)))
+   ((register? (car ts))
+    (values '() (register! ts env #f)))
+   ((advance? (car ts))
+    (values '() (advance! ts env #f)))
    ((global? (car ts))
-    (values '() (assignment! (cdr ts) env #t)))
+    (cond ((assignment? (cadr ts))
+	   (values '() (assignment! (cdr ts) env #t)))
+	  ((register? (cadr ts))
+	   (values '() (register! (cdr ts) env #t)))
+	  ((advance? (cadr ts))
+	   (values '() (advance! (cdr ts) env #t)))
+	  ))
    (else
     (eval-macro ts env))))
 
