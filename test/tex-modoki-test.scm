@@ -416,8 +416,7 @@ c"))))
        (output (string->tokenlist "\\count20=10\\dimen100=\\count20pt\\dimen100")))
 
 (test* "advance counter"
-       '(200)
-       (output (string->tokenlist "\\count10=100\\advance\\count10 by \\count10\\count10")))
+       '(7208960)
+       (output (string->tokenlist "\\count10=100\\dimen10=10pt\\advance\\dimen10 by \\count10pt\\dimen10")))
 
 (test-end)
-

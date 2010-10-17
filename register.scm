@@ -93,7 +93,7 @@
 			      (let1 old (find-register-value base num env)
 				(eqtb-update! (car env) base num (+ old val))
 				#t)
-			    in num <- (p env)
+			    in num <- (get-tex-int-num env)
 			       by  <- (parser-cont
 				       (skip tex-space1)
 				       (make-string-parser "by")
