@@ -8,10 +8,6 @@
   (define (restore-command ts)
     (cond ((null? ts)
 	   '())
-          ; math charcode
-	  ((and (null? (cdar ts)) (integer? (caar ts)))
-	   (cons #`"&#,(mathchar (list (caar ts)));" 
-		 (restore-command (cdr ts))))
 	  ((not (textoken? (car ts)))
 	   (cond
             ; group
@@ -34,6 +30,10 @@
 	     (cons (print-math (cdar ts) (caar ts))
 		   (restore-command (cdr ts))))
 	    (else '())))
+          ; math charcode
+	  ((and (null? (cdar ts)) (integer? (caar ts)))
+	   (cons #`"&#,(mathchar (list (caar ts)));" 
+		 (restore-command (cdr ts))))
 	  ((= -1 (cat (car ts)))
 	   (cons 
 	    (cond ((string=? "par" (cdar ts))

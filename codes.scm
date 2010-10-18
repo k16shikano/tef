@@ -25,11 +25,11 @@
 			    alt
 			    rest))))
 
-(define (update-catcode! char newcode env)
-  (eqtb-update! (car env) 'catcode char newcode))
+(define (update-catcode! char newcode env global?)
+  (eqtb-update! (if global? (last env) (car env)) 'catcode char newcode))
 
-(define (update-mathcode! char newcode env)
-  (eqtb-update! (car env) 'mathcode char newcode))
+(define (update-mathcode! char newcode env global?)
+  (eqtb-update! (if global? (last env) (car env)) 'mathcode char newcode))
 
 (define (find-catcode t env)
   (cond ((or (not (textoken? t)) (not t) (null? env))
@@ -45,6 +45,18 @@
 	 => (cut list <>))
 	(else 
 	 (find-mathcode t (cdr env)))))
+
+(define (catcode! ts env global?)
+  (receive (num newcode rest)
+	   (get-codename (cdr ts) env)
+	   (begin (update-catcode! (integer->char num) newcode env global?)
+		  rest)))
+
+(define (mathcode! ts env global?)
+  (receive (num newcode rest)
+	   (get-codename (cdr ts) env)
+	   (begin (update-mathcode! (integer->char num) newcode env global?)
+		  rest)))
 
 (define default-mathcodes-list
   (list

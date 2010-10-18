@@ -384,10 +384,11 @@ c"))))
        (output (string->tokenlist "\\count10=100\\dimen10=10pt\\advance\\dimen10 by \\count10pt\\dimen10")))
 
 (test* "ex.15.9 of the TeX Book"
-       '((-100) 4)
-       (output 
-	(string->tokenlist 
-	 "\\count1=5 {\\count1=2\\global\\advance\\count1by\\count1\
-             \\advance\\count1by\\count1}\\count1")))
+       "4"
+       (tokenlist->string
+	(output 
+	 (string->tokenlist 
+	  "\\count1=5{\\count1=2\\global\\advance\\count1by\\count1\
+             \\advance\\count1by\\count1}\\the\\count1"))))
 
 (test-end)
