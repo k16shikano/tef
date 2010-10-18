@@ -1,5 +1,6 @@
 (load "group.scm")
 (load "eqtb.scm")
+(load "register")
 (load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 

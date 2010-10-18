@@ -2,31 +2,27 @@
 tex-modoki
  
 * Overview
- A simple parser for tex manuscripts. 
- It requires Gauche scheme interpreter.
+
+ TeX-modoki is aiming to become a subset of plain TeX implementation. 
+ It's implemented with Gauche Scheme interpreter.
 
 * Feature
- You can expand trivial tex macros like this.
- 
- (tokenlist->string 
-  (output
-   (string->tokenlist "\
-\\def\\a{\\b}\
-\\def\\b{A\\def\\a{B\\def\\a{C\\def\\a{\\b}}}}\
-\\def\\puzzle{\\a\\a\\a\\a\\a}\
-\\puzzle")))
 
- => "ABCAB" 
+ Instead of DVI or PDF, it is intended to generate a plain-old HTML file with CSS 2.1.  
+ Being fully compliant with TeX's macro language, it could support LaTeX or other packages. 
 
- You can also get mathematical formula in HTML/CSS. See http://wiki.github.com/k16shikano/tex-modoki/ .
+* Usage
 
- You can find other examples in tex-modoki-test.scm.
+ > gosh -I . main.scm sample/sample.tex > result.html
 
 * Change Log
+
 [2009-05-28] First version.
 [2010-06-14] The real-lexer, a former experimental branch, is now the master.
+[2010-10-18] Add main.
 
 * Licence
+
 Copyright (c) 2010, Keiichirou SHIKANO <k16.shikano@gmail.com>
 All rights reserved.
  

@@ -8,6 +8,10 @@
   (define (restore-command ts)
     (cond ((null? ts)
 	   '())
+          ; math charcode
+	  ((and (null? (cdar ts)) (integer? (caar ts)) (> (caar ts) 0))
+	   (cons #`"&#,(mathchar (list (caar ts)));" 
+		 (restore-command (cdr ts))))
 	  ((not (textoken? (car ts)))
 	   (cond
             ; group
@@ -30,14 +34,11 @@
 	     (cons (print-math (cdar ts) (caar ts))
 		   (restore-command (cdr ts))))
 	    (else '())))
-          ; math charcode
-	  ((and (null? (cdar ts)) (integer? (caar ts)))
-	   (cons #`"&#,(mathchar (list (caar ts)));" 
-		 (restore-command (cdr ts))))
 	  ((= -1 (cat (car ts)))
 	   (cons 
 	    (cond ((string=? "par" (cdar ts))
-		   "\n\n")
+;		   "\n\n")
+		   "<br/>")
 		  ((null? (cdr ts))
 		   (string-append "\\" (x->string (cdar ts))))
 		  ((= 11 (cat (cadr ts)))
@@ -198,6 +199,7 @@
    (string-join 
     (list 
     "<!--"
+    "body {font-family:serif}"
     "span.noad {display:inline-block;text-align:left;vertical-align:middle;font-size:60%}"
     "span.noad div.sub {position:relative;bottom:0.4em;}"
     "span.noad div.sup {position:relative;top:0.4em;}"

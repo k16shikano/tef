@@ -39,7 +39,8 @@
   (define (in-comment c p) 
     (cond ((char=? #\newline (peek-char p))
 	   (read-char p)
-	   (cons 5 #\newline))
+	   (loop (peek-char p) p))
+;	   (cons 5 #\newline))
 	  (else
 	   (in-comment (read-char p) p))))
   (define (in-newlines c N? p)
