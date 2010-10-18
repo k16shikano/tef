@@ -31,7 +31,7 @@
 	(string->tokenlist "$x\\over y$")))
 
 (test* "math with fraction" 
-       '((200 (Fraction (-101 . -80) ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
+       '((200 (Fraction -5242880 ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
        (output
 	(string->tokenlist "$x\\above-'120pt y$")))
 
@@ -115,3 +115,16 @@
          \\mathchardef\\plusminus=\"300b1\
          Roots of the quadratic equation $ax^2+bx+c=0$ are
          $x={-b\\plusminus\\sqrt{b^2 - 4ac} \\over 2a}$"))))))
+
+(with-output-to-file 
+    "result.html"
+  (lambda ()
+    (display 
+     (tokenlist->html
+      (output
+       (string->tokenlist
+	"\\def\\matrix#1{\\halign{$##$&&$##$\\cr#1}}\
+         \\mathchardef\\lambda=\"003bb\
+         $$\\matrix{x-\\lambda & 1 & 0 \\cr 
+                    0 & x-\\lambda & 1 \\cr
+                    0 & 0 & x-\\lambda \\cr}$$"))))))

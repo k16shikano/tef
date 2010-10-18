@@ -1,11 +1,6 @@
 (load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 
-(define (get-tex-dimen ts)
-  (receive (num-unit rest)
-	   (tex-dimen ts)
-	   (values `((-101 . ,(tokenlist->string num-unit))) rest)))
-
 (define tex-number 
   (parser-cont extra-sign tex-int-num))
 
@@ -17,7 +12,7 @@
 	      (parser-cont (tex-other-char #\`) char-token)
 	      (error "it's not number"))
    (skip extra-space1)))
-
+			
 (define (tex-int->integer ts)
   (define (p radix ts)
     (string->number (list->string (map cdr ts)) radix))
@@ -99,36 +94,34 @@
    (error "it's not a valid dimension unit")))
 
 (define tex-dimen
-  (parser-cont extra-sign tex-factor dimen-unit))
+  (parser-cont (skip extra-space1) extra-sign tex-factor dimen-unit))
 
 (define tex-register tex-factor)
 
-(define (get-tex-dimen-after str ts)
+(define (get-tex-dimen-after str ts env)
   (let ((dimen (match-head ts (string->tokenlist str))))
     (if dimen
-	(get-tex-dimen dimen)
-	(values '((-101 . #f)) ts))))
-
-(define (dimen->sp ts)
-  (if (not (= -101 (car ts))) (error "here expects dimensions")
-      (let* ((dimstr (cdr ts))
-	     (true   (string-scan dimstr "true"))
-	     (ratio  (car (filter car
-		      (map 
-		       (lambda (x)
-			 (cons (string-scan dimstr (car x)) (cdr x)))
-		       (zip '("pt" "in" "pc" "cm" "mm" "bp" "dd" "cc" "sp")
-			    `(1 7227/100 12/1 7227/254 7227/2540 
-				7227/7200 1238/1157 14856/1157 65536)))))))
-	(cons -101
-	      (* (tex-int->integer 
-		  (string->tokenlist (string-take dimstr (or true (car ratio)))))
-		 (cadr ratio))))))
+	((get-tex-dimen env) dimen)
+	(values #f ts))))
 
 (define (token->number ts)
   (string->number (tokenlist->string ts)))
 
-#;(define (get-tex-dimen ts)
-  (receive (num-unit rest)
-	   (tex-dimen ts)
-	   (values `((-101 . ,(tokenlist->string num-unit))) rest)))
+(define (dimen->sp num-unit)
+  (let* ((dimstr (tokenlist->string num-unit))
+	 (true   (string-scan dimstr "true"))
+	 (ratio  (car 
+		  (filter 
+		   car
+		   (map 
+		    (lambda (x)
+		      (cons (string-scan dimstr (car x)) (cdr x)))
+		    (zip 
+		     '("pt" "in" "pc" "cm" "mm" "bp" "dd" "cc" "sp" "em" "ex")
+		     `(1 7227/100 12/1 7227/254 7227/2540 
+			 7227/7200 1238/1157 14856/1157 65536
+			 10 10))))))) ; em and ex
+    (* (tex-int->integer 
+	(string->tokenlist (string-take dimstr (or true (car ratio)))))
+       (/ 1 (cadr ratio))
+       65536)))

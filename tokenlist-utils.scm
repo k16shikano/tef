@@ -9,9 +9,12 @@
   (string-append str (apply string char)))
 
 (define (token->symbol token)
-  (if (string? token) 
-      (string->symbol token)
-      #f))
+  (cond ((string? token) 
+	 (string->symbol token))
+	((char? token)
+	 (string->symbol (string token)))
+	(else
+	 #f)))
 
 ;; [token] -> [token] -> [token] or #f
 (define (match-head ls pattern) 
@@ -35,10 +38,10 @@
 ;; are there any values whose first value is not null?
 (define-syntax orvalues
   (syntax-rules ()
-    ((_) (values '(-101 . #f) '()))
+    ((_) (values #f '()))
     ((_ v1) v1)
     ((_ v1 v2 ...) 
-     (if (not (cdar (values-ref v1 0))) (orvalues v2 ...) v1))))
+     (if (not (values-ref v1 0)) (orvalues v2 ...) v1))))
 
 (define-syntax orp
   (syntax-rules ()
@@ -101,6 +104,7 @@
 
 (defpred par? "par")
 (defpred expandafter? "expandafter")
+(defpred noexpand? "noexpand")
 (defpred global? "global")
 
 (defpred let? "let")
@@ -141,3 +145,12 @@
 (defpred mathcode? "mathcode")
 
 (define codename? (orp catcode? mathcode?))
+
+(defpred count? "count")
+(defpred dimen? "dimen")
+(defpred skip? "skip")
+(defpred muskip? "muskip")
+
+(define register? (orp count? dimen? skip? muskip?))
+
+(defpred advance? "advance")

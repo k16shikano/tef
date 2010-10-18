@@ -13,6 +13,7 @@
 (use util.list)
 (load "box.scm")
 (load "codes.scm")
+(load "eqtb.scm")
 (load "tokenlist-utils.scm")
 (load "parser-combinator/parser-combinator.scm")
 
@@ -67,12 +68,15 @@
 	  ;; group
 	  ((= -100 (car token))
 	   (cons `(Inner 
-		   ,(mlist (cdr token) (cons (make-hash-table) codetbl) limit)
+		   ,(mlist (cdr token) (cons (make-eqtb) codetbl) limit)
 		   () ())
 		 result))
 	  ;; box
           ((= -102 (car token))
 	   (cons `(Box ,(expand-box token) () ()) result))
+	  ;; align
+          ((= -103 (car token))
+	   (cons `(Inner ,token () ()) result))
 	  (else
 	   (cons `(,(select-atom token) 
 		   ,(or (find-mathcode token codetbl) token)
@@ -222,12 +226,12 @@
 ;;;; getter used by output-loop
 ;; [token] -> ([token] and [token])
 (define-condition-type <read-math-error> <error> #f)
-(define (get-inline-math ls)
+(define (get-inline-math ls env)
   (define (in-math ls body)
     (cond ((null? ls)
 	   (error <read-math-error> "unterminated math $"))
 	  ((box? (car ls))
-	   (let1 boxed (boxen ls)
+	   (let1 boxed (boxen ls env)
 		 (in-math (cdr boxed) (cons (car boxed) body))))
 	  ((mathdollar? (car ls))
 	   (values (reverse body) (cdr ls)))
@@ -251,31 +255,29 @@
 (define mathen
   (put-specific-code 100 beginmath? get-inline-math))
 
-(define (get-mathchar ts)
+(define (get-mathchar ts env)
   (receive (num rest)
-	   (tex-int-num ts)
-	   (values (list (tex-int->integer num)) rest)))
+	   ((get-tex-int-num env) ts)
+	   (values (list num) rest)))
 
-(define (get-delimiter ts)
+(define (get-delimiter ts env)
   (receive (num rest)
-	   (tex-int-num ts)
-	   (values (list (tex-int->integer num)) rest)))
+	   ((get-tex-int-num env) ts)
+	   (values (list num) rest)))
 
-(define (get-fracspec ts)
+(define (get-fracspec ts env)
   (cond (((orp over? atop?) (car ts))
 	 (values (list (car ts)) (cdr ts)))
 	(((orp overwithdelims? atopwithdelims?) (car ts))
 	 (values (list (car ts) (cadr ts) (caddr ts)) (cdddr ts)))
 	((above? (car ts))
 	 (receive (dimen rest)
-		  (get-tex-dimen (cdr ts))
-		  (values (list (car ts) 
-				(dimen->sp (car dimen))) rest)))
+		  ((get-tex-dimen env) (cdr ts))
+		  (values (list (car ts) dimen) rest)))
 	((abovewithdelims? (car ts))
 	 (receive (dimen rest)
-		  (get-tex-dimen (cdddr ts))
-		  (values (list (car ts) (cadr ts) (caddr ts) 
-				(dimen->sp (car dimen))) rest)))))
+		  ((get-tex-dimen env) (cdddr ts))
+		  (values (list (car ts) (cadr ts) (caddr ts) dimen) rest)))))
 
 ;; A math token is list of a number whose top hexadecimal represents 
 ;; the class and the rest is the unicode encoding.

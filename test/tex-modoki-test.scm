@@ -31,42 +31,6 @@
 	(get-tex-group 
 	 (string->tokenlist "{This information should be    {centered}}"))))
 
-(test-section "some utilites")
-(load "tex-trim-utils.scm")
-
-(test* "get-args" 
-       '(((12 . #\1)) ((12 . #\2)) ((12 . #\3)))
-       (get-args 3 (string->tokenlist "{1}{2}{3}")))
-
-(test* "get-command-sequence" 
-       '((11 . #\a) (11 . #\b) (11 . #\c) (10 . #\space)) 
-       (get-command-sequence 
-	"twocol" 2 
-	(string->tokenlist "abc \\twocol{1}\n {2}abc")))
-
-(test* "get-command-sequence" 
-       '((-1 . "twocol") ((12 . #\1)) ((12 . #\2))) 
-       (values-ref 
-	(get-command-sequence 
-	 "twocol" 2 
-	 (string->tokenlist "abc \\twocol{1}\n {2}abc"))
-	1))
-
-(test* "read-tex-token: case \"    d     \""
-       '((10 . #\space) (11 . #\d) (10 . #\space)) 
-       (with-input-from-string "   d   " 
-	 (lambda () 
-	   (port-map values read-tex-token))))
-
-(test* "get-inline-math" 
-       '((11 . #\a) (11 . #\b) (11 . #\c) (10 . #\space) 
-	 (12 . #\=) (10 . #\space) (12 . #\1))
-       (get-inline-math (string->tokenlist "$abc = 1$.")))
-
-(test* "get-comment-line"
-       '()
-       (get-comment-line (string->tokenlist "% comment \n")))
-
 (test-section "macro definition")
 (load "def-macro.scm")
 
@@ -236,19 +200,38 @@ c"))))
  \\triple{A}}\
 {\\triple{B}}"))))
 
+(test-section "\\let")
+
+(test* "trivial let"
+       "*"
+       (tokenlist->string
+	(output (string->tokenlist "\\let\\b=*\\b"))))
+
+(test* "let" 
+       "A: B: B"
+       (tokenlist->string 
+	(output
+	 (string->tokenlist "\
+\\def\\b{B}\
+{\\def\\a#1.{#1:}\
+\\let\\b\\a\
+\\a{A}.
+\\b{B}.}
+\\b "))))
+
+
 (test-section "number and dimension")
 (load "num-dimen.scm")
 
 (test* "get-tex-dimen-after and orvalues"
-       "1.0pt"
-       (tokenlist->string
-	(let ((ts (string->tokenlist "spread1.0pt{...}")))
-	  (orvalues (get-tex-dimen-after "to" ts)
-		    (get-tex-dimen-after "spread" ts)))))
+       65536.0
+       (let ((ts (string->tokenlist "spread1.0pt{...}")))
+	 (orvalues (get-tex-dimen-after "to" ts `(,(make-eqtb)))
+		   (get-tex-dimen-after "spread" ts `(,(make-eqtb))))))
 
 (parser-test* "tex-dimen"
 	      "3pt" "{x}"
-	      get-tex-dimen "3pt{x}")
+	      tex-dimen "3pt{x}")
 
 (parser-test* "dimen-unit"
 	      "pt" ""
@@ -335,23 +318,76 @@ c"))))
 \\isifx\\a\\b
 \\isifx\\d\\e"))))
 
-(test* "let" 
-       "A: B: B"
-       (tokenlist->string 
+(test* "if"
+       "yes1yes3"
+       (tokenlist->string
 	(output
 	 (string->tokenlist "\
-\\def\\b{B}\
-{\\def\\a#1.{#1:}\
-\\let\\b\\a\
-\\a{A}.
-\\b{B}.}
-\\b "))))
+\\def\\a{*}\
+\\let\\b=*\
+\\def\\c{/}\
+\\if*\\a yes1\\fi
+\\if\\a\\c yes2\\fi
+\\if\\par\\let yes3\\fi"))))
+
+(test* "if"
+       "zyes"
+       (tokenlist->string
+	(output
+	 (string->tokenlist "\
+\\def\\a{xx}\
+\\def\\b{z}\
+\\if\\a\\b yes\\else no \\fi"))))
+
+(test* "ifcat"
+       "yes1yes2no3"
+       (tokenlist->string
+	(output
+	 (string->tokenlist "\
+\\catcode`[=13 \\catcode`]=13 \\def[{*}\
+\\ifcat[*yes1\\else no1\\fi\
+\\ifcat\\noexpand[\\noexpand]yes2\\else no2\\fi\
+\\ifcat\\noexpand[*yes3\\else no3\\fi"))))
+
+
+(test-section "alignment")
+
+(test* "align"
+       '((-103 (((200 (Ord (11 . #\a) () ()))) ((12 . #\2) (11 . #\b)) ((200 (Ord (11 . #\c) () ()))) ((12 . #\2) (11 . #\d)))) (11 . #\g) (11 . #\g))
+       (output 
+	(string->tokenlist "\\halign{&$#$&2#\\cr a&b&c&d\\cr}gg")))
 
 (test-section "codename")
  
 (test* "catcode"
        "a<"
-       (tokenlist->string (output (string->tokenlist "{\\catcode`\\<=1 <a}}<"))))
+       (tokenlist->string
+	(output (string->tokenlist "{\\catcode`\\<=1 <a}}<"))))
+
+(test* "active char"
+       "*"
+       (tokenlist->string
+	(output (string->tokenlist "\\catcode`[=13\\def[{*}["))))
+
+(test-section "registers")
+
+(test* "count register"
+       '(100)
+       (output (string->tokenlist "\\count20=100\\count\\count20=\\count20\\count100")))
+
+(test* "dimen register"
+       '(655360)
+       (output (string->tokenlist "\\count20=10\\dimen100=\\count20pt\\dimen100")))
+
+(test* "advance counter"
+       '(7208960)
+       (output (string->tokenlist "\\count10=100\\dimen10=10pt\\advance\\dimen10 by \\count10pt\\dimen10")))
+
+(test* "ex.15.9 of the TeX Book"
+       '((-100) 4)
+       (output 
+	(string->tokenlist 
+	 "\\count1=5 {\\count1=2\\global\\advance\\count1by\\count1\
+             \\advance\\count1by\\count1}\\count1")))
 
 (test-end)
-
