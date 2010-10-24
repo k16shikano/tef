@@ -16,7 +16,7 @@
 	   (receive (num newcode rest)
 		    (get-codename (cdr ls) env)
 		    (begin (update-catcode! (integer->char num) newcode 
-					    localenv)
+					    localenv #f)
 			   (in-group rest body i))))
 	  ((find-catcode (car ls) localenv)
 	   => (lambda (v)

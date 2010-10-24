@@ -279,7 +279,7 @@ c"))))
 	 (string->tokenlist "\
 \\def\\a#1#{\\hbox to #1}\
 \\a3pt{x}"))))
-
+(load "box")
 (test* "for box parameters" 
        "[x]"
        (tokenlist->string 
@@ -295,6 +295,13 @@ c"))))
 \\setbox4=\\hbox{A}\\setbox4=\\hbox{\\unhbox4 B}\
  box3 is \\box3, \
  box4 is \\box4"))))
+
+(test* "box and unbox"
+       "[A]"
+       (tokenlist->string
+	(output
+	 (string->tokenlist "\
+{\\global\\setbox3=\\hbox{A}\\setbox3=\\hbox{}}\\box3"))))
 
 (test-section "if")
 

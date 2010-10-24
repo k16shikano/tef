@@ -37,8 +37,8 @@
 	  ((= -1 (cat (car ts)))
 	   (cons 
 	    (cond ((string=? "par" (cdar ts))
-;		   "\n\n")
-		   "<br/>")
+		   "\n\n")
+;		   "<br/>")
 		  ((null? (cdr ts))
 		   (string-append "\\" (x->string (cdar ts))))
 		  ((= 11 (cat (cadr ts)))

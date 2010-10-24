@@ -56,7 +56,7 @@
 				   (skip tex-space1)
 				   (orothers "" #\=)
 				   (skip tex-space1))
-		          val  <- getter))
+		          val  <- (getter env)))
 		     rest)
 		    (let1 boxval (if (null? boxval) #f boxval)
 			  (eqtb-update! (if global? (last env) (car env)) 
