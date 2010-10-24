@@ -44,7 +44,10 @@
 		  (append expanded
 			  (expand-all rest env))))
 	((box? (car ts))
-	 (eval-box (cdr ts) env))
+	 (receive (box rest)
+		  ((get-evaled-box env) ts)
+		  (append box
+			  (expand-all rest env))))
 	((halign? (car ts))
 	 (let1 haligned (haligning (eval-till-begingroup ts env) env)
 	       (append
@@ -114,6 +117,15 @@
 	       (append evaled rest)
 	       (append evaled (eval-till-begingroup rest env)))))
 
+(define (get-evaled-box env)
+  (lambda (ts)
+    (let1 boxed (boxen (eval-till-begingroup ts env) env)
+	  (values
+	   (expand-box
+	    `(,(caar boxed) ,(cadar boxed) ,(caddar boxed)
+	      ,@(expand-all (cdddar boxed) env)))
+	   (cdr boxed)))))
+
 ;; [token] -> env -> [expanded token] and [rest]
 (define (eval-control-sequence ts env)
   (cond
@@ -124,7 +136,7 @@
    ((register? (car ts))
     (values '() (register! ts env #f)))
    ((setbox? (car ts))
-    (values '() (setbox! ts env #f)))
+    (values '() (setbox! ts env (get-evaled-box env) #f)))
    ((getbox? (car ts))
     (values '() (getbox! ts env #f)))
    ((unbox? (car ts))
@@ -164,13 +176,6 @@
    (else
     (eval-macro ts env))))
 
-(define (eval-box ts env)
-  (let1 boxed (boxen (eval-till-begingroup ts env) env)
-	(append
-	 (expand-box 
-	  `(,(caar boxed) ,(cadar boxed) ,(caddar boxed)
-	    ,@(expand-all (cdddar boxed) env)))
-	 (expand-all (cdr boxed) env))))
 
 (define (eval-macro ts env)
   (cond

@@ -17,24 +17,12 @@
 		          altval <- (cond ((eq? 'count base)
 					   (get-tex-int-num env))
 					  ((eq? 'dimen base)
-					   (get-tex-dimen env))
-					  ((eq? 'box base)
-					   (get-box-value env)))
+					   (get-tex-dimen env)))
 			  ))
 		     rest)
 		    (values num
 			    (if (null? alt) #f alt)
 			    rest))))
-
-;; tbf
-(define (get-box-value env)
-  (lambda (ts)
-  (let1 boxed (boxen (eval-till-begingroup ts env) env)
-	(values
-	  (expand-box
-	  `(,(caar boxed) ,(cadar boxed) ,(caddar boxed)
-	    ,@(expand-all (cdddar boxed) env)))
-	 (cdr boxed))))) 
 
 (define (find-register-value type num env)
   (cond ((or (not num) (null? env))
@@ -57,12 +45,23 @@
 			 (list (find-register-value base num env))
 			 rest))))))
 
-(define (setbox! ts env global?)
-  (receive (num val rest)
-	   (get-register-value 'box (cdr ts) env)
-	   (begin
-	     (eqtb-update! (if global? (last env) (car env)) 'box num val)
-	     rest)))
+(define (setbox! ts env getter global?)
+  (receive (num rest)
+	   ((get-tex-int-num env) (cdr ts))
+	   (receive (boxval rest)
+		    ((parser-many
+		      (parser-do 
+		       return val
+		       in eqat <- (parser-cont
+				   (skip tex-space1)
+				   (orothers "" #\=)
+				   (skip tex-space1))
+		          val  <- getter))
+		     rest)
+		    (let1 boxval (if (null? boxval) #f boxval)
+			  (eqtb-update! (if global? (last env) (car env)) 
+					'box num boxval)
+			  rest))))
 
 (define (getbox! ts env global?)
   (receive (num rest)
