@@ -146,12 +146,19 @@
 
 (define codename? (orp catcode? mathcode?))
 
-(defpred count? "count")
-(defpred dimen? "dimen")
-(defpred skip? "skip")
+(defpred count?  "count")
+(defpred dimen?  "dimen")
+(defpred skip?   "skip")
 (defpred muskip? "muskip")
+(defpred setbox? "setbox")
+(defpred getbox? "box")
+(defpred copy?   "copy")
+(defpred unhbox? "unhbox")
+(defpred unvbox? "unvbox")
+(defpred uncopy? "uncopy")
 
 (define register? (orp count? dimen? skip? muskip?))
+(define unbox? (orp unhbox? unvbox?))
 
 (defpred advance? "advance")
 

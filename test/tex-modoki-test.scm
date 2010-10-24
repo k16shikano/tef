@@ -4,6 +4,7 @@
 (load "read.scm")
 (load "show.scm")
 (load "group.scm")
+(load "output-loop.scm")
 
 (test-section "parse tex strings")
 
@@ -62,7 +63,6 @@
 	 1)))
 
 (test-section "macro expantion")
-(load "output-loop.scm")
 
 (test* "eval macro: exercise 20.2 of the TeX book" 
        "ABCAB" 
@@ -286,6 +286,15 @@ c"))))
 	(output
 	 (string->tokenlist "\\def\\w{3pt}\\hbox to\\w{x}"))))
 
+(test* "box and unbox"
+       "box3 is [[A]B], box4 is [AB]"
+       (tokenlist->string
+	(output
+	 (string->tokenlist "\
+\\setbox3=\\hbox{A}\\setbox3=\\hbox{\\box3 B}\
+\\setbox4=\\hbox{A}\\setbox4=\\hbox{\\unhbox4 B}\
+ box3 is \\box3, \
+ box4 is \\box4"))))
 
 (test-section "if")
 

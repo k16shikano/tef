@@ -9,7 +9,8 @@
   (and (textoken? token)
        (= (cat token) -1)
        (member (cdr token) 
-	       '("hbox" "vbox" "vtop" "box" "copy" "vsplit" "lastbox" "vcenter"))))
+	       ;; box and copy primitive are to be in register.scm
+	       '("hbox" "vbox" "vtop" "vsplit" "lastbox" "vcenter"))))
 
 (define (box-type=? typestr token)
   (and (< (cat token) 0)
@@ -23,10 +24,6 @@
 		  (values `(,(car ts) ,(if dimen dimen #f) 
 			       ,@(cdar (groupen body)))
 			  (cdr (groupen body)))))
-	((member (cdar ts) '("box" "copy"))
-	 (receive (oct rest)
-		  ((get-tex-int-num env) (cdr ts))
-		  (values `(,(car ts) ,@oct '()) rest)))
 	((string=? (cdar ts) "vsplit")
 	 (receive (oct rest)
 		  ((get-tex-int-num env) (cdr ts))

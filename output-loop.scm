@@ -44,12 +44,7 @@
 		  (append expanded
 			  (expand-all rest env))))
 	((box? (car ts))
-	 (let1 boxed (boxen (eval-till-begingroup ts env) env)
-	       (append
-		(expand-box 
-		 `(,(caar boxed) ,(cadar boxed) ,(caddar boxed)
-		   ,@(expand-all (cdddar boxed) env)))
-		(expand-all (cdr boxed) env))))
+	 (eval-box (cdr ts) env))
 	((halign? (car ts))
 	 (let1 haligned (haligning (eval-till-begingroup ts env) env)
 	       (append
@@ -80,11 +75,14 @@
 		(receive (num rest)
 			 ((get-tex-int-num env) (cddr ts))
 			 (let1 base (string->symbol #`",(cdadr ts)")
-			       (append (string->tokenlist (x->string (find-register-value base num env)))
-				       rest))))))
+			       (append 
+				(string->tokenlist 
+				 (x->string
+				  (find-register-value base num env)))
+				rest))))))
 	((or (= (cat (car ts)) -1) (= (cat (car ts)) 13))
 	 (receive (expanded rest)
-		  (eval-assignments ts env)
+		  (eval-control-sequence ts env)
 		  (append expanded
 			  (expand-all rest env))))
 	((begingroup? (car ts))
@@ -96,7 +94,8 @@
 	((beginmath? (car ts))
 	 (let* ((gots   (mathen ts env))
 		(limit  (if (null? (car gots)) 1 2))
-		(math   (cdar (if (null? (car gots)) (mathen (cdr ts) env) gots)))
+		(math   (cdar (if (null? (car gots))
+				  (mathen (cdr ts) env) gots)))
 		(rest   (if (null? (car gots))
 			    (cddr (mathen (cdr ts) env)) (cdr gots))))
 	   (append 
@@ -110,13 +109,13 @@
 
 (define (eval-till-begingroup ts env)
   (receive (evaled rest)
-	   (eval-macro ts env)
+	   (eval-control-sequence ts env)
 	   (if (or (null? rest) (begingroup? (car rest)))
 	       (append evaled rest)
 	       (append evaled (eval-till-begingroup rest env)))))
 
 ;; [token] -> env -> [expanded token] and [rest]
-(define (eval-assignments ts env)
+(define (eval-control-sequence ts env)
   (cond
    ((null? ts)
     (values '() '()))
@@ -124,6 +123,16 @@
     (values '() (assignment! ts env #f)))
    ((register? (car ts))
     (values '() (register! ts env #f)))
+   ((setbox? (car ts))
+    (values '() (setbox! ts env #f)))
+   ((getbox? (car ts))
+    (values '() (getbox! ts env #f)))
+   ((unbox? (car ts))
+    (values '() (unbox! ts env #f)))
+   ((copy? (car ts))
+    (values '() (copy ts env #f)))
+   ((uncopy? (car ts))
+    (values '() (uncopy ts env #f)))
    ((advance? (car ts))
     (values '() (advance! ts env #f)))
    ((catcode? (car ts))
@@ -135,6 +144,16 @@
 	   (values '() (assignment! (cdr ts) env #t)))
 	  ((register? (cadr ts))
 	   (values '() (register! (cdr ts) env #t)))
+	  ((setbox? (car ts))
+	   (values '() (setbox! ts env #t)))
+	  ((getbox? (car ts))
+	   (values '() (getbox! ts env #t)))
+	  ((unbox? (car ts))
+	   (values '() (unbox! ts env #t)))
+	  ((copy? (car ts))
+	   (values '() (copy ts env #t)))
+	  ((uncopy? (car ts))
+	   (values '() (uncopy ts env #t)))
 	  ((advance? (cadr ts))
 	   (values '() (advance! (cdr ts) env #t)))
 	  ((advance? (cadr ts))
@@ -144,6 +163,14 @@
 	  ))
    (else
     (eval-macro ts env))))
+
+(define (eval-box ts env)
+  (let1 boxed (boxen (eval-till-begingroup ts env) env)
+	(append
+	 (expand-box 
+	  `(,(caar boxed) ,(cadar boxed) ,(caddar boxed)
+	    ,@(expand-all (cdddar boxed) env)))
+	 (expand-all (cdr boxed) env))))
 
 (define (eval-macro ts env)
   (cond

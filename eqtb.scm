@@ -13,11 +13,16 @@
     `(dimen    . ,(make-hash-table))
     `(skip     . ,(make-hash-table))
     `(muskip   . ,(make-hash-table))
+    `(box      . ,(make-hash-table))
     ))
 
 (define (eqtb-get tb base key)
   (hash-table-get 
    (hash-table-get tb base #f) key #f))
+
+(define (eqtb-delete! tb base key)
+  (hash-table-delete!
+   (hash-table-get tb base #f) key))
 
 (define (eqtb-update! tb base key new)
   (define (base-update! base)
@@ -29,5 +34,4 @@
   (if (hash-table-exists? tb base)
       (hash-table-update! tb base base-update!)
       (error "Unknown base:" base)))
-
 
