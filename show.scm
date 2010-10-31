@@ -56,7 +56,7 @@
 
 (define (print-math ts limit)
   (define (padding n)
-    (html:span :style #`"font-size:{,(x->string n)}%" "&nbsp;"))
+    (html:span :style #`"width:,(x->string n)%;" " "))
 
   (define (print-nolimit-supsub t)
     (html:span 
@@ -116,7 +116,7 @@
      (print-math `(((,code))) limit)))
 
   (cond ((null? ts)
-	 (html:span :class "null"  "&nbsp;"))
+	 (html:span :class "null" ""))
 	((null? (cdar ts))
 	 (tokenlist->string (car ts)))
 	((eq? 'Nil (caar ts))
@@ -206,12 +206,11 @@
     "span.italic {font-style:italic}" 
     "span.normal {font-style:normal}" 
     "span.op {display:inline-block; text-align:center; vertical-align:middle;font-size:200%}"
-    "span.op span.noad {font-size:60%}"
-    "span.op span.noad div.sub {position:relative;bottom:1em}"
-    "span.op span.noad div.sup {position:relative;top:1em}"
+    "span.op span.noad div.sub {font-size:50%;position:relative;bottom:1em}"
+    "span.op span.noad div.sup {font-size:50%;position:relative;top:1em}"
     "span.op div.sup {font-size:30%;vertical-align:bottom}"
     "span.op div.sub {font-size:30%;vertical-align:bottom}"
-    "span.op div.nuc {font-size:100%;line-height:80%}" 
+    "span.op div.nuc {font-size:100%;line-height:80%}"
     "span.null {display:inline-block;width:0px;line-height:0px}"
     "span.binrel {display:inline-block;text-align:center;vertical-align:middle;font-size:110%;}"
     "span.box {font-style:normal; vertical-align:middle}" 
