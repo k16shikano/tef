@@ -279,7 +279,7 @@ c"))))
 	 (string->tokenlist "\
 \\def\\a#1#{\\hbox to #1}\
 \\a3pt{x}"))))
-(load "box")
+
 (test* "for box parameters" 
        "[x]"
        (tokenlist->string 

@@ -193,7 +193,7 @@
   (receive (param body rest)
 	   (grab-macro-definition (cddr ts))
 	   `((-1 . "def") ,(cadr ts) ,@param 
-	     (1 . #\{) ,@(expand-all body env) (2 . #\}) 
+	     (1 . #\{) ,@(expand-all body env 'H) (2 . #\}) 
 	     ,@rest)))
 
 (define (mathchardef->def ts env)

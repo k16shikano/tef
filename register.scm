@@ -45,7 +45,7 @@
 			 (list (find-register-value base num env))
 			 rest))))))
 
-(define (setbox! ts env getter global?)
+(define (setbox! ts env getter mode global?)
   (receive (num rest)
 	   ((get-tex-int-num env) (cdr ts))
 	   (receive (boxval rest)
@@ -56,7 +56,7 @@
 				   (skip tex-space1)
 				   (orothers "" #\=)
 				   (skip tex-space1))
-		          val  <- (getter env)))
+		          val  <- (getter env mode)))
 		     rest)
 		    (let1 boxval (if (null? boxval) #f boxval)
 			  (eqtb-update! (if global? (last env) (car env)) 
