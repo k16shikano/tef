@@ -44,7 +44,9 @@
 	  (else
 	   (in-comment (read-char p) p))))
   (define (in-newlines c N? p)
-    (cond ((char-set-contains? #[\s] (peek-char p))
+    (cond ((eof-object? (peek-char p))
+	   (peek-char p))
+	  ((char-set-contains? #[\s] (peek-char p))
 	   (in-spaces (read-char p) "" #t #t p))
 	  (N? (cons -1 "par"))
 	  (else
