@@ -31,12 +31,12 @@
      ((= -3 next-field)
       (values (make-radical-noad token (car spec) result) 0 (cdr spec)))
      ;; supscr
-     ((= 7 (car token))
+     ((and (textoken? token) (= 7 (car token)))
       (values result -1 spec))
      ((= -1 next-field)
       (values (set-supscr token result) 0 spec))
      ;; subscr
-     ((= 8 (car token))
+     ((and (textoken? token) (= 8 (car token)))
       (values result -2 spec))
      ((= -2 next-field)
       (values (set-subscr token result) 0 spec))
@@ -66,9 +66,9 @@
     (cond ((null? token)
 	   (cons '(() () ()) result))
 	  ;; group
-	  ((= -100 (car token))
+	  ((list? (car token))
 	   (cons `(Inner 
-		   ,(mlist (cdr token) (cons (make-eqtb) codetbl) limit)
+		   ,(mlist (car token) (cons (make-eqtb) codetbl) limit)
 		   () ())
 		 result))
 	  ;; box
@@ -95,7 +95,7 @@
 	(cons `(Bin ,(find-mathcode t codetbl) () ()) result)))
 
   (define (make-radical-noad token spec result)
-    (cons `(Rad ,(mlist (cdr token) codetbl limit) () () ,(cadr spec)) result))
+    (cons `(Rad ,(mlist (car token) codetbl limit) () () ,(cadr spec)) result))
 
   (define (set-subscr token result)
     (if (null? result)

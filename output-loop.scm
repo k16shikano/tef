@@ -93,7 +93,7 @@
 		  (get-tex-group ts (cons (make-eqtb) env))
 		  (if (eq? mode 'M)
 		      (cons
-		       (cons -100 (expand-all group (cons (make-eqtb) env) mode))
+		       (list (expand-all group (cons (make-eqtb) env) mode))
 		       (expand-all rest env mode))
 		      (append
 		       (expand-all group (cons (make-eqtb) env) mode)
