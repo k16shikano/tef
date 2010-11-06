@@ -92,25 +92,15 @@
 	((begingroup? (car ts))
 	 (receive (group rest)
 		  (get-tex-group ts (cons (make-eqtb) env))
-		  (if (eq? mode 'M)
-		      (cons
-		       (list (expand-all group (cons (make-eqtb) env) mode))
-		       (expand-all rest env mode))
-		      (cons
-		       (list (expand-all group (cons (make-eqtb) env) mode))
-		       (expand-all rest env mode)))))
+		  (cons
+		   (list (expand-all group (cons (make-eqtb) env) mode))
+		   (expand-all rest env mode))))
 	((beginmath? (car ts))
-	 (receive (gots rest)
-	     (get-inline-math ts env)
-	   (receive (limit math rest)
-	       (if (null? gots) 
-		   (receive (inline-math rest)
-		       (get-inline-math (cdr ts) env)
-		     (values 1 inline-math (cdr rest)))
-		   (values 2 gots rest))
-	     (append 
-	      `(,(mlist (expand-all math env 'M) env limit))
-	      (expand-all rest env mode)))))
+	 (receive (limit math rest)
+		  (get-mathtokens ts env)
+		  (append 
+		   `(,(mlist (expand-all math env 'M) env limit))
+		   (expand-all rest env mode))))
 	((find-catcode (car ts) env)
 	 => (lambda (v)
 	      (expand-all (cons (cons v (cdar ts)) (cdr ts)) env mode)))

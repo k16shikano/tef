@@ -255,6 +255,16 @@
 (define mathen
   (put-specific-code 100 beginmath? get-inline-math))
 
+(define (get-mathtokens ts env)
+  (receive (gots rest)
+	   (get-inline-math ts env)
+	   (receive (limit math rest)
+		    (if (null? gots) 
+			(receive (inline-math rest)
+				 (get-inline-math (cdr ts) env)
+				 (values 1 inline-math (cdr rest)))
+			(values 2 gots rest)))))
+
 (define (get-mathchar ts env)
   (receive (num rest)
 	   ((get-tex-int-num env) ts)
