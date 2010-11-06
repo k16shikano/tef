@@ -22,19 +22,6 @@
       (drop ls (length pattern))
       #f))
 
-;; [token] -> [get token] [rest token]
-(define (put-specific-code code finder getter)
-  (lambda (ls . env)
-    (if (null? ls)
-	'()
-	(if (finder (car ls))
-	    (receive (group unseen)
-		     (if (null? env)
-			 (getter ls)
-			 (getter ls (car env)))
-		     (cons `(,@group) unseen))
-	    ls))))
-
 ;; are there any values whose first value is not null?
 (define-syntax orvalues
   (syntax-rules ()

@@ -14,26 +14,24 @@
 		 (restore-command (cdr ts))))
 	  ((not (textoken? (car ts)))
 	   (cond
-            ; group
-	    ((list? (car ts))
-;	    ((= -100 (caar ts))
-	     (cons (restore-command (car ts)) (restore-command (cdr ts))))
+	    ((null? (caar ts)) 
+	     (restore-command (cdr ts)))
 	    ; box
-	    ((= -102 (caar ts))
-	     (cond ((= 0 (caadar ts)) ; hbox
-		    (cons (list #\[ (restore-command (cdadar ts)) #\])
+	    ((number? (caar ts))
+	     (cond ((= 0 (caar ts))    ; hbox
+		    (cons (list #\[ (restore-command (cdar ts)) #\])
 			  (restore-command (cdr ts))))
-		   ((= 1 (caadar ts)) ; vbox
-		    (cons (list #\| (restore-command (cdadar ts)) #\|)
+		   ((= 1 (caar ts))    ; vbox
+		    (cons (list #\| (restore-command (cdar ts)) #\|)
+			  (restore-command (cdr ts))))
+		   ((or (= 100 (caar ts)) (= 200 (caar ts))) ; math
+		    (cons (print-math (cdar ts) (caar ts))
 			  (restore-command (cdr ts))))))
-	    ; align
-	    ((= -103 (caar ts))
+	    ((eq? 'alignment (caar ts)) ; align
 	     (cons (print-align (cdar ts))
 		   (restore-command (cdr ts))))
-	    ; math
-	    ((or (= 100 (caar ts)) (= 200 (caar ts)))
-	     (cons (print-math (cdar ts) (caar ts))
-		   (restore-command (cdr ts))))
+	    ((list? (car ts)) ; group
+	     (cons (restore-command (car ts)) (restore-command (cdr ts))))
 	    (else '())))
 	  ((= -1 (cat (car ts)))
 	   (cons 
@@ -54,6 +52,7 @@
 	   (else
 	    (cons (cdar ts) (restore-command (cdr ts))))))
   (tree->string (restore-command tls)))
+
 
 (define (print-math ts limit)
   (define (padding n)
@@ -77,7 +76,7 @@
 	  (html:span 
 	   :class class 
 	   (cond ((null? (second t)) "")
-		 ((and (pair? (car (second t))) (= -102 (caar (second t))))
+		 ((and (pair? (car (second t))) (number? (caar (second t))))
 		  (tokenlist->string (second t)))
 		 (else (tokenlist->string (list (second t)))))
 	   (print-nolimit-supsub t))))

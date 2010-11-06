@@ -65,17 +65,16 @@
   (define (make-noad token result)
     (cond ((null? token)
 	   (cons '(() () ()) result))
-	  ;; group
+	  ;; group and box
 	  ((list? (car token))
-	   (cons `(Inner 
-		   ,(mlist (car token) (cons (make-eqtb) codetbl) limit)
-		   () ())
-		 result))
-	  ;; box
-          ((= -102 (car token))
-	   (cons `(Box ,(expand-box token) () ()) result))
-	  ;; align
-          ((= -103 (car token))
+	   (cond ((number? (caar token))
+		  (cons `(Box ,token () ()) result))
+		 (else
+		  (cons `(Inner 
+			  ,(mlist (car token) (cons (make-eqtb) codetbl) limit)
+			  () ())
+			result))))
+	  ((eq? 'alignment (car token))
 	   (cons `(Inner ,token () ()) result))
 	  (else
 	   (cons `(,(select-atom token) 
@@ -231,8 +230,9 @@
     (cond ((null? ls)
 	   (error <read-math-error> "unterminated math $"))
 	  ((box? (car ls))
-	   (let1 boxed (boxen ls env)
-		 (in-math (cdr boxed) (cons (car boxed) body))))
+	   (receive (box rest)
+		    (get-box-parameter ls env)
+		    (in-math rest (cons (expand-box box) body))))
 	  ((mathdollar? (car ls))
 	   (values (reverse body) (cdr ls)))
 	  (else
@@ -252,18 +252,14 @@
   (and (textoken? token)
        (= 3 (cat token))))
 
-(define mathen
-  (put-specific-code 100 beginmath? get-inline-math))
-
 (define (get-mathtokens ts env)
   (receive (gots rest)
 	   (get-inline-math ts env)
-	   (receive (limit math rest)
-		    (if (null? gots) 
-			(receive (inline-math rest)
-				 (get-inline-math (cdr ts) env)
-				 (values 1 inline-math (cdr rest)))
-			(values 2 gots rest)))))
+	   (if (null? gots) 
+	       (receive (inline-math rest)
+			(get-inline-math (cdr ts) env)
+			(values 1 inline-math (cdr rest)))
+	       (values 2 gots rest))))
 
 (define (get-mathchar ts env)
   (receive (num rest)

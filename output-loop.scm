@@ -49,14 +49,15 @@
 		  (append box
 			  (expand-all rest env mode))))
 	((halign? (car ts))
-	 (let1 haligned (haligning (eval-till-begingroup ts env mode) env)
-	       (append
-		`((-103 . ,(align-map 
-			    (lambda (content) (expand-all content env mode))
-			    (cdar (expand-halign
-				   (caddar haligned)
-				   (expand-all (cdddar haligned) env mode))))))
-		(expand-all (cdr haligned) env mode))))
+	 (receive (halign rest)
+		  (get-halign (eval-till-begingroup ts env mode) env)
+		  `((alignment
+		     ,@(align-map
+			(lambda (content) (expand-all content env mode))
+			(expand-halign
+			 (cadr halign)
+			 (expand-all (cddr halign) env mode))))
+		    ,@(expand-all rest env mode))))
 	((mathchar? (car ts))
 	 (receive (mathcharcode rest)
 		  (get-mathchar (cdr ts) env)
@@ -107,22 +108,23 @@
       	(else
 	 (cons (car ts) (expand-all (cdr ts) env mode)))))
 
-
 (define (eval-till-begingroup ts env mode)
   (receive (evaled rest)
 	   (eval-control-sequence ts env mode)
-	   (if (or (null? rest) (begingroup? (car rest)))
+	   (if (or (null? rest) (list? (car rest)) (begingroup? (car rest)))
 	       (append evaled rest)
 	       (append evaled (eval-till-begingroup rest env mode)))))
 
 (define (get-evaled-box env mode)
   (lambda (ts)
-    (let1 boxed (boxen (eval-till-begingroup ts env mode) env)
-	  (values
-	   (expand-box
-	    `(,(caar boxed) ,(cadar boxed) ,(caddar boxed)
-	      ,@(expand-all (cdddar boxed) env (box-mode (cadar boxed)))))
-	   (cdr boxed)))))
+    (receive (box rest)
+	     (get-box-parameter
+	      (eval-till-begingroup ts env mode) env)
+	     (values
+	      (expand-box
+	       `(,(car box) ,(cadr box)
+		 ,@(expand-all (cddr box) env (box-mode (car box)))))
+	      rest))))
 
 (define (box-mode type)
   (cond
@@ -179,7 +181,6 @@
    (else
     (eval-macro ts env mode))))
 
-
 (define (eval-macro ts env mode)
   (cond
    ((expandafter? (car ts))
@@ -206,6 +207,44 @@
 				   (apply-pattern (cdr v) params) env mode) rest))))))
    (else
     (values `(,(car ts)) (cdr ts)))))
+
+;; [token] -> env -> bool -> [token]
+(define (assignment! ts env global?)
+  (cond	
+   ((let? (car ts))
+    (let! (cdr ts) env global?))
+   ((def? (car ts))
+    (update-env! (cdr ts) env global?))
+   ((gdef? (car ts))
+    (update-env! (cdr ts) env #t))
+   ((edef? (car ts))
+    (edef->def ts env))
+   ((xdef? (car ts))
+    `((-1 . "global") ,@(edef->def ts env)))
+   ((mathchardef? (car ts))
+    (mathchardef->def ts env))
+;   ((countdef? (car ts))
+;    (countdef->def ts))
+   ))
+
+(define (edef->def ts env)
+  (receive (param body rest)
+	   (grab-macro-definition (cddr ts))
+	   `((-1 . "def") ,(cadr ts) ,@param 
+	     (1 . #\{) ,@(expand-all body env 'H) (2 . #\}) 
+	     ,@rest)))
+
+(define (mathchardef->def ts env)
+  (receive (texcharint rest)
+	   ((parser-cont (skip tex-space1)
+			 (skip (tex-other-char #\= ""))
+			 (skip tex-space1)
+			 (get-tex-int-num env))
+	    (cddr ts))
+	   `((-1 . "def") ,(cadr ts) 
+	     (1 . #\{) (-1 . "mathchar") 
+	     ,@(string->tokenlist (x->string texcharint)) (2 . #\})
+	     ,@rest)))
 
 ;;;; process-if
 ;; In TeX, conditional statements is processed while its macro expansion.

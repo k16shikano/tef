@@ -1,4 +1,4 @@
-;; box := [-102, type, dimen, body] 
+;; expanded box := [type, dimen, body] 
 
 (load "tokenlist-utils.scm")
 (load "num-dimen.scm")
@@ -22,7 +22,7 @@
 		  (orvalues (get-tex-dimen-after "to" (cdr ts) env)
 			    (get-tex-dimen-after "spread" (cdr ts) env))
 		  (values `(,(car ts) ,(if dimen dimen #f) 
-			       ,@(cdar (groupen body)))
+			    ,@(car (groupen body)))
 			  (cdr (groupen body)))))
 	((string=? (cdar ts) "vsplit")
 	 (receive (oct rest)
@@ -33,16 +33,12 @@
 	((string=? (cdar ts) "lastbox")
 	 (values '() rest))))
 
-(define boxen
-  (put-specific-code -102 box? get-box-parameter))
-
 (define (expand-box box)
-  (if (not (= -102 (car box))) (error "here expects a tex box.")
-      (receive (type rest)
-	       (values (cadr box) (cddr box))
-	       (let1 body (cdr rest)
-		     (cond ((box-type=? "hbox" type)
-			    `((-102 (0 ,@body))))
-			   ((box-type=? "vbox" type)
-			    `((-102 (1 ,@body))))
-			   (else body))))))
+  (receive (type rest)
+	   (values (car box) (cdr box))
+	   (let1 body (cdr rest)
+		 (cond ((box-type=? "hbox" type)
+			`((0 ,@body)))
+		       ((box-type=? "vbox" type)
+			`((1 ,@body)))
+		       (else body)))))

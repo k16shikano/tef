@@ -21,7 +21,7 @@
 	(string->tokenlist "$x^{y^2}$")))
  
 (test* "math with box" 
-       '((200 (Ord (11 . #\x) ((Inner (200 (Box ((-102 (0 (11 . #\y)))) () ())) () ())) ((Ord (11 . #\u) () ())))))
+       '((200 (Ord (11 . #\x) ((Inner (200 (Box ((0 (11 . #\y))) () ())) () ())) ((Ord (11 . #\u) () ())))))
        (output
 	(string->tokenlist "$x^{\\hbox{y}}_u$")))
 

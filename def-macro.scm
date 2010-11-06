@@ -48,21 +48,6 @@
 		   (else
 		    (R `((,(car pt) . ,(car params)) . ,(cdr params)) rest))))))
 
-;; [groupen token] -> [token]
-(define (treat-group param)
-  (define (ex-group token)
-    (if (eq? -100 (car token))
-	`((1 . #\{) ,@(cdr token) (2 . #\}))
-	`(,token)))
-  (let ((param (reverse param)))
-    (cond ((null? param)
-	   '())
-	  ((and (null? (cdr param)) ; a group
-		(eq? -100 (caar param)))
-	   (cdar param))
-	  (else
-	   (append-map ex-group param)))))
-
 ;; [token] -> [pattern] -> ([token] and [token])
 (define (tail-match token pattern)
   (let ((pattern (cdr pattern)))
@@ -73,7 +58,7 @@
 		  (not (charlbrace? (last target))))
 	     (R param (append target '((11 . #\{)))))
 	    ((match-head target pattern)
-	     => (cut values (treat-group param) <>))
+	     => (cut values (reverse param) <>))
 	    (else
 	     (let ((target (groupen target)))
 	       (R `(,(car target) . ,param) (cdr target))))))))
@@ -82,9 +67,13 @@
 (define (single-match token)
   (cond ((null? token)
 	 (values '() token))
+	((begingroup? (car token))
+	 (let ((target (groupen token)))
+	   (values (car target) (cdr target))))
 	(else
 	 (let ((target (groupen token)))
-	   (values (treat-group `(,(car target))) (cdr target))))))
+	   (values (reverse `(,(car target))) (cdr target))))))
+
 
 ;; [token] -> [pattern token] -> ([[parameter token]] and [rest token])
 (define (match-def-parameter token patterns)
@@ -190,41 +179,3 @@
 		  (cons (car head)
 			(apply-pattern rest params)))
 		 )))
-
-(define (edef->def ts env)
-  (receive (param body rest)
-	   (grab-macro-definition (cddr ts))
-	   `((-1 . "def") ,(cadr ts) ,@param 
-	     (1 . #\{) ,@(expand-all body env 'H) (2 . #\}) 
-	     ,@rest)))
-
-(define (mathchardef->def ts env)
-  (receive (texcharint rest)
-	   ((parser-cont (skip tex-space1)
-			 (skip (tex-other-char #\= ""))
-			 (skip tex-space1)
-			 (get-tex-int-num env))
-	    (cddr ts))
-	   `((-1 . "def") ,(cadr ts) 
-	     (1 . #\{) (-1 . "mathchar") 
-	     ,@(string->tokenlist (x->string texcharint)) (2 . #\})
-	     ,@rest)))
-
-;; [token] -> env -> bool -> [token]
-(define (assignment! ts env global?)
-  (cond	
-   ((let? (car ts))
-    (let! (cdr ts) env global?))
-   ((def? (car ts))
-    (update-env! (cdr ts) env global?))
-   ((gdef? (car ts))
-    (update-env! (cdr ts) env #t))
-   ((edef? (car ts))
-    (edef->def ts env))
-   ((xdef? (car ts))
-    `((-1 . "global") ,@(edef->def ts env)))
-   ((mathchardef? (car ts))
-    (mathchardef->def ts env))
-;   ((countdef? (car ts))
-;    (countdef->def ts))
-   ))

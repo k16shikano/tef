@@ -41,5 +41,13 @@
 	   (values `(,(car ls)) (cdr ls))))) ; a token is also a group
   (out-group ls))
 
-(define groupen 
-  (put-specific-code -100 begingroup? get-tex-group))
+(define (groupen ls . env)
+  (if (null? ls)
+      '()
+      (if (begingroup? (car ls))
+	  (receive (group unseen)
+		   (if (null? env)
+		       (get-tex-group ls)
+		       (get-tex-group ls (car env)))
+		   (cons `(,@group) unseen))
+	  ls)))

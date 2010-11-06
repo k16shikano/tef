@@ -75,7 +75,7 @@
 
 (define (unbox! ts env global?)
   (let1 box (getbox! ts env global?)
-	(cons (cadr (cadr (car box))) (cdr box))))
+	(cons (cadr (car box)) (cdr box))))
 
 (define (copy ts env global?)
   (receive (num rest)
@@ -88,7 +88,7 @@
 
 (define (uncopy ts env delete-box? global?)
   (let1 box (copy ts env global?)
-	(cons (cadr (cadr (car box))) (cdr box))))
+	(cons (cadr (car box)) (cdr box))))
 
 ;; env -> ([tokenlist] -> integer)
 (define (get-tex-int-num env)
