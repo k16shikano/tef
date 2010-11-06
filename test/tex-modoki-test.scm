@@ -40,14 +40,14 @@
        (parse-parameter (string->tokenlist "a#1. #2{...}aa")))
 
 (test* "match-def-parameter: a sample from ch20 of the TeX book"
-       '("You owe {\\$5.00}" " Pay it.")
+       '("You owe \\$5.00" " Pay it.")
        (map tokenlist->string 
 	    (match-def-parameter
 	     (string->tokenlist "You owe {\\$5.00}. Pay it.\\par{...}")
 	     (string->tokenlist "#1.#2\\par{...}"))))
 
 (test* "match-def-parameter: a sample from ch20 of the TeX book"
-       '("\\LOOK" "" "{And\\$ }{look}")
+       '("\\LOOK" "" "And\\$ look")
        (map tokenlist->string 
 	    (match-def-parameter
 	     (string->tokenlist "AB {\\LOOK}C${And\\$ }{look}\\$ 5.")

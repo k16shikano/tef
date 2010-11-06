@@ -96,8 +96,8 @@
 		      (cons
 		       (list (expand-all group (cons (make-eqtb) env) mode))
 		       (expand-all rest env mode))
-		      (append
-		       (expand-all group (cons (make-eqtb) env) mode)
+		      (cons
+		       (list (expand-all group (cons (make-eqtb) env) mode))
 		       (expand-all rest env mode)))))
 	((beginmath? (car ts))
 	 (let* ((gots   (mathen ts env))

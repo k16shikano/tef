@@ -15,8 +15,9 @@
 	  ((not (textoken? (car ts)))
 	   (cond
             ; group
-	    ((= -100 (caar ts))
-	     (cons (restore-command (cdar ts)) (restore-command (cdr ts))))
+	    ((list? (car ts))
+;	    ((= -100 (caar ts))
+	     (cons (restore-command (car ts)) (restore-command (cdr ts))))
 	    ; box
 	    ((= -102 (caar ts))
 	     (cond ((= 0 (caadar ts)) ; hbox

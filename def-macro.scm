@@ -12,6 +12,8 @@
 (define (parameter-token ts)
   (cond ((null? ts)
 	 (values '() '()))
+	((list? (car ts))
+	 (values (parameter-token (car ts)) (cdr ts)))
 	((= 6 (cat (car ts)))
 	 (if (null? (cdr ts))
 	     (values '((11 . #\{)) (cdr ts))

@@ -32,9 +32,7 @@
 		     (if (null? env)
 			 (getter ls)
 			 (getter ls (car env)))
-		     (cons `(,code ,@group) 
-			   #;(if (null? group) '() `(,code . ,group)) 
-			   unseen))
+		     (cons `(,@group) unseen))
 	    ls))))
 
 ;; are there any values whose first value is not null?
