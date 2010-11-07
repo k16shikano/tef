@@ -32,6 +32,20 @@
 	      (else
 	       (cons (car ts) (output (cdr ts)))))))
 
+(define (mk-getter proc)
+  (lambda (env mode)
+    (lambda (ts) (proc env mode ts))))
+
+(define-macro (expand-with getter result ts env)
+  `(receive (got rest)
+	    (,getter ,ts ,env)
+	    ,result))
+
+(define (expand-append getter env mode ts)
+  (receive (got rest)
+	   ((getter env mode) ts)
+	   (append got (expand-all rest env mode))))
+
 ;; [ts] -> env -> [ts]
 (define (expand-all ts env mode)
   (cond ((null? ts)
@@ -39,47 +53,35 @@
 	((not (textoken? (car ts)))
 	 (cons (car ts) (expand-all (cdr ts) env mode)))
 	((if? (car ts))
-	 (receive (expanded rest)
-		  (process-if ts env mode)
-		  (append expanded
-			  (expand-all rest env mode))))
+	 (expand-append (mk-getter process-if) env mode ts))
 	((box? (car ts))
-	 (receive (box rest)
-		  ((get-evaled-box env mode) ts)
-		  (append box
-			  (expand-all rest env mode))))
+	 (expand-append get-evaled-box env mode ts))
 	((halign? (car ts))
-	 (receive (halign rest)
-		  ((get-evaled-halign env mode) ts)
-		  (append halign
-			  (expand-all rest env mode))))
+	 (expand-append get-evaled-halign env mode ts))
 	((mathchar? (car ts))
-	 (receive (mathcharcode rest)
-		  (get-mathchar (cdr ts) env)
-		  (expand-all (cons mathcharcode rest) env mode)))
+	 (expand-with get-mathchar
+		      (expand-all (cons got rest) env mode)
+		      (cdr ts)
+		      env))
 	((delimiter? (car ts))
-	 (receive (delcode rest)
-		  (get-delimiter (cdr ts) env)
-		  (expand-all (cons delcode rest) env mode)))
+	 (expand-with get-delimiter
+		      (expand-all (cons got rest) env mode)
+		      (cdr ts)
+		      env))
 	((fraction? (car ts))
-	 (receive (fracspec rest)
-		  (get-fracspec 
-		   (cons (car ts) (expand-all (cdr ts) env mode)) env)
-		  (cons fracspec rest)))
+	 (expand-with get-fracspec
+		      (cons got rest)
+		      (cons (car ts) (expand-all (cdr ts) env mode))
+		      env))
 	((radical? (car ts))
-	 (receive (radicalspec rest)
-		  (get-delimiter (expand-all (cdr ts) env mode) env)
-		  (cons (cons (car ts) radicalspec) rest)))
+	 (expand-with get-delimiter
+		      (cons (cons (car ts) got) rest)
+		      (expand-all (cdr ts) env mode)
+		      env))
 	((the? (car ts))
-	 (receive (thestring rest)
-		  (expand-the ts env mode)
-		  (append thestring
-			  (expand-all rest env mode))))
+	 (expand-append expand-the env mode ts))
 	((or (= (cat (car ts)) -1) (= (cat (car ts)) 13))
-	 (receive (expanded rest)
-		  (eval-control-sequence ts env mode)
-		  (append expanded
-			  (expand-all rest env mode))))
+	 (expand-append (mk-getter eval-control-sequence) env mode ts))
 	((begingroup? (car ts))
 	 (receive (group rest)
 		  (get-tex-group ts (cons (make-eqtb) env))
@@ -98,18 +100,19 @@
       	(else
 	 (cons (car ts) (expand-all (cdr ts) env mode)))))
 
-(define (eval-till-begingroup ts env mode)
+
+(define (eval-till-begingroup env mode ts)
   (receive (evaled rest)
-	   (eval-control-sequence ts env mode)
+	   (eval-control-sequence env mode ts)
 	   (if (or (null? rest) (list? (car rest)) (begingroup? (car rest)))
 	       (append evaled rest)
-	       (append evaled (eval-till-begingroup rest env mode)))))
+	       (append evaled (eval-till-begingroup env mode rest)))))
 
 (define (get-evaled-box env mode)
   (lambda (ts)
     (receive (box rest)
 	     (get-box-parameter
-	      (eval-till-begingroup ts env mode) env)
+	      (eval-till-begingroup env mode ts) env)
 	     (values
 	      (expand-box
 	       `(,(car box) ,(cadr box)
@@ -119,7 +122,7 @@
 (define (get-evaled-halign env mode)
   (lambda (ts)
     (receive (halign rest)
-	     (get-halign (eval-till-begingroup ts env mode) env)
+	     (get-halign (eval-till-begingroup env mode ts) env)
 	     (values 
 	      `((alignment
 		 ,@(align-map
@@ -129,19 +132,20 @@
 		     (expand-all (cddr halign) env mode)))))
 	      rest))))
 
-(define (expand-the ts env mode)
-  (cond ((register? (cadr ts))
-	 (receive (num rest)
-		  ((get-tex-int-num env) (cddr ts))
-		  (values 
-		   (let1 base (string->symbol #`",(cdadr ts)")
-			 (string->tokenlist 
-			  (x->string
-			   (find-register-value base num env))))
-		   rest)))))
+(define (expand-the env mode)
+  (lambda (ts)
+    (cond ((register? (cadr ts))
+	   (receive (num rest)
+		    ((get-tex-int-num env) (cddr ts))
+		    (values
+		     (let1 base (string->symbol #`",(cdadr ts)")
+			   (string->tokenlist
+			    (x->string
+			     (find-register-value base num env))))
+		     rest))))))
 
 ;; [token] -> env -> [expanded token] and [rest]
-(define (eval-control-sequence ts env mode)
+(define (eval-control-sequence env mode ts)
   (cond
    ((null? ts)
     (values '() '()))
@@ -188,13 +192,13 @@
 	   (values '() (advance! (cdr ts) env #t)))
 	  ))
    (else
-    (eval-macro ts env mode))))
+    (eval-macro env mode ts))))
 
-(define (eval-macro ts env mode)
+(define (eval-macro env mode ts)
   (cond
    ((expandafter? (car ts))
     (receive (expanded rest)
-	     (eval-macro (cddr ts) env mode)
+	     (eval-macro env mode (cddr ts))
 	     (values (expand-all `(,(cadr ts) ,@expanded) env mode) rest)))
    ((noexpand? (car ts))
     (values
@@ -262,11 +266,11 @@
 
 (define-condition-type <read-if-error> <error> #f)
 
-(define (process-if ts env mode)
+(define (process-if env mode ts)
   (define (expand-if test rest)
     (if test
-	(expand-true rest mode)
-	(expand-false rest mode)))
+	(expand-true rest env mode)
+	(expand-false rest env mode)))
   (cond ((null? ts)
 	 (values '() '()))
 	((if-type=? "ifnum" (car ts))
@@ -290,13 +294,10 @@
 
 (define (ifnum-test condi env mode)
   (define (token-compare n1 n2 prod)
-;    (let ((n1 (token->number n1))
-;	  (n2 (token->number n2)))
       (cond ((char=? (cdar prod) #\<) (< n1 n2))
 	    ((char=? (cdar prod) #\=) (= n1 n2))
 	    ((char=? (cdar prod) #\>) (> n1 n2))
 	    (else (error "Unknown predicate for ifnum"))))
-;)
   ((parser-do
     return (token-compare n1 n2 prod)
         in n1   <- (get-tex-int-num env)
@@ -314,21 +315,21 @@
 	      (values (equal? t1 t2) (cddr condi)))
 	    (values (equal? t1 t2) (cddr condi))))))
 
-(define (expand-for-two ts env mode)
+(define (expand-for-two env mode ts)
   (receive (expanded rest)
-	   (eval-macro ts env mode)
+	   (eval-macro env mode ts)
 	   (cond ((<= 2 (length expanded))
 		  (append expanded rest))
 		 ((null? expanded)
-		  (expand-for-two rest env))
+		  (expand-for-two env rest))
 		 (else
 		  (append expanded 
 			  (call-with-values 
-			      (lambda () (eval-macro rest env mode))
+			      (lambda () (eval-macro env mode rest))
 			    append))))))
 
 (define (ifchar-test condi type env mode)
-  (let* ((ts (expand-for-two condi env mode))
+  (let* ((ts (expand-for-two env mode condi))
 	 (t1 (and (not (null? ts)) (car ts)))
 	 (t2 (and t1 (not (null? (cdr ts))) (cadr ts))))
     (values 
@@ -341,12 +342,12 @@
 	    (error "Unknown if type")))
      (expand-all (cddr ts) env mode))))
 
-(define (seek-else ts mode)
+(define (seek-else ts env mode)
   (let R ((ts ts) (body '()))
     (cond ((null? ts)
 	   (error <read-if-error> "Unterminated if"))
 	  ((if? (car ts))
-	   (process-if ts mode))
+	   (process-if env mode ts))
 	  ((fi? (car ts))
 	   (values #f (cdr ts)))
 	  ((else? (car ts))
@@ -354,30 +355,30 @@
 	  (else
 	   (R (cdr ts) (cons (car ts) body))))))
 
-(define (seek-fi ts mode)
+(define (seek-fi ts env mode)
   (let R ((ts ts) (body '()))
     (cond ((null? ts)
 	   (error <read-if-error> "Unterminated if"))
 	  ((if? (car ts))
-	   (process-if ts mode))
+	   (process-if env mode ts))
 	  ((fi? (car ts))
 	   (values (reverse body) (cdr ts)))
 	  (else
 	   (R (cdr ts) (cons (car ts) body))))))
 
-(define (expand-true ts mode)
+(define (expand-true ts env mode)
   (receive (true rest)
-	   (seek-else ts mode)
+	   (seek-else ts env mode)
 	   (if true
 	       (receive (false rest)
-			(seek-fi rest mode)
+			(seek-fi rest env mode)
 			(values true rest))
-	       (seek-fi ts mode))))
+	       (seek-fi ts env mode))))
 
-(define (expand-false ts mode)
+(define (expand-false ts env mode)
   (receive (true rest)
-	   (seek-else ts mode)
+	   (seek-else ts env mode)
 	   (if true 
-	       (seek-fi rest mode)
+	       (seek-fi rest env mode)
 	       (values '() rest))))
 
