@@ -12,6 +12,11 @@
 	       ;; box and copy primitive are to be in register.scm
 	       '("hbox" "vbox" "vtop" "vsplit" "lastbox" "vcenter"))))
 
+(define (box-mode type)
+  (cond
+   ((box-type=? "hbox" type) 'H)
+   ((box-type=? "vbox" type) 'V)))
+
 (define (box-type=? typestr token)
   (and (< (cat token) 0)
        (string=? typestr (cdr token))))

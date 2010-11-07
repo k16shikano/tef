@@ -50,14 +50,9 @@
 			  (expand-all rest env mode))))
 	((halign? (car ts))
 	 (receive (halign rest)
-		  (get-halign (eval-till-begingroup ts env mode) env)
-		  `((alignment
-		     ,@(align-map
-			(lambda (content) (expand-all content env mode))
-			(expand-halign
-			 (cadr halign)
-			 (expand-all (cddr halign) env mode))))
-		    ,@(expand-all rest env mode))))
+		  ((get-evaled-halign env mode) ts)
+		  (append halign
+			  (expand-all rest env mode))))
 	((mathchar? (car ts))
 	 (receive (mathcharcode rest)
 		  (get-mathchar (cdr ts) env)
@@ -76,15 +71,10 @@
 		  (get-delimiter (expand-all (cdr ts) env mode) env)
 		  (cons (cons (car ts) radicalspec) rest)))
 	((the? (car ts))
-	 (cond ((register? (cadr ts))
-		(receive (num rest)
-			 ((get-tex-int-num env) (cddr ts))
-			 (let1 base (string->symbol #`",(cdadr ts)")
-			       (append 
-				(string->tokenlist 
-				 (x->string
-				  (find-register-value base num env)))
-				rest))))))
+	 (receive (thestring rest)
+		  (expand-the ts env mode)
+		  (append thestring
+			  (expand-all rest env mode))))
 	((or (= (cat (car ts)) -1) (= (cat (car ts)) 13))
 	 (receive (expanded rest)
 		  (eval-control-sequence ts env mode)
@@ -99,8 +89,8 @@
 	((beginmath? (car ts))
 	 (receive (limit math rest)
 		  (get-mathtokens ts env)
-		  (append 
-		   `(,(mlist (expand-all math env 'M) env limit))
+		  (cons
+		   (mlist (expand-all math env 'M) env limit)
 		   (expand-all rest env mode))))
 	((find-catcode (car ts) env)
 	 => (lambda (v)
@@ -126,10 +116,29 @@
 		 ,@(expand-all (cddr box) env (box-mode (car box)))))
 	      rest))))
 
-(define (box-mode type)
-  (cond
-   ((box-type=? "hbox" type) 'H)
-   ((box-type=? "vbox" type) 'V)))
+(define (get-evaled-halign env mode)
+  (lambda (ts)
+    (receive (halign rest)
+	     (get-halign (eval-till-begingroup ts env mode) env)
+	     (values 
+	      `((alignment
+		 ,@(align-map
+		    (lambda (content) (expand-all content env mode))
+		    (expand-halign
+		     (cadr halign)
+		     (expand-all (cddr halign) env mode)))))
+	      rest))))
+
+(define (expand-the ts env mode)
+  (cond ((register? (cadr ts))
+	 (receive (num rest)
+		  ((get-tex-int-num env) (cddr ts))
+		  (values 
+		   (let1 base (string->symbol #`",(cdadr ts)")
+			 (string->tokenlist 
+			  (x->string
+			   (find-register-value base num env))))
+		   rest)))))
 
 ;; [token] -> env -> [expanded token] and [rest]
 (define (eval-control-sequence ts env mode)
@@ -202,9 +211,11 @@
 	     (receive (params rest)
 		      (match-def-parameter (cdr ts) (car v))
 		      (if (null? params)
-			  (values (expand-all (cdr v) env mode) rest)
-			  (values (expand-all
-				   (apply-pattern (cdr v) params) env mode) rest))))))
+			  (values (expand-all (cdr v) env mode) 
+				  rest)
+			  (values (expand-all 
+				   (apply-pattern (cdr v) params) env mode) 
+				  rest))))))
    (else
     (values `(,(car ts)) (cdr ts)))))
 
@@ -312,7 +323,8 @@
 		  (expand-for-two rest env))
 		 (else
 		  (append expanded 
-			  (call-with-values (lambda () (eval-macro rest env mode))
+			  (call-with-values 
+			      (lambda () (eval-macro rest env mode))
 			    append))))))
 
 (define (ifchar-test condi type env mode)
