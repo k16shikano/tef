@@ -1,7 +1,11 @@
-(use srfi-1)
-(use srfi-13)
-(use text.tree)
-(load "tokenlist-utils.scm")
+(define-module read
+  (use srfi-1)
+  (use srfi-13)
+  (use tokenlist-utils)
+  (export-all)
+)
+
+(select-module read)
 
 ;; special category code
 ;;   code < 0     : control sequence
@@ -103,3 +107,5 @@
 
 (define (port->tokenlist p)
   (port->list read-tex-token p))
+
+(provide "read")

@@ -1,7 +1,7 @@
-(load "read")
-(load "show")
-(load "output-loop")
-(load "tokenlist-utils")
+(use read)
+(use show)
+(use output-loop)
+(use tokenlist-utils)
 
 (define (main args)
   (call-with-input-file (cadr args)
@@ -11,4 +11,3 @@
 	(output 
 	 (string->tokenlist (port->string p)))))))
   0)
-

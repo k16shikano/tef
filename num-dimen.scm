@@ -1,5 +1,15 @@
-(load "tokenlist-utils.scm")
-(load "parser-combinator/parser-combinator.scm")
+(define-module num-dimen
+  (use srfi-1)
+  (use srfi-13)
+  (use read)
+  (use show)
+  (use tokenlist-utils)
+  (use parser-combinator.parser-combinator)
+  (use eqtb)
+  (export-all)
+)
+
+(select-module num-dimen)
 
 (define tex-number 
   (parser-cont extra-sign tex-int-num))
@@ -98,12 +108,6 @@
 
 (define tex-register tex-factor)
 
-(define (get-tex-dimen-after str ts env)
-  (let ((dimen (match-head ts (string->tokenlist str))))
-    (if dimen
-	((get-tex-dimen env) dimen)
-	(values #f ts))))
-
 (define (token->number ts)
   (string->number (tokenlist->string ts)))
 
@@ -125,3 +129,5 @@
 	(string->tokenlist (string-take dimstr (or true (car ratio)))))
        (/ 1 (cadr ratio))
        65536)))
+
+(provide "num-dimen")

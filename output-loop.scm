@@ -3,16 +3,24 @@
 ;;;; its key is the name of macros in symbol, 
 ;;;; and its value is [[parameter token] . [body token]].
 
-(use util.list)
-(load "def-macro.scm")
-(load "codes.scm")
-(load "eqtb.scm")
-(load "group.scm")
-(load "box.scm")
-(load "register.scm")
-(load "math.scm")
-(load "align.scm")
-(load "tokenlist-utils.scm")
+(define-module output-loop
+  (use util.list)
+  (use show)
+  (use read)
+  (use tokenlist-utils)
+  (use parser-combinator.parser-combinator)
+  (use def-macro)
+  (use box)
+  (use eqtb)
+  (use codes)
+  (use group)
+  (use register)
+  (use math)
+  (use align)
+  (export-all)
+)
+
+(select-module output-loop)
 
 (define (init-eqtb)
   (let1 tb (make-eqtb)
@@ -382,3 +390,4 @@
 	       (seek-fi rest env mode)
 	       (values '() rest))))
 
+(provide "output-loop")

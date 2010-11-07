@@ -1,9 +1,10 @@
-;;;; utilities for tex-modoki parser
+(define-module tokenlist-utils
+  (use srfi-1)
+  (export-all))
 
-(define (perror ls)
-  (if (<= (length ls) 20)
-      (tokenlist->string ls)
-      (string-append (tokenlist->string (take ls 20)) "...")))
+(select-module tokenlist-utils)
+
+;;;; utilities for tex-modoki parser
 
 (define (string+char str . char)
   (string-append str (apply string char)))
@@ -150,3 +151,5 @@
 (defpred advance? "advance")
 
 (defpred the? "the")
+
+(provide "tokenlist-utils")

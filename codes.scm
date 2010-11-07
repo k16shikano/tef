@@ -3,11 +3,17 @@
 ;; In tex-modoki, each character is represented as a dotted-pair of 
 ;; integer and character, while it is just a integer in TeX82. 
 
-(use util.list)
-(load "eqtb.scm")
-(load "register.scm")
-(load "tokenlist-utils.scm")
-(load "parser-combinator/parser-combinator.scm")
+(define-module codes
+  (use srfi-1)
+  (use util.list)
+  (use tokenlist-utils)
+  (use parser-combinator.parser-combinator)
+  (use eqtb)
+  (use register)
+  (export-all)
+)
+
+(select-module codes)
 
 (define (get-codename ts env)
   (receive (num rest)
@@ -66,3 +72,4 @@
    '(#\= . #x3d)
    '(#\> . #x3e)))
 
+(provide "codes")

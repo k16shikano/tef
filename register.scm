@@ -1,7 +1,15 @@
-(load "eqtb.scm")
-(load "tokenlist-utils.scm")
-(load "num-dimen.scm")
-(load "parser-combinator/parser-combinator.scm")
+(define-module register
+  (use srfi-1)
+  (use read)
+  (use show)
+  (use tokenlist-utils)
+  (use parser-combinator.parser-combinator)
+  (use eqtb)
+  (use num-dimen)
+  (export-all)
+)
+
+(select-module register)
 
 (define (get-register-value base ts env)
   (receive (num rest)
@@ -134,23 +142,11 @@
 		    (tex-dimen ts)
 		    (values (dimen->sp num-unit) rest)))))
 
-
-(define (advance! ts env global?)
-  (let1 rest (cons 
-	      (or (and (= -1 (caar (cdr ts)))
-		       (find-macro-definition 
-			(token->symbol (cdadr ts)) env))
-		  (cadr ts))
-	      (cddr ts))
-	(do-advance! rest env global?)))
-
-(define (do-advance! ts env global?)
-  (cond ((count? (car ts))
-	 (register-advance-with get-tex-int-num ts env global?))
-	((dimen? (car ts))
-	 (register-advance-with get-tex-dimen ts env global?))
-	(else
-	 (error "not implemented" (perror ts)))))
+(define (get-tex-dimen-after str ts env)
+  (let ((dimen (match-head ts (string->tokenlist str))))
+    (if dimen
+	((get-tex-dimen env) dimen)
+	(values #f ts))))
 
 (define-syntax register-advance-with
   (syntax-rules ()
@@ -170,3 +166,13 @@
 			       val <- (p env))
 		 (cdr ts))
 		rest)))))
+
+(define (do-advance! ts env global?)
+  (cond ((count? (car ts))
+	 (register-advance-with get-tex-int-num ts env global?))
+	((dimen? (car ts))
+	 (register-advance-with get-tex-dimen ts env global?))
+	(else
+	 (error "not implemented" (perror ts)))))
+
+(provide "register")

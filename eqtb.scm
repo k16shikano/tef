@@ -1,3 +1,9 @@
+(define-module eqtb
+  (export-all)
+  )
+
+(select-module eqtb)
+
 ;; Table of Equivalents. (TeX The Program 220)
 ;; Here we simply define it as a hashtable containing hashtables
 ;; each represents the active characters base, control sequence 
@@ -35,3 +41,4 @@
       (hash-table-update! tb base base-update!)
       (error "Unknown base:" base)))
 
+(provide "eqtb")

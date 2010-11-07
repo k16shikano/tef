@@ -1,6 +1,11 @@
-(load "tokenlist-utils.scm")
-(load "codes.scm")
-(load "eqtb.scm")
+(define-module group
+  (use tokenlist-utils)
+  (use codes)
+  (use eqtb)
+  (export get-tex-group groupen)
+)
+
+(select-module group)
 
 ;; this gets the head group from a token list,
 ;; returning the group and the rest of the string in multivalues as tokenlists.
@@ -51,3 +56,5 @@
 		       (get-tex-group ls (car env)))
 		   (cons `(,@group) unseen))
 	  ls)))
+
+(provide "group")

@@ -1,7 +1,14 @@
+(define-module parser-combinator.parser-combinator
+  (use tokenlist-utils)
+  (use show)
+  (use read)
+  (export-all)
+)
+
+(select-module parser-combinator.parser-combinator)
+
 ;;;; A simple parser combinator for tex-modoki.
 ;;;; parser := [token] -> [matched token] and [rest token]
-
-(load "tokenlist-utils.scm")
 
 (define-condition-type <parser-error> <error> #f)
 
@@ -178,3 +185,4 @@
 	    (tokenlist->string
 	     (values-ref (,parser (string->tokenlist ,tokens)) 1)))))
 
+(provide "parser-combinator.parser-combinator")

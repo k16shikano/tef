@@ -1,10 +1,22 @@
-(load "group.scm")
-(load "eqtb.scm")
-(load "register")
-(load "tokenlist-utils.scm")
-(load "parser-combinator/parser-combinator.scm")
+(define-module def-macro
+  (use srfi-1)
+  (use tokenlist-utils)
+  (use parser-combinator.parser-combinator)
+  (use eqtb)
+  (use group)
+  (use codes)
+  (use register)
+  (export-all)
+#;  (export match-def-parameter
+	  grab-macro-definition
+	  find-macro-definition
+	  update-env! let!
+	  find-activechar-definition
+	  find-definition
+	  apply-pattern)
+  )
 
-;;;; def (usre macro)
+(select-module def-macro)
 
 (define-condition-type <read-parameter-error> <error> #f)
 
@@ -144,6 +156,15 @@
 		   (error "malformed let" (perror ts))))
 	    rest))))))
 
+(define (advance! ts env global?)
+  (let1 rest (cons 
+	      (or (and (= -1 (caar (cdr ts)))
+		       (find-macro-definition 
+			(token->symbol (cdadr ts)) env))
+		  (cadr ts))
+	      (cddr ts))
+	(do-advance! rest env global?)))
+
 ;; symbol -> env
 (define (find-macro-definition key env)
   (cond ((or (not key) (null? env))
@@ -179,3 +200,5 @@
 		  (cons (car head)
 			(apply-pattern rest params)))
 		 )))
+
+(provide "def-macro")

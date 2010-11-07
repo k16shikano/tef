@@ -1,9 +1,14 @@
 ;; expanded box := [type, dimen, body] 
 
-(load "tokenlist-utils.scm")
-(load "num-dimen.scm")
-(load "group.scm")
-(load "register.scm")
+(define-module box
+  (use tokenlist-utils)
+  (use group)
+  (use register)
+  (use num-dimen)
+  (export-all)
+)
+
+(select-module box)
 
 (define (box? token)
   (and (textoken? token)
@@ -47,3 +52,5 @@
 		       ((box-type=? "vbox" type)
 			`((1 ,@body)))
 		       (else body)))))
+
+(provide "box")

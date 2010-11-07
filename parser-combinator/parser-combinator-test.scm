@@ -1,7 +1,11 @@
 (use gauche.test)
+(use read)
+(use show)
+(use num-dimen)
+(use tokenlist-utils)
+(use parser-combinator.parser-combinator)
 
 (test-start "parser-combinator")
-(load "parser-combinator.scm")
 
 (parser-test* "number"
 	      "1" "2"

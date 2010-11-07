@@ -1,14 +1,14 @@
 (use gauche.test)
+(use read)
+(use show)
+(use output-loop)
+(use tokenlist-utils)
+(use math)
+(use box)
 
 (test-start "tex-modoki math related features")
-(load "read.scm")
-(load "show.scm")
-(load "output-loop.scm")
-(load "tokenlist-utils.scm")
 
 (test-section "parse math list")
-(load "math.scm")
-(load "box.scm")
 
 (test* "make mlist" 
        '((200 (Ord (11 . #\x) ((Inner (200 (Ord (11 . #\y) () ())) () ())) ((Ord (12 . #\2) () ())))))

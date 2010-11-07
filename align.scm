@@ -1,9 +1,15 @@
 ;; halign := [type, dimen, body] 
 
-(use gauche.sequence)
-(load "tokenlist-utils.scm")
-(load "num-dimen.scm")
-(load "group.scm")
+(define-module align
+  (use srfi-1)
+  (use gauche.sequence)
+  (use tokenlist-utils)
+  (use register)
+  (use group)
+  (export-all)
+)
+
+(select-module align)
 
 (defpred halign? "halign")
 (defpred cr? "cr")
@@ -56,3 +62,5 @@
   (map (lambda (row)
 	 (map (lambda (col) (proc col)) row))
        align))
+
+(provide "align")

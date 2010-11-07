@@ -1,5 +1,3 @@
-;; math.scm
-
 ; mlist := [100, noad] (display style) or [200, noad] (text style)
 ; noad  := [atom description, nuclear, supscript, subscript]
 ; nuclear,supscript,subscript := mathchar | mlist | box
@@ -8,14 +6,21 @@
 ; Every mathchar is a unicode character.
 ; (eventually we omit some TeX features such as \fam.)
 
-(use srfi-1)
-(use gauche.collection)
-(use util.list)
-(load "box.scm")
-(load "codes.scm")
-(load "eqtb.scm")
-(load "tokenlist-utils.scm")
-(load "parser-combinator/parser-combinator.scm")
+(define-module math
+  (use srfi-1)
+  (use util.list)
+  (use gauche.collection)
+  (use read)
+  (use tokenlist-utils)
+  (use parser-combinator.parser-combinator)
+  (use box)
+  (use eqtb)
+  (use codes)
+  (use register)
+  (export-all)
+)
+
+(select-module math)
 
 (define (mlist ts codetbl limit)
   (define (loop token result next-field spec)
@@ -306,19 +311,11 @@
 		   (classname->num class)))
       (if (number? char) char (char->ucs char)))))
 
-(define (mathchar mathtoken)
-  (if (integer? (car mathtoken))
-      (remainder (car mathtoken) #x10000)
-      mathtoken))
-
 (define (mathclass token)
   (cond ((integer? token) token)
 	((textoken? token) 7)
 	(else
 	 (floor (/ (car token) #xffff)))))
-
-
-
 
 ;; preds
 
@@ -367,3 +364,5 @@
 
 (defpred nolimits? "nolimits")
 (defpred limits? "limits")
+
+(provide "math")

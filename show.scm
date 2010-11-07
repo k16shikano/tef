@@ -1,8 +1,15 @@
 ;; show tokenlist as a plain text string
 ;; using HTML4 and CSS2.1 to display mlist.
 
-(use text.html-lite)
-(load "tokenlist-utils.scm")
+(define-module show
+  (use srfi-1)
+  (use text.html-lite)
+  (use text.tree)
+  (use tokenlist-utils)
+  (export-all)
+  )
+
+(select-module show)
 
 (define (tokenlist->string tls)
   (define (restore-command ts)
@@ -10,7 +17,7 @@
 	   '())
           ; math charcode
 	  ((and (null? (cdar ts)) (integer? (caar ts)) (> (caar ts) 0))
-	   (cons #`"&#,(mathchar (list (caar ts)));" 
+	   (cons #`"&#,(mathchar (list (caar ts)));"
 		 (restore-command (cdr ts))))
 	  ((not (textoken? (car ts)))
 	   (cond
@@ -53,6 +60,10 @@
 	    (cons (cdar ts) (restore-command (cdr ts))))))
   (tree->string (restore-command tls)))
 
+(define (mathchar mathtoken)
+  (if (integer? (car mathtoken))
+      (remainder (car mathtoken) #x10000)
+      mathtoken))
 
 (define (print-math ts limit)
   (define (padding n)
@@ -235,3 +246,10 @@
 		  (html:td (tokenlist->string col)))
 		row)))
 	align)))
+
+(define (perror ls)
+  (if (<= (length ls) 20)
+      (tokenlist->string ls)
+      (string-append (tokenlist->string (take ls 20)) "...")))
+
+(provide "show")

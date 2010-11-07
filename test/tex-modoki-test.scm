@@ -1,10 +1,18 @@
 (use gauche.test)
 
+(use read)
+(use show)
+(use eqtb)
+(use output-loop)
+(use def-macro)
+(use group)
+(use num-dimen)
+(use register)
+(use box)
+(use tokenlist-utils)
+(use parser-combinator.parser-combinator)
+
 (test-start "tex-modoki")
-(load "read.scm")
-(load "show.scm")
-(load "group.scm")
-(load "output-loop.scm")
 
 (test-section "parse tex strings")
 
@@ -33,7 +41,7 @@
 	 (string->tokenlist "{This information should be    {centered}}"))))
 
 (test-section "macro definition")
-(load "def-macro.scm")
+
 
 (test* "parse parameter"
        '(((11 . #\a)) ((-15 . 1) (12 . #\.) (10 . #\space)) ((-15 . 2)))
@@ -221,13 +229,12 @@ c"))))
 
 
 (test-section "number and dimension")
-(load "num-dimen.scm")
 
 (test* "get-tex-dimen-after and orvalues"
        65536.0
        (let ((ts (string->tokenlist "spread1.0pt{...}")))
 	 (orvalues (get-tex-dimen-after "to" ts `(,(make-eqtb)))
-		   (get-tex-dimen-after "spread" ts `(,(make-eqtb))))))
+		   (get-tex-dimen-after "spread" (string->tokenlist "spread1.0pt{...}") `(,(make-eqtb))))))
 
 (parser-test* "tex-dimen"
 	      "3pt" "{x}"
@@ -250,7 +257,6 @@ c"))))
 	      tex-dimen "54.2em{...}")
 
 (test-section "box")
-(load "box.scm")
 
 (test* "box expansion" 
        "[this text is boxed] not boxed"
