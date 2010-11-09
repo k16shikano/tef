@@ -44,11 +44,6 @@
   (lambda (env mode)
     (lambda (ts) (proc env mode ts))))
 
-(define-macro (expand-with getter result ts env)
-  `(receive (got rest)
-	    (,getter ,ts ,env)
-	    ,result))
-
 (define (expand-append getter env mode ts)
   (receive (got rest)
 	   ((getter env mode) ts)
@@ -66,30 +61,8 @@
 	 (expand-append get-evaled-box env mode ts))
 	((halign? (car ts))
 	 (expand-append get-evaled-halign env mode ts))
-	((mathchar? (car ts))
-	 (expand-with get-mathchar
-		      (expand-all (cons got rest) env mode)
-		      (cdr ts)
-		      env))
-	((delimiter? (car ts))
-	 (expand-with get-delimiter
-		      (expand-all (cons got rest) env mode)
-		      (cdr ts)
-		      env))
-	((fraction? (car ts))
-	 (expand-with get-fracspec
-		      (cons got rest)
-		      (cons (car ts) (expand-all (cdr ts) env mode))
-		      env))
-	((radical? (car ts))
-	 (expand-with get-delimiter
-		      (cons (cons (car ts) got) rest)
-		      (expand-all (cdr ts) env mode)
-		      env))
 	((the? (car ts))
 	 (expand-append expand-the env mode ts))
-	((or (= (cat (car ts)) -1) (= (cat (car ts)) 13))
-	 (expand-append (mk-getter eval-control-sequence) env mode ts))
 	((begingroup? (car ts))
 	 (receive (group rest)
 		  (get-tex-group ts (cons (make-eqtb) env))
@@ -102,12 +75,15 @@
 		  (cons
 		   (mlist (expand-all math env 'M) env limit)
 		   (expand-all rest env mode))))
-	((find-catcode (car ts) env)
+ 	((find-catcode (car ts) env)
 	 => (lambda (v)
 	      (expand-all (cons (cons v (cdar ts)) (cdr ts)) env mode)))
-      	(else
+	((eq? 'M mode)
+	 (prepare-math ts env))
+	((or (= (cat (car ts)) -1) (= (cat (car ts)) 13))
+	 (expand-append (mk-getter eval-control-sequence) env mode ts))
+     	(else
 	 (cons (car ts) (expand-all (cdr ts) env mode)))))
-
 
 (define (eval-till-begingroup env mode ts)
   (receive (evaled rest)
@@ -268,6 +244,37 @@
 	     (1 . #\{) (-1 . "mathchar") 
 	     ,@(string->tokenlist (x->string texcharint)) (2 . #\})
 	     ,@rest)))
+
+(define-macro (expand-with getter result ts env)
+  `(receive (got rest)
+	    (,getter ,ts ,env)
+	    ,result))
+
+(define (prepare-math ts env)
+  (cond ((mathchar? (car ts))
+	 (expand-with get-mathchar
+		      (expand-all (cons got rest) env 'M)
+		      (cdr ts)
+		      env))
+	((delimiter? (car ts))
+	 (expand-with get-delimiter
+		      (expand-all (cons got rest) env 'M)
+		      (cdr ts)
+		      env))
+	((fraction? (car ts))
+	 (expand-with get-fracspec
+		      (cons got rest)
+		      (cons (car ts) (expand-all (cdr ts) env 'M))
+		      env))
+	((radical? (car ts))
+	 (expand-with get-delimiter
+		      (cons (cons (car ts) got) rest)
+		      (expand-all (cdr ts) env 'M)
+		      env))
+	((or (= (cat (car ts)) -1) (= (cat (car ts)) 13))
+	 (expand-append (mk-getter eval-control-sequence) env 'M ts))
+     	(else
+	 (cons (car ts) (expand-all (cdr ts) env 'M)))))
 
 ;;;; process-if
 ;; In TeX, conditional statements is processed while its macro expansion.
