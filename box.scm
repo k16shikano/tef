@@ -1,6 +1,7 @@
 ;; expanded box := [type, dimen, body] 
 
 (define-module box
+  (use srfi-1)
   (use tokenlist-utils)
   (use group)
   (use register)
@@ -23,7 +24,7 @@
    ((box-type=? "vbox" type) 'V)))
 
 (define (box-type=? typestr token)
-  (and (< (cat token) 0)
+  (and (= (cat token) -1)
        (string=? typestr (cdr token))))
 
 (define (get-box-parameter ts env)
@@ -31,7 +32,7 @@
 	 (receive (dimen body)
 		  (orvalues (get-tex-dimen-after "to" (cdr ts) env)
 			    (get-tex-dimen-after "spread" (cdr ts) env))
-		  (values `(,(car ts) ,(if dimen dimen #f) 
+		  (values `(,(car ts) ,dimen
 			    ,@(car (groupen body)))
 			  (cdr (groupen body)))))
 	((string=? (cdar ts) "vsplit")
@@ -39,18 +40,18 @@
 		  ((get-tex-int-num env) (cdr ts))
 		  (receive (dimen rest)
 			   (get-tex-dimen-after "to" (cdr ts) env)
-			   (values `(,(car ts) ,@oct ,@dimen '()) rest))))
+			   (values `(,(car ts) ,@oct ,@dimen '()) dimen rest))))
 	((string=? (cdar ts) "lastbox")
 	 (values '() rest))))
 
 (define (expand-box box)
-  (receive (type rest)
-	   (values (car box) (cdr box))
-	   (let1 body (cdr rest)
-		 (cond ((box-type=? "hbox" type)
-			`((0 ,@body)))
-		       ((box-type=? "vbox" type)
-			`((1 ,@body)))
-		       (else body)))))
+  (let ((type  (first box))
+	(dimen (second box))
+	(body  (cddr box)))
+    (cond ((box-type=? "hbox" type)
+	   `((H ,dimen ,@body)))
+	  ((box-type=? "vbox" type)
+	   `((V ,dimen ,@body)))
+	  (else body))))
 
 (provide "box")

@@ -137,10 +137,10 @@
 
 "))))
 
-(test* "for real lexer" 
-       "a\n\nb x s\n\nc"
-       (tokenlist->string 
-	(output
+(test* "text display build-para"
+       "a\n\nb x s\n\nc\n\n"
+       (tokenlist->string
+	(build-para
 	 (string->tokenlist "\
 a
 
@@ -272,7 +272,7 @@ c"))))
 \\hbox spread 3pt{xx}aa"))))
 
 (test* "box expansion" 
-       "|xx|aa" 
+       "xx\n\naa" 
        (tokenlist->string 
 	(output
 	 (string->tokenlist "\
@@ -375,7 +375,7 @@ c"))))
 (test-section "alignment")
 
 (test* "align"
-       '((alignment (((200 (Ord (11 . #\a) () ()))) ((12 . #\2) (11 . #\b)) ((200 (Ord (11 . #\c) () ()))) ((12 . #\2) (11 . #\d)))) (11 . #\g) (11 . #\g))
+       '((alignment (((M (Ord (11 . #\a) () ()))) ((12 . #\2) (11 . #\b)) ((M (Ord (11 . #\c) () ()))) ((12 . #\2) (11 . #\d)))) (11 . #\g) (11 . #\g))
        (output 
 	(string->tokenlist "\\halign{&$#$&2#\\cr a&b&c&d\\cr}gg")))
 

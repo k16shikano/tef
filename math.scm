@@ -1,4 +1,4 @@
-; mlist := [100, noad] (display style) or [200, noad] (text style)
+; mlist := [MD noad] (display style) or [M noad] (text style)
 ; noad  := [atom description, nuclear, supscript, subscript]
 ; nuclear,supscript,subscript := mathchar | mlist | box
 
@@ -72,8 +72,10 @@
 	   (cons '(() () ()) result))
 	  ;; group and box
 	  ((list? (car token))
-	   (cond ((number? (caar token))
-		  (cons `(Box ,token () ()) result))
+	   (cond ((symbol? (caar token))
+		  (cond ((eq? 'H (caar token))
+			 (cons `(Box ,token () ()) result))
+			(else (error "Unsuported Symbol" (caar token)))))
 		 (else
 		  (cons `(Inner 
 			  ,(mlist (car token) (cons (make-eqtb) codetbl) limit)
@@ -86,7 +88,7 @@
 		   ,(or (find-mathcode token codetbl) token)
 		   () ())
 		 result))))
-
+  
   (define (minus-symbol? token)
     (and (textoken? token) 
 	 (= 12 (cat token)) 
@@ -144,7 +146,7 @@
   
   (receive (result next-field spec)
 	   (fold3 loop '() 0 #f ts)
-	   (cons (* 100 limit) 
+	   (cons (if (= limit 2) 'M 'MD)
 		 (let1 result (reverse result)
 		       (if spec
 			   (make-fraction spec 

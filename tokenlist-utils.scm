@@ -91,6 +91,7 @@
 	    (string=? str (cdr token)))))))
 
 (defpred par? "par")
+(defpred end? "end")
 (defpred expandafter? "expandafter")
 (defpred noexpand? "noexpand")
 (defpred global? "global")

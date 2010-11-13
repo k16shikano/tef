@@ -11,27 +11,27 @@
 (test-section "parse math list")
 
 (test* "make mlist" 
-       '((200 (Ord (11 . #\x) ((Inner (200 (Ord (11 . #\y) () ())) () ())) ((Ord (12 . #\2) () ())))))
+       '((M (Ord (11 . #\x) ((Inner (M (Ord (11 . #\y) () ())) () ())) ((Ord (12 . #\2) () ())))))
        (output
 	(string->tokenlist "$x^{y}_2$")))
 
 (test* "make mlist" 
-       '((200 (Ord (11 . #\x) ((Inner (200 (Ord (11 . #\y) ((Ord (12 . #\2) () ())) ())) () ())) ())))
+       '((M (Ord (11 . #\x) ((Inner (M (Ord (11 . #\y) ((Ord (12 . #\2) () ())) ())) () ())) ())))
        (output 
 	(string->tokenlist "$x^{y^2}$")))
  
 (test* "math with box" 
-       '((200 (Ord (11 . #\x) ((Inner (200 (Box ((0 (11 . #\y))) () ())) () ())) ((Ord (11 . #\u) () ())))))
+       '((M (Ord (11 . #\x) ((Inner (M (Box ((H 196608 (11 . #\y))) () ())) () ())) ((Ord (11 . #\u) () ())))))
        (output
-	(string->tokenlist "$x^{\\hbox{y}}_u$")))
+	(string->tokenlist "$x^{\\hbox to 3pt{y}}_u$")))
 
 (test* "math with fraction" 
-       '((200 (Fraction default-code ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
+       '((M (Fraction default-code ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
        (output
 	(string->tokenlist "$x\\over y$")))
 
 (test* "math with fraction" 
-       '((200 (Fraction -5242880 ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
+       '((M (Fraction -5242880 ((Ord (11 . #\x) () ())) ((Ord (11 . #\y) () ())) () ())))
        (output
 	(string->tokenlist "$x\\above-'120pt y$")))
 
@@ -45,7 +45,7 @@
 (test-section "mathcode")
 
 (test* "mathcode" 
-       '((200 (Ord (12 . #\1) . #0=(() ())) (Ord (33) . #0#)))
+       '((M (Ord (12 . #\1) . #0=(() ())) (Ord (33) . #0#)))
        (output
 	(string->tokenlist "\\mathcode`!=\"21 $1!$")))
 

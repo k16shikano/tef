@@ -24,19 +24,22 @@
 	    ((null? (caar ts)) 
 	     (restore-command (cdr ts)))
 	    ; box
-	    ((number? (caar ts))
-	     (cond ((= 0 (caar ts))    ; hbox
-		    (cons (list #\[ (restore-command (cdar ts)) #\])
+	    ((symbol? (caar ts))
+	     (cond ((eq? 'V (caar ts))
+		    (list (restore-command (cddar ts))
+			  (list "\n\n")
 			  (restore-command (cdr ts))))
-		   ((= 1 (caar ts))    ; vbox
-		    (cons (list #\| (restore-command (cdar ts)) #\|)
+		   ((eq? 'H (caar ts))    ; vbox
+		    (cons (list #\[ (restore-command (cddar ts)) #\])
 			  (restore-command (cdr ts))))
-		   ((or (= 100 (caar ts)) (= 200 (caar ts))) ; math
+		   ((or (eq? 'M (caar ts)) (eq? 'MD (caar ts))) ; math
 		    (cons (print-math (cdar ts) (caar ts))
-			  (restore-command (cdr ts))))))
-	    ((eq? 'alignment (caar ts)) ; align
-	     (cons (print-align (cdar ts))
-		   (restore-command (cdr ts))))
+			  (restore-command (cdr ts))))
+		   ((eq? 'alignment (caar ts))           ; alignment
+		    (cons (print-align (cdar ts))
+			  (restore-command (cdr ts))))
+		   (else
+		    (error "Cannot display" (car ts)))))
 	    ((list? (car ts)) ; group
 	     (cons (restore-command (car ts)) (restore-command (cdr ts))))
 	    (else '())))
@@ -140,7 +143,7 @@
 	  (print-math (cdr ts) limit)))
 	((eq? 'Op (caar ts))
 	 (list
-	  (if (= 200 limit)
+	  (if (eq? 'M limit)
 	      (print-limit-op (car ts))
 	      (print-nolimit-op (car ts)))
 	  (padding 20)
@@ -233,10 +236,20 @@
     ) "\n")))
 
 (define (tokenlist->html ts)
+  (define (tokenlist->body ts)
+    (fold-right loop '() ts))
+  (define (loop t r)
+    (cond
+     ; box
+     ((symbol? (car t))
+      (cond ((eq? 'V (car t))
+	     (cons (html:p (tokenlist->body (cdr t))) r))))
+     (else
+      (cons (cdr t) r))))
   (tree->string 
    (html:html 
     (css) 
-    (html:body (tokenlist->string ts)))))
+    (html:body (tokenlist->body ts)))))
 
 (define (print-align align)
   (html:table
