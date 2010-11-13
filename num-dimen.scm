@@ -121,10 +121,9 @@
 		    (lambda (x)
 		      (cons (string-scan dimstr (car x)) (cdr x)))
 		    (zip 
-		     '("pt" "in" "pc" "cm" "mm" "bp" "dd" "cc" "sp" "em" "ex")
+		     '("pt" "in" "pc" "cm" "mm" "bp" "dd" "cc" "sp")
 		     `(1 7227/100 12/1 7227/254 7227/2540 
-			 7227/7200 1238/1157 14856/1157 65536
-			 10 10))))))) ; em and ex
+			 7227/7200 1238/1157 14856/1157 65536)))))))
     (* (tex-int->integer 
 	(string->tokenlist (string-take dimstr (or true (car ratio)))))
        (/ 1 (cadr ratio))

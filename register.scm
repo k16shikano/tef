@@ -83,7 +83,7 @@
 
 (define (unbox! ts env global?)
   (let1 box (getbox! ts env global?)
-	(cons (cadr (car box)) (cdr box))))
+	(cons (cddr (car box)) (cdr box))))
 
 (define (copy ts env global?)
   (receive (num rest)
