@@ -119,11 +119,13 @@
     "result.html"
   (lambda ()
     (display 
-     (tokenlist->html
-      (output
+;     (tokenlist->html
+      (build-para
        (string->tokenlist
 	"\\def\\matrix#1{\\halign{$##$&&$##$\\cr#1}}\
          \\mathchardef\\lambda=\"003bb\
+
+
          $$\\matrix{x-\\lambda & 1 & 0 \\cr 
                     0 & x-\\lambda & 1 \\cr
-                    0 & 0 & x-\\lambda \\cr}$$"))))))
+                    0 & 0 & x-\\lambda \\cr}$$")))))

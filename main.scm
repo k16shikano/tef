@@ -8,6 +8,8 @@
     (lambda (p)
       (display
        (tokenlist->html
-	(output 
-	 (string->tokenlist (port->string p)))))))
+	(build-para
+	 (string->tokenlist (port->string p)))))
+      )
+    )
   0)

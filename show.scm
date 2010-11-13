@@ -243,9 +243,11 @@
      ; box
      ((symbol? (car t))
       (cond ((eq? 'V (car t))
-	     (cons (html:p (tokenlist->body (cdr t))) r))))
+	     (cons (html:p (tokenlist->body (cddr t))) r))
+	    (else 
+	     (cons (tokenlist->string (list t)) r))))
      (else
-      (cons (cdr t) r))))
+      (cons (tokenlist->string (list t)) r))))
   (tree->string 
    (html:html 
     (css) 
