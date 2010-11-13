@@ -125,7 +125,7 @@
      (print-nolimit-supsub t)))
 
   (define (print-code code class)
-    (html:span 
+    (html:span
      :class class
      (print-math `(((,code))) limit)))
 
@@ -254,7 +254,7 @@
     (html:body (tokenlist->body ts)))))
 
 (define (print-align align)
-  (html:table
+  (html:table :style "border-right:solid 1px; border-left:solid 1px"
    (map (lambda (row)
 	  (html:tr 
 	   (map (lambda (col)
