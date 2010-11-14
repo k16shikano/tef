@@ -35,6 +35,10 @@
 	      "\\let" "1234"
 	      (parser-cont (skip tex-space1) any-token) "\\let1234")
 
+(parser-test* "123"
+	      "foo-12a.tex" "a"
+	      any-name " foo-12a.tex a")
+
 (load "num-dimen.scm")
 (parser-test* "do parser"
 	      "000" "cc"

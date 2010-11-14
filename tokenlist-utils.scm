@@ -153,4 +153,6 @@
 
 (defpred the? "the")
 
+(defpred input? "input")
+
 (provide "tokenlist-utils")

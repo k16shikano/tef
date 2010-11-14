@@ -103,6 +103,17 @@
 	  ((par? (car ts))
 	   (set! rest-para (cdr ts))
 	   '())
+	  ((input? (car ts))
+	   (receive (name rest)
+		    (any-name (cdr ts))
+		    (append 
+		     (let1 filename 
+			   (string-append (tokenlist->string name))
+			   (call-with-input-file filename
+			     (lambda (p)
+			       (loop (string->tokenlist (port->string p))
+				     env mode))))
+		     (loop rest env mode))))
 	  ((not (textoken? (car ts)))
 	   (cons (car ts) (loop (cdr ts) env mode)))
 	  ((if? (car ts))

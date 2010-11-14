@@ -174,6 +174,23 @@
 	       ((<parser-error> e) ((orstring d2 ...) ts)))
 	      ((make-string-parser d1) ts))))))
 
+(define any-char
+  (lambda (ts)
+    (cond ((null? ts)
+	   (error <parser-error> "there's no tokens" (perror ts)))
+	  ((and (textoken? (car ts))
+		(> (remainder (cat (car ts)) 5) 0)
+		(char? (cdar ts)))
+	   (values (list (car ts)) (cdr ts)))
+	  (else
+	   (error <parser-error> "it's not char")))))
+
+(define any-name
+  (parser-cont extra-space
+	       (parser-many any-char)
+	       extra-space))
+
+
 ;; for test
 (define-macro (parser-test* desc match-expect rest-expect parser tokens)
   `(begin
