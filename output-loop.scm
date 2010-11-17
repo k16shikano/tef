@@ -107,12 +107,10 @@
 	   (receive (name rest)
 		    (any-name (cdr ts))
 		    (append 
-		     (let1 filename 
-			   (string-append (tokenlist->string name))
-			   (call-with-input-file filename
-			     (lambda (p)
-			       (loop (string->tokenlist (port->string p))
-				     env mode))))
+		     (call-with-input-file (tokenlist->input-filename name)
+		       (lambda (p)
+			 (loop (string->tokenlist (port->string p))
+			       env mode)))
 		     (loop rest env mode))))
 	  ((not (textoken? (car ts)))
 	   (cons (car ts) (loop (cdr ts) env mode)))
@@ -190,6 +188,15 @@
 			    (x->string
 			     (find-register-value base num env))))
 		     rest))))))
+
+(define (tokenlist->input-filename name)
+  (let1 filename (tokenlist->string name)
+    (rxmatch-if (#/(?<=[.])[\w]{1,3}$/ filename)
+	(ind)
+      (if (member ind '("tex"))
+	  filename
+	  (string-append filename ".tex"))
+      (string-append filename ".tex"))))
 
 ;; [token] -> env -> [expanded token] and [rest]
 (define (eval-control-sequence env mode ts)
