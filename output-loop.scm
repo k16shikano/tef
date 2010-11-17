@@ -106,12 +106,11 @@
 	  ((input? (car ts))
 	   (receive (name rest)
 		    (any-name (cdr ts))
-		    (append 
-		     (call-with-input-file (tokenlist->input-filename name)
-		       (lambda (p)
-			 (loop (string->tokenlist (port->string p))
-			       env mode)))
-		     (loop rest env mode))))
+		    (call-with-input-file (tokenlist->input-filename name)
+		      (lambda (p)
+			(loop (append 
+			       (string->tokenlist (port->string p)) rest)
+			      env mode)))))
 	  ((not (textoken? (car ts)))
 	   (cons (car ts) (loop (cdr ts) env mode)))
 	  ((if? (car ts))
