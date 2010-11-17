@@ -236,13 +236,15 @@ c"))))
 	 (orvalues (get-tex-dimen-after "to" ts `(,(make-eqtb)))
 		   (get-tex-dimen-after "spread" (string->tokenlist "spread1.0pt{...}") `(,(make-eqtb))))))
 
+(define tempenv `(,(make-eqtb)))
+
 (parser-test* "tex-dimen"
 	      "3pt" "{x}"
-	      tex-dimen "3pt{x}")
+	      (tex-dimen tempenv) "3pt{x}")
 
 (parser-test* "dimen-unit"
 	      "pt" ""
-	      dimen-unit "pt")
+	      (dimen-unit tempenv) "pt")
 
 (parser-test* "tex-number"
 	      "\"AB" "pt"
@@ -254,7 +256,7 @@ c"))))
 
 (parser-test* "tex-dimen"
 	      "54.2em" "{...}"
-	      tex-dimen "54.2em{...}")
+	      (tex-dimen tempenv) "54.2em{...}")
 
 (test-section "box")
 
@@ -380,11 +382,10 @@ c"))))
 	(string->tokenlist "\\halign{&$#$&2#\\cr a&b&c&d\\cr}gg")))
 
 (test* "align"
-       "<table><tr><td>a</td\n><td>2b</td\n><td>c</td\n><td>2d</td\n></tr\n></table\n>gg"
-       (tokenlist->string
-	(output 
-	 (string->tokenlist "\\halign to3pt{&#&2#\\cr a&b&c&d\\cr}gg"))))
-
+       ; "<table><tr><td>a</td\n><td>2b</td\n><td>c</td\n><td>2d</td\n></tr\n></table\n>gg"
+       '((alignment (((11 . #\a)) (#0=(12 . #\2) (11 . #\b)) ((11 . #\c)) (#0# (11 . #\d)))) (11 . #\g) (11 . #\g))					
+       (output 
+	(string->tokenlist "\\halign to3pt{&#&2#\\cr a&b&c&d\\cr}gg")))
 
 (test-section "codename")
  
@@ -419,5 +420,11 @@ c"))))
 	 (string->tokenlist 
 	  "\\count1=5{\\count1=2\\global\\advance\\count1by\\count1\
              \\advance\\count1by\\count1}\\the\\count1"))))
+
+(test* "hskip to glue"
+       '((HG 327680 32768.0 32768.0) (11 . #\a))
+       (output 
+	(string->tokenlist 
+	 "\\hskip5pt plus.5pt minus.5pt a")))
 
 (test-end)

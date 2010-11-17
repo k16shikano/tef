@@ -14,6 +14,7 @@
   (use eqtb)
   (use codes)
   (use group)
+  (use glue)
   (use register)
   (use math)
   (use align)
@@ -51,7 +52,7 @@
 	   (R (cdr ts) env))
 	  (else
 	   (receive (para rest)
-		    (expand-all ts env 'V)
+		    (expand-all ts env 'H)
 		    `((V () ,@para) . ,(R rest env)))))))
 
 (define (mk-getter proc)
@@ -103,6 +104,12 @@
 	  ((par? (car ts))
 	   (set! rest-para (cdr ts))
 	   '())
+	  ((hskip? (car ts))
+	   (cond ((eq? mode 'V)
+		  (set! rest-para (cdr ts))
+		  '())
+		 (else
+		  (expand-append get-hskip env mode (cdr ts)))))
 	  ((input? (car ts))
 	   (receive (name rest)
 		    (any-name (cdr ts))
@@ -117,8 +124,6 @@
 	   (expand-append (mk-getter process-if) env mode ts))
 	  ((box? (car ts))
 	   (expand-append get-evaled-box env mode ts))
-	  ((skip? (car ts))
-	   (expand-append get-glue-parameter env mode ts))
 	  ((halign? (car ts))
 	   (expand-append get-evaled-halign env mode ts))
 	  ((the? (car ts))
@@ -143,7 +148,7 @@
 	  ((or (= (cat (car ts)) -1) (= (cat (car ts)) 13))
 	   (expand-append (mk-getter eval-control-sequence) env mode ts))
 	  (else
-	   (cons (car ts) (loop (cdr ts) env mode)))))
+	   (cons (car ts) (loop (cdr ts) env 'H)))))
 
   (values (loop ts env mode) rest-para))
 

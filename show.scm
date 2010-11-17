@@ -38,6 +38,9 @@
 		   ((eq? 'alignment (caar ts))           ; alignment
 		    (cons (print-align (cdar ts))
 			  (restore-command (cdr ts))))
+		   ((eq? 'HG (caar ts))
+		    (cons (print-hskip (cdar ts))
+			  (restore-command (cdr ts))))
 		   (else
 		    (error "Cannot display" (car ts)))))
 	    ((list? (car ts)) ; group
@@ -261,6 +264,9 @@
 		  (html:td (tokenlist->string col)))
 		row)))
 	align)))
+
+(define (print-hskip spec)
+  (html:span :style #`"display:inline-block;width:,(/ (car spec) 65536)pt;"))
 
 (define (perror ls)
   (if (<= (length ls) 20)
