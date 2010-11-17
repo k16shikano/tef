@@ -3,6 +3,7 @@
   (use srfi-13)
   (use read)
   (use show)
+  (use internal-value)
   (use tokenlist-utils)
   (use parser-combinator.parser-combinator)
   (use eqtb)
@@ -91,20 +92,40 @@
     (error "it's not a physical unit"))
    extra-space1))
 
-(define inner-unit
+(define (internal-unit env)
   (parser-or (parser-cont (make-string-parser "em") extra-space1)
 	     (parser-cont (make-string-parser "ex") extra-space1)
-	     (error "it's not an inner unit")))
+	     (internal-int env)
+	     (internal-dimen env)
+	     (internal-glue env)
+	     (error "it's not an internal unit")))
 
-(define dimen-unit
+(define (dimen-unit env)
   (parser-or
    (parser-cont (parser-many (make-string-parser "true"))
 		physical-unit)
-   (parser-cont (parser-many tex-space1) inner-unit)
+   (parser-cont (skip extra-space1) (internal-unit env))
    (error "it's not a valid dimension unit")))
 
-(define tex-dimen
-  (parser-cont (skip extra-space1) extra-sign tex-factor dimen-unit))
+(define (tex-dimen env)
+  (parser-cont (skip extra-space1) extra-sign tex-factor (dimen-unit env)))
+
+(define (mu-dimen env)
+  (parser-cont (skip extra-space1) extra-sign (unsigned-mu-dimen env)))
+
+(define (unsigned-mu-dimen env)
+  (parser-or (normal-mu-dimen env) (coerced-mu-dimen env)))
+
+(define (normal-mu-dimen env)
+  (parser-cont tex-factor (mu-unit env)))
+
+(define (coerced-mu-dimen env)
+  (internal-mu-glue env))
+
+(define (mu-unit env)
+  (parser-or
+   (parser-cont (skip extra-space1) (internal-mu-glue env))
+   (parser-cont (make-text-parser "mu") extra-space1)))
 
 (define tex-register tex-factor)
 

@@ -30,7 +30,7 @@
 
 ;; [token] -> env -> [expanded token]
 (define (output ts)
-  (let1 ts (expand-all ts (list (init-eqtb))'H)
+  (let1 ts (expand-all ts (list (init-eqtb)) 'H)
 	(cond ((null? ts)
 	       '())
 	      ((not (textoken? (car ts)))
@@ -118,6 +118,8 @@
 	   (expand-append (mk-getter process-if) env mode ts))
 	  ((box? (car ts))
 	   (expand-append get-evaled-box env mode ts))
+	  ((skip? (car ts))
+	   (expand-append get-glue-parameter env mode ts))
 	  ((halign? (car ts))
 	   (expand-append get-evaled-halign env mode ts))
 	  ((the? (car ts))
@@ -264,7 +266,7 @@
      (and (= 13 (or (find-catcode (car ts) env) (cat (car ts))))
 	  (find-activechar-definition (token->symbol (cdar ts)) env)))
     => (lambda (v)
-	 (if (and (textoken? (car v)) (< 0 (cat (car v)))) 
+	 (if (and (textoken? (car v)) (< 0 (cat (car v))))
 	     (values v (cdr ts))
 	     (receive (params rest)
 		      (match-def-parameter (cdr ts) (car v))

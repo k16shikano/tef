@@ -30,6 +30,13 @@
    'any
    textoken?))
 
+(define (apply-parser-or ps)
+  (lambda (ts)
+    (let R ((ps ps))
+      (guard (e ((<parser-error> e) (R (cdr ps)))
+		((<error> e) (error <parser-error> "not a glue parameter")))
+	     ((car ps) ts)))))
+
 (define-syntax parser-or
   (syntax-rules (error)
     ((_ (error m1 ...))

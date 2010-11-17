@@ -139,7 +139,7 @@
 				       rest)))))))
 	    (else (error "parse failed" (perror ts))))
 	   (receive (num-unit rest)
-		    (tex-dimen ts)
+		    ((tex-dimen env) ts)
 		    (values (dimen->sp num-unit) rest)))))
 
 (define (get-tex-dimen-after str ts env)
