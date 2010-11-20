@@ -246,7 +246,7 @@
      ; box
      ((symbol? (car t))
       (cond ((eq? 'V (car t))
-	     (cons (html:p (tokenlist->body (cddr t))) r))
+	     (cons (html:div :class "para" (tokenlist->body (cddr t))) r))
 	    (else 
 	     (cons (tokenlist->string (list t)) r))))
      (else
