@@ -29,7 +29,7 @@
 		    (list (restore-command (cddar ts))
 			  (list "\n\n")
 			  (restore-command (cdr ts))))
-		   ((eq? 'H (caar ts))    ; vbox
+		   ((eq? 'H (caar ts))    ; hbox
 		    (cons (list #\[ (restore-command (cddar ts)) #\])
 			  (restore-command (cdr ts))))
 		   ((or (eq? 'M (caar ts)) (eq? 'MD (caar ts))) ; math
@@ -94,14 +94,14 @@
 	   :class class 
 	   (cond ((null? (second t)) "")
 		 ((and (pair? (car (second t))) (number? (caar (second t))))
-		  (tokenlist->string (second t)))
-		 (else (tokenlist->string (list (second t)))))
+		  (tokenlist->body (second t)))
+		 (else (tokenlist->body (list (second t)))))
 	   (print-nolimit-supsub t))))
 
   (define (print-nolimit-op t)
     (html:span 
      :class "op" 
-      (tokenlist->string (list (second t)))
+      (tokenlist->body (list (second t)))
       (print-nolimit-supsub t)))
 
   (define (print-limit-op t)
@@ -110,17 +110,17 @@
      (html:div :class "sup"
 	       (print-math (third t) limit))
      (html:div :class "nuc"
-	       (tokenlist->string (list (second t))))
+	       (tokenlist->body (list (second t))))
      (html:div :class "sub"
 	       (print-math (fourth t) limit))))
 
   (define (print-binrel t)
     (html:span :class "binrel"
-	       (tokenlist->string (list (second t)))))
+	       (tokenlist->body (list (second t)))))
 
   (define (print-mathtoken t class)
     (html:span :class class
-	       (tokenlist->string t)))
+	       (tokenlist->body t)))
 
   (define (print-inner t class)
     (html:span :class class
@@ -135,7 +135,7 @@
   (cond ((null? ts)
 	 (html:span :class "null" ""))
 	((null? (cdar ts))
-	 (tokenlist->string (car ts)))
+	 (tokenlist->body (car ts)))
 	((eq? 'Nil (caar ts))
 	 (cons
 	  (print-nolimit (car ts) "")
@@ -238,19 +238,26 @@
     "-->"
     ) "\n")))
 
-(define (tokenlist->html ts)
-  (define (tokenlist->body ts)
-    (fold-right loop '() ts))
+(define (tokenlist->body ts)
   (define (loop t r)
     (cond
      ; box
      ((symbol? (car t))
       (cond ((eq? 'V (car t))
 	     (cons (html:div :class "para" (tokenlist->body (cddr t))) r))
+	    ((eq? 'H (car t))
+	     (cons (html:span :class "hbox" (tokenlist->body (cddr t))) r))
+	    ((eq? 'M (car t))
+	     (cons (html:span :class "math" (print-math (cdr t) 1)) r))
+	    ((eq? 'MD (car t))
+	     (cons (html:span :class "math" (print-math (cdr t) 2)) r))
 	    (else 
 	     (cons (tokenlist->string (list t)) r))))
      (else
       (cons (tokenlist->string (list t)) r))))
+  (fold-right loop '() ts))
+
+(define (tokenlist->html ts)
   (tree->string 
    (html:html 
     (css) 
@@ -261,7 +268,7 @@
    (map (lambda (row)
 	  (html:tr 
 	   (map (lambda (col)
-		  (html:td (tokenlist->string col)))
+		  (html:td (tokenlist->body col)))
 		row)))
 	align)))
 

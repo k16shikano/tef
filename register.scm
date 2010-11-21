@@ -6,6 +6,8 @@
   (use parser-combinator.parser-combinator)
   (use eqtb)
   (use num-dimen)
+  (use glue)
+  (use internal-value)
   (export-all)
 )
 
@@ -25,7 +27,9 @@
 		          altval <- (cond ((eq? 'count base)
 					   (get-tex-int-num env))
 					  ((eq? 'dimen base)
-					   (get-tex-dimen env)))
+					   (get-tex-dimen env))
+					  ((eq? 'skip base)
+					   (get-glue env)))
 			  ))
 		     rest)
 		    (values num
@@ -147,6 +151,34 @@
     (if dimen
 	((get-tex-dimen env) dimen)
 	(values #f ts))))
+
+
+(define (get-glue env)
+  (define (stretch env)
+    (parser-or
+     (parser-do return dim 
+		in void <- (make-string-parser "plus")
+		   dim  <- (get-tex-dimen env))
+     (parser-do return dim
+		in void <- (make-string-parser "plus")
+		   dim  <- fil-dimen)
+     extra-space))
+  (define (shrink env)
+    (parser-or
+     (parser-do return dim 
+		in void <- (make-string-parser "minus")
+	           dim  <- (get-tex-dimen env))
+     (parser-do return dim
+		in void <- (make-string-parser "minus")
+		   dim  <- fil-dimen)
+     extra-space))
+  (parser-or
+   (parser-cont extra-sign (internal-glue env))
+   (parser-do 
+    return (list a b c)
+    in a <- (get-tex-dimen env) 
+       b <- (stretch env)
+       c <- (shrink env))))
 
 (define-syntax register-advance-with
   (syntax-rules ()

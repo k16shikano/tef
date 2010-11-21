@@ -155,4 +155,6 @@
 
 (defpred input? "input")
 
+(defpred hskip? "hskip")
+
 (provide "tokenlist-utils")

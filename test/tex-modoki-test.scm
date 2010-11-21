@@ -409,6 +409,10 @@ c"))))
        '(655360)
        (output (string->tokenlist "\\count20=10\\dimen100=\\count20pt\\dimen100")))
 
+(test* "skip register"
+       '()
+       (output (string->tokenlist "\\skip2=0pt plus 2fill minus 3fill")))
+
 (test* "advance counter"
        '(7208960)
        (output (string->tokenlist "\\count10=100\\dimen10=10pt\\advance\\dimen10 by \\count10pt\\dimen10")))

@@ -183,6 +183,14 @@
 		     (expand-all (cddr halign) env mode)))))
 	      rest))))
 
+(define (get-hskip env mode)
+  (lambda (ts)
+    (receive (glue rest)
+	     ((get-glue env) ts)
+	     (cond ((eq? mode 'H) (values `((HG ,@glue)) rest))
+		   ((eq? mode 'M) (values `((MG ,@glue)) rest))
+		   (else (error "inhibite mode" (perror ts)))))))
+
 (define (expand-the env mode)
   (lambda (ts)
     (cond ((register? (cadr ts))
