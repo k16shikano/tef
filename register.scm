@@ -159,18 +159,18 @@
      (parser-do return dim 
 		in void <- (make-string-parser "plus")
 		   dim  <- (get-tex-dimen env))
-     (parser-do return dim
+     (parser-do return (tokenlist->string dim)
 		in void <- (make-string-parser "plus")
-		   dim  <- fil-dimen)
+		   dim  <- (parser-cont extra-space fil-dimen))
      extra-space))
   (define (shrink env)
     (parser-or
      (parser-do return dim 
 		in void <- (make-string-parser "minus")
 	           dim  <- (get-tex-dimen env))
-     (parser-do return dim
+     (parser-do return (tokenlist->string dim)
 		in void <- (make-string-parser "minus")
-		   dim  <- fil-dimen)
+		   dim  <- (parser-cont extra-space fil-dimen))
      extra-space))
   (parser-or
    (parser-cont extra-sign (internal-glue env))

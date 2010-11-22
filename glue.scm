@@ -1,6 +1,5 @@
 (define-module glue
   (use num-dimen)
-;  (use register)
   (use tokenlist-utils)
   (use internal-value)
   (use parser-combinator.parser-combinator)
@@ -14,7 +13,7 @@
    extra-sign
    tex-factor
    fil-unit
-   extra-space1))
+   extra-space))
 
 (define fil-unit
   (parser-cont
