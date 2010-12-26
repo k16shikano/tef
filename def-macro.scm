@@ -125,7 +125,7 @@
 (define (update-env! ts env global?)
   (let1 tb (if global? (last env) (car env))
     (receive (param body rest)
-	(grab-macro-definition (cdr ts))		 
+	(grab-macro-definition (cdr ts))
       (let ((k (token->symbol (cdar ts)))
 	    (b (cons param body)))
 	(cond ((= (cat (car ts)) -1)
@@ -156,16 +156,6 @@
 		   (error "malformed let" (perror ts))))
 	    rest))))))
 
-(define (advance! ts env global?)
-  (let1 rest (cons 
-	      (or (and (= -1 (caar (cdr ts)))
-		       (find-macro-definition 
-			(token->symbol (cdadr ts)) env))
-		  (cadr ts))
-	      (cddr ts))
-	(do-advance! rest env global?)))
-
-;; symbol -> env
 (define (find-macro-definition key env)
   (cond ((or (not key) (null? env))
 	 #f)
@@ -174,7 +164,6 @@
 	(else
 	 (find-macro-definition key (cdr env)))))
 
-;; symbol -> env
 (define (find-activechar-definition key env)
   (cond ((or (not key) (null? env))
 	 #f)

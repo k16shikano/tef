@@ -5,6 +5,7 @@
 
 (define-module output-loop
   (use util.list)
+  (use srfi-1)
   (use show)
   (use read)
   (use tokenlist-utils)
@@ -110,6 +111,21 @@
 		  '())
 		 (else
 		  (expand-append get-hskip env mode (cdr ts)))))
+	  ((tex-number? (car ts))
+	   (receive (num rest)
+		    (orvalues
+			  (let1 v (find-macro-definition (token->symbol (cdadr ts)) env)
+				(if (and (textoken? (car v)) (< 0 (cat (car v))))
+				    (values v (cddr ts))
+				    (receive (params rest)
+					     (match-def-parameter (cddr ts) (car v))
+						(if (register? (cadr v))
+						    (let1 val (register! (cdr v) env #f)
+							  (values (car val) rest))
+						    (values #f #f))
+						  )))
+			  ((get-tex-int-num env) (cdr ts)))
+		    (append (string->tokenlist (x->string num)) (loop rest env mode))))
 	  ((input? (car ts))
 	   (receive (name rest)
 		    (any-name (cdr ts))
@@ -152,6 +168,11 @@
 
   (values (loop ts env mode) rest-para))
 
+(define (append-expand-all ls env mode)
+  (receive (para rest)
+	   (expand-all ls env mode)
+	   (append para rest)))
+
 (define (eval-till-begingroup env mode ts)
   (receive (evaled rest)
 	   (eval-control-sequence env mode ts)
@@ -167,7 +188,7 @@
 	     (values
 	      (expand-box
 	       `(,(car box) ,(cadr box)
-		 ,@(expand-all (cddr box) env (box-mode (car box)))))
+		 ,@(append-expand-all (cddr box) env (box-mode (car box)))))
 	      rest))))
 
 (define (get-evaled-halign env mode)
@@ -177,10 +198,10 @@
 	     (values 
 	      `((alignment
 		 ,@(align-map
-		    (lambda (content) (expand-all content env mode))
+		    (lambda (content) (append-expand-all content env mode))
 		    (expand-halign
 		     (cadr halign)
-		     (expand-all (cddr halign) env mode)))))
+		     (append-expand-all (cddr halign) env mode)))))
 	      rest))))
 
 (define (get-hskip env mode)
@@ -221,6 +242,8 @@
     (values '() (assignment! ts env #f)))
    ((register? (car ts))
     (values '() (register! ts env #f)))
+   ((countdef? (car ts))
+    (values '() (countdef! ts env #f)))
    ((setbox? (car ts))
     (values '() (setbox! ts env get-evaled-box mode #f)))
    ((getbox? (car ts))
@@ -242,6 +265,8 @@
 	   (values '() (assignment! (cdr ts) env #t)))
 	  ((register? (cadr ts))
 	   (values '() (register! (cdr ts) env #t)))
+	  ((countdef? (cadr ts))
+	   (values '() (countdef! (cdr ts) env #t)))
 	  ((setbox? (cadr ts))
 	   (values '() (setbox! (cdr ts) env get-evaled-box mode #t)))
 	  ((getbox? (cadr ts))
@@ -254,10 +279,10 @@
 	   (values '() (uncopy ts env #t)))
 	  ((advance? (cadr ts))
 	   (values '() (advance! (cdr ts) env #t)))
-	  ((advance? (cadr ts))
-	   (values '() (advance! (cdr ts) env #t)))
-	  ((advance? (cadr ts))
-	   (values '() (advance! (cdr ts) env #t)))
+	  ((catcode? (cadr ts))
+	   (values '() (catcode! (cdr ts) env #t)))
+	  ((mathcode? (cadr ts))
+	   (values '() (mathcode! (cdr ts) env #t)))
 	  ))
    (else
     (eval-macro env mode ts))))
@@ -266,8 +291,8 @@
   (cond
    ((expandafter? (car ts))
     (receive (expanded rest)
-	     (eval-macro env mode (cddr ts))
-	     (values (expand-all `(,(cadr ts) ,@expanded) env mode) rest)))
+	     (expand-all (cddr ts) env mode)
+	     (values (append-expand-all `(,(cadr ts) ,@expanded) env mode) rest)))
    ((noexpand? (car ts))
     (values
      `(,(cons (or (find-catcode (cadr ts) env) (cat (cadr ts))) (cdadr ts)))
@@ -283,11 +308,8 @@
 	     (receive (params rest)
 		      (match-def-parameter (cdr ts) (car v))
 		      (if (null? params)
-			  (values (expand-all (cdr v) env mode) 
-				  rest)
-			  (values (expand-all 
-				   (apply-pattern (cdr v) params) env mode) 
-				  rest))))))
+			  (expand-all `(,@(cdr v) ,@rest) env mode)
+			  (expand-all `(,@(apply-pattern (cdr v) params) ,@rest) env mode))))))
    (else
     (values `(,(car ts)) (cdr ts)))))
 
@@ -306,16 +328,14 @@
     `((-1 . "global") ,@(edef->def ts env)))
    ((mathchardef? (car ts))
     (mathchardef->def ts env))
-;   ((countdef? (car ts))
-;    (countdef->def ts))
-   (else (error))
+   (else (error "no assignment"))
    ))
 
 (define (edef->def ts env)
   (receive (param body rest)
 	   (grab-macro-definition (cddr ts))
 	   `((-1 . "def") ,(cadr ts) ,@param 
-	     (1 . #\{) ,@(expand-all body env 'H) (2 . #\}) 
+	     (1 . #\{) ,@(append-expand-all body env 'H) (2 . #\}) 
 	     ,@rest)))
 
 (define (mathchardef->def ts env)
@@ -330,6 +350,45 @@
 	     ,@(string->tokenlist (x->string texcharint)) (2 . #\})
 	     ,@rest)))
 
+(define (countdef! ts env global?)
+  (receive (texcharint rest)
+	   (guard (e
+		    ((<parser-error> e)
+		     (cond ((find-macro-definition (token->symbol (cdadr (cddr ts))) env)
+			    => (lambda (v)
+				 (values (car (append-expand-all (cdr v) env 'H)) (cddddr ts))))
+			   (else (error "couldn't find count definition" (perror (cddr ts))))))
+		    ((<error> e)
+		     (error "couldn't find count definition" (perror ts))))
+		  ((parser-cont (skip tex-space1)
+				(skip (tex-other-char #\= ""))
+				(skip tex-space1)
+				(get-tex-int-num env))
+		   (cddr ts)))
+	   (let ((k (token->symbol (cdadr ts)))
+		 (b `(() (-1 . "count") ,@(string->tokenlist (x->string texcharint)))))
+	     (eqtb-update! (if global? (last env) (car env)) 'control-sequence k b)
+	     rest)))
+
+(define (advance! ts env global?)
+  (let1 rest (cond ((and (= -1 (caar (cdr ts)))
+			 (find-macro-definition (token->symbol (cdadr ts)) env))
+		    => (lambda (v)
+			 (receive (params rest)
+				  (match-def-parameter (cddr ts) (car v))
+				  (if (register? (cadr v))
+				      `(,@(cdr v) ,@rest)
+				      (error "its not a count register" (perror rest))))))
+		   (else (cdr ts)))
+	(do-advance! rest env global?)))
+
+(define (do-advance! ts env global?)
+  (cond ((count? (car ts))
+	 (register-advance-with (get-tex-int-num env) ts env global?))
+	((dimen? (car ts))
+	 (register-advance-with (get-tex-dimen env) ts env global?))
+	(else
+	 (error "not implemented" (perror ts)))))
 
 ;;;; process-if
 ;; In TeX, conditional statements is processed while its macro expansion.
@@ -373,7 +432,7 @@
         in n1   <- (get-tex-int-num env)
 	   prod <- (parser-cont (orothers "" #\< #\= #\>) extra-space)
 	   n2   <- (get-tex-int-num env))
-    (expand-all condi env mode)))
+   condi))
 
 (define (ifx-test condi env mode)
   (if (or (null? condi) (null? (cdr condi)))
@@ -417,7 +476,9 @@
     (cond ((null? ts)
 	   (error <read-if-error> "Unterminated if"))
 	  ((if? (car ts))
-	   (process-if env mode ts))
+	   (receive (inner-if rest)
+		    (process-if env mode ts)
+		    (R rest (append (reverse inner-if) body))))
 	  ((fi? (car ts))
 	   (values #f (cdr ts)))
 	  ((else? (car ts))
@@ -430,7 +491,9 @@
     (cond ((null? ts)
 	   (error <read-if-error> "Unterminated if"))
 	  ((if? (car ts))
-	   (process-if env mode ts))
+	   (receive (inner-if rest)
+		    (process-if env mode ts)
+		    (R rest (append (reverse inner-if) body))))
 	  ((fi? (car ts))
 	   (values (reverse body) (cdr ts)))
 	  (else
@@ -442,14 +505,14 @@
 	   (if true
 	       (receive (false rest)
 			(seek-fi rest env mode)
-			(values true rest))
-	       (seek-fi ts env mode))))
+			(values true (append-expand-all rest env mode)))
+	       (seek-fi (append-expand-all ts env mode) env mode))))
 
 (define (expand-false ts env mode)
   (receive (true rest)
 	   (seek-else ts env mode)
-	   (if true 
-	       (seek-fi rest env mode)
-	       (values '() rest))))
+	   (if true
+	       (seek-fi (append-expand-all rest env mode) env mode)
+	       (values '() (append-expand-all rest env mode)))))
 
 (provide "output-loop")

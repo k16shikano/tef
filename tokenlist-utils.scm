@@ -103,14 +103,9 @@
 (defpred xdef? "xdef")
 (defpred mathchardef? "mathchardef")
 
-(define (assignment? token)
-  (or (let? token)
-      (def? token)
-      (edef? token)
-      (gdef? token)
-      (xdef? token)
-      (mathchardef? token)
-      ))
+(defpred countdef? "countdef")
+
+(define assignment? (orp let? def? edef? gdef? xdef? mathchardef?))
 
 (define (if? token)
   (and (textoken? token)
@@ -158,3 +153,6 @@
 (defpred hskip? "hskip")
 
 (provide "tokenlist-utils")
+
+(defpred tex-number? "number")
+

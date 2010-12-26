@@ -17,6 +17,7 @@
 
 (define tex-int-num
   (parser-cont
+   extra-sign
    (parser-or (parser-cont tex-int-const)
 	      (parser-cont (tex-other-char #\') tex-oct-const)
 	      (parser-cont (tex-other-char #\") tex-hex-const)

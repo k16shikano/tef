@@ -159,18 +159,18 @@
      (parser-do return dim 
 		in void <- (make-string-parser "plus")
 		   dim  <- (get-tex-dimen env))
-     (parser-do return (tokenlist->string dim)
+     (parser-do return dim
 		in void <- (make-string-parser "plus")
-		   dim  <- (parser-cont extra-space fil-dimen))
+		   dim  <- fil-dimen)
      extra-space))
   (define (shrink env)
     (parser-or
      (parser-do return dim 
 		in void <- (make-string-parser "minus")
 	           dim  <- (get-tex-dimen env))
-     (parser-do return (tokenlist->string dim)
+     (parser-do return dim
 		in void <- (make-string-parser "minus")
-		   dim  <- (parser-cont extra-space fil-dimen))
+		   dim  <- fil-dimen)
      extra-space))
   (parser-or
    (parser-cont extra-sign (internal-glue env))
@@ -182,7 +182,7 @@
 
 (define-syntax register-advance-with
   (syntax-rules ()
-    ((_ p ts env global?)
+    ((_ getter ts env global?)
      (let1 base (string->symbol #`",(cdar ts)")
        (receive (void rest)
 		((parser-do return 
@@ -195,16 +195,8 @@
 				       (skip tex-space1)
 				       (make-string-parser "by")
 				       (skip tex-space1))
-			       val <- (p env))
+			       val <- getter)
 		 (cdr ts))
 		rest)))))
-
-(define (do-advance! ts env global?)
-  (cond ((count? (car ts))
-	 (register-advance-with get-tex-int-num ts env global?))
-	((dimen? (car ts))
-	 (register-advance-with get-tex-dimen ts env global?))
-	(else
-	 (error "not implemented" (perror ts)))))
 
 (provide "register")

@@ -69,3 +69,10 @@
 \mathchardef\cdotp = "000b7
 \def\cdots{%
   \mathinner{\cdotp\cdotp\cdotp}}
+
+\count10=22
+\countdef\inscount=20\countdef\allocationnumber=21
+\def\newcount{\alloc0\count\countdef\inscount}
+\def\alloc#1#2#3#4#5{\global\advance\count1#1 by1
+  \allocationnumber=\count1#1
+  \global#3#5=\allocationnumber}

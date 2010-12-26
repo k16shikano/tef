@@ -1,5 +1,6 @@
 (define-module group
   (use tokenlist-utils)
+  (use show)
   (use codes)
   (use eqtb)
   (export get-tex-group groupen)
