@@ -1,0 +1,22 @@
+\input sample/plain
+
+\newcount\cnt
+\def\ika#1{
+  \cnt = #1
+  \advance \cnt by -1
+  \ifnum#1 = 0
+    イカ娘！
+  \else
+    侵略！\expandafter\ika\number\cnt
+  \fi
+}
+
+
+\ika{6}
+
+
+\def\hoge#1{%
+  #1{5}
+}
+
+\hoge{\ika}
