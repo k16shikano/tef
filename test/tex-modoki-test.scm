@@ -394,6 +394,12 @@ c"))))
        (tokenlist->string
 	(output (string->tokenlist "{\\catcode`\\<=1 <a}}<"))))
 
+(test* "mathcode"
+       ""
+       (tokenlist->string
+	(output
+	 (string->tokenlist "\\mathcode`\\+=\"202B"))))
+
 (test* "active char"
        "*"
        (tokenlist->string

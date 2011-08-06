@@ -106,7 +106,7 @@
 (define (get-tex-int-num env)
   (lambda (ts)
     (guard (e
-	    ((<parser-error> e) 
+	    ((<parser-error> e)
 	     (receive (base num-rest)
 		      ((parser-or
 			(make-command-parser "count")

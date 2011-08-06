@@ -21,15 +21,24 @@
    (parser-or (parser-cont tex-int-const)
 	      (parser-cont (tex-other-char #\') tex-oct-const)
 	      (parser-cont (tex-other-char #\") tex-hex-const)
-	      (parser-cont (tex-other-char #\`) char-token)
+	      (parser-cont (tex-other-char #\`) (parser-or hathat-char char-token symbol-string))
 	      (error "it's not number"))
    (skip extra-space1)))
 			
 (define (tex-int->integer ts)
   (define (p radix ts)
     (string->number (list->string (map cdr ts)) radix))
+  (define (charcode->integer ts)
+    (cond ((= (caar ts) -1) (char->integer (string-ref (cdar ts) 0)))
+	  ((char=? (cdar ts) #\^) (hat->integer (cddr ts)))
+	  (else (char->integer (cdar ts)))))
+  (define (hat->integer ts)
+    (if (null? (cdr ts))
+	(let1 i (char->integer (cdar ts))
+	      (if (>= i 64) (- i 64) (+ i 64)))
+	(p 16 ts)))
   (cond ((char=? #\- (cdar ts)) (* -1 (tex-int->integer (cdr ts))))
-	((char=? #\` (cdar ts)) (char->integer (cdadr ts)))
+	((char=? #\` (cdar ts)) (charcode->integer (cdr ts)))
 	((char=? #\" (cdar ts)) (p 16 (cdr ts)))
 	((char=? #\' (cdar ts)) (p 8  (cdr ts)))
 	(else                   (p 10 ts))))
@@ -55,6 +64,15 @@
    "character"
    'any
    char?))
+(define symbol-string
+  (make-token-parser "symbol string" -1
+    (lambda (s)
+      (char-alphabetic? (string-ref s 0)))))
+(define hathat-char ; ^^@ etc
+  (parser-cont (make-token-parser "left hat"  12 (pa$ char=? #\^))
+	       (make-token-parser "right hat"  7 (pa$ char=? #\^))
+	       (parser-or char-token symbol-string
+			  (parser-cont tex-hex-digit tex-hex-digit))))
 
 (define sign1
   (parser-or (make-token-parser "plus  sign" 12 (cut char=? #\+ <>))

@@ -24,15 +24,9 @@
 
 (select-module output-loop)
 
-(define (init-eqtb)
-  (let1 tb (make-eqtb)
-    (hash-table-update!
-     tb 'mathcode (lambda (old) (alist->hash-table default-mathcodes-list)))
-    tb))
-
 ;; [token] -> env -> [expanded token]
 (define (output ts)
-  (let1 ts (expand-all ts (list (init-eqtb)) 'H)
+  (let1 ts (expand-all ts (list (make-eqtb)) 'H)
 	(cond ((null? ts)
 	       '())
 	      ((not (textoken? (car ts)))
@@ -44,7 +38,7 @@
 
 (define (build-para ts)
   (let R ((ts ts) 
-	  (env (list (init-eqtb))))
+	  (env (list (make-eqtb))))
     (cond ((null? ts)
 	   '())
 	  ((not (textoken? (car ts)))
