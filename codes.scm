@@ -64,4 +64,18 @@
 	   (begin (update-mathcode! (integer->char num) newcode env global?)
 		  rest)))
 
+;; we haven't implemented the bihavior of space factors.
+(define (sfcode! ts env global?)
+  (receive (num newcode rest)
+	   (get-codename (cdr ts) env)
+	   (begin (update-mathcode! (integer->char num) newcode env global?)
+		  rest)))
+
+;; we haven't supported big/small delimiter yet
+(define (delcode! ts env global?)
+  (receive (num newcode rest)
+	   (get-codename (cdr ts) env)
+	   (begin (update-mathcode! (integer->char num) newcode env global?)
+		  rest)))
+
 (provide "codes")

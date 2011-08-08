@@ -22,7 +22,8 @@
 	(cons -1 seq))
        ((char-set-contains? #[\s] x)
 	(in-spaces x seq #t #f p))
-       ((char-set-contains? #[\W\d_] x)
+       ((and (char-set-contains? #[\W\d_] x)
+	     (char-set-contains? #[^@] x))
 	(cond ((string-null? seq)
 	       (cons -1 (string (read-char p))))
 	      (else

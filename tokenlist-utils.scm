@@ -101,11 +101,12 @@
 (defpred edef? "edef")
 (defpred gdef? "gdef")
 (defpred xdef? "xdef")
+(defpred chardef? "chardef")
 (defpred mathchardef? "mathchardef")
 
 (defpred countdef? "countdef")
 
-(define assignment? (orp let? def? edef? gdef? xdef? mathchardef?))
+(define assignment? (orp let? def? edef? gdef? xdef? chardef? mathchardef?))
 
 (define (if? token)
   (and (textoken? token)
@@ -127,6 +128,8 @@
 
 (defpred catcode?  "catcode")
 (defpred mathcode? "mathcode")
+(defpred sfcode? "mathcode")
+(defpred delcode? "mathcode")
 
 (define codename? (orp catcode? mathcode?))
 
