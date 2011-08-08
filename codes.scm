@@ -64,12 +64,4 @@
 	   (begin (update-mathcode! (integer->char num) newcode env global?)
 		  rest)))
 
-(define default-mathcodes-list
-  (list
-;   '(#\+ . #x2b)
-;   '(#\- . #x2212)
-;   '(#\< . #x3c)
-;   '(#\= . #x3d)
- ;  '(#\> . #x3e)))
-))
 (provide "codes")

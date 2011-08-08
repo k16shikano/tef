@@ -84,11 +84,14 @@
 	  ((eq? 'alignment (car token))
 	   (cons `(Inner ,token () ()) result))
 	  (else
-	   (cons `(,(select-atom token) 
-		   ,(or (find-mathcode token codetbl) token)
-		   () ())
-		 result))))
-  
+	   (let* ((mathcode (find-mathcode token codetbl))
+		  (atom (select-atom
+			 (if mathcode
+			     (quotient (car mathcode) #x10000)
+			    token)))
+		  (codevalue (if mathcode mathcode token)))
+	     (cons `(,atom ,codevalue () ()) result)))))
+
   (define (minus-symbol? token)
     (and (textoken? token) 
 	 (= 12 (cat token)) 
@@ -167,6 +170,7 @@
 ;; 	((under? token) 'Under)
 ;; 	((acc?   token) 'Acc)
 ;; 	((vcent? token) 'Vcent)
+	(else (error "unknown mathtype"))
 ))
 
 (define (asis-mathchar? token)
