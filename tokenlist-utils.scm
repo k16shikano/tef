@@ -149,6 +149,8 @@
 (define unbox? (orp unhbox? unvbox?))
 
 (defpred advance? "advance")
+(defpred multiply? "multiply")
+(defpred divide? "divide")
 
 (defpred the? "the")
 

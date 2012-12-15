@@ -107,15 +107,21 @@
   (lambda (ts)
     (guard (e
 	    ((<parser-error> e)
+             (let1 ts (if (and (= -1 (caar ts)) (not (member (cdar ts) '("dimen" "count" "mathchardef" "chardef"))))
+                          (append (cdr (eqtb-get (car env) 'control-sequence (token->symbol (cdar ts))))
+                                  (cdr ts))
+                          ts) 
 	     (receive (base num-rest)
 		      ((parser-or
 			(make-command-parser "count")
-			(make-command-parser "dimen")) ts)
+			(make-command-parser "dimen")
+			(make-command-parser "chardef")
+			(make-command-parser "mathchardef")) ts)
 		      (receive (n rest)
 			       ((get-tex-int-num env) num-rest)
-			       (let1 base (string->symbol (cdar base))
+			       (let1 base (token->symbol (cdar base))
 				 (values (find-register-value base n env)
-					 rest)))))
+					 rest))))))
 	    (else (error "parse failed" (perror ts))))
 	   (receive (n rest)
 		    (tex-int-num ts)
@@ -186,9 +192,30 @@
      (let1 base (string->symbol #`",(cdar ts)")
        (receive (void rest)
 		((parser-do return 
+			      (let ((old (find-register-value base num env))
+                                    (ratio (if (null? sig) 1 -1)))
+				(eqtb-update! (if global? (last env) (car env))
+					      base num (+ old (* ratio val)))
+				#t)
+			    in num <- (get-tex-int-num env)
+			       by  <- (parser-cont
+				       (skip tex-space1)
+				       (make-string-parser "by")
+				       (skip tex-space1))
+                               sig <- extra-sign
+			       val <- getter)
+		 (cdr ts))
+		rest)))))
+
+(define-syntax register-multiply-with
+  (syntax-rules ()
+    ((_ getter ts env global?)
+     (let1 base (string->symbol #`",(cdar ts)")
+       (receive (void rest)
+		((parser-do return 
 			      (let1 old (find-register-value base num env)
 				(eqtb-update! (if global? (last env) (car env))
-					      base num (+ old val))
+					      base num (* old val))
 				#t)
 			    in num <- (get-tex-int-num env)
 			       by  <- (parser-cont
@@ -198,5 +225,25 @@
 			       val <- getter)
 		 (cdr ts))
 		rest)))))
+
+(define-syntax register-divide-with
+  (syntax-rules ()
+    ((_ getter ts env global?)
+     (let1 base (string->symbol #`",(cdar ts)")
+       (receive (void rest)
+		((parser-do return 
+			      (let1 old (find-register-value base num env)
+				(eqtb-update! (if global? (last env) (car env))
+					      base num (quotient old val))
+				#t)
+			    in num <- (get-tex-int-num env)
+			       by  <- (parser-cont
+				       (skip tex-space1)
+				       (make-string-parser "by")
+				       (skip tex-space1))
+			       val <- getter)
+		 (cdr ts))
+		rest)))))
+
 
 (provide "register")
