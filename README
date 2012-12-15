@@ -13,7 +13,7 @@ tex-modoki
 
 * Usage
 
- > gosh -I . main.scm sample/sample.tex > result.html
+ > gosh -I . main.scm -o html sample/sample.tex > result.html
 
 * Change Log
 
