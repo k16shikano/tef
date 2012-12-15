@@ -162,3 +162,4 @@
 
 (defpred tex-number? "number")
 
+(defpred relax? "relax")

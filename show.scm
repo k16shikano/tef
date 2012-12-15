@@ -16,6 +16,8 @@
     (cond ((null? ts)
 	   '())
           ; math charcode
+          ((not (and (car ts) (pair? (car ts))))
+           (restore-command (cdr ts)))
 	  ((and (null? (cdar ts)) (integer? (caar ts)) (> (caar ts) 0))
 	   (cons #`"&#,(mathchar (list (caar ts)));"
 		 (restore-command (cdr ts))))
@@ -51,8 +53,12 @@
 	    (cond ((string=? "par" (cdar ts))
 		   "\n\n")
 ;		   "<br/>")
+		  ((string=? "relax" (cdar ts))
+		   (values '() (cdr ts)))
 		  ((null? (cdr ts))
 		   (string-append "\\" (x->string (cdar ts))))
+		  ((not (textoken? (cadr ts)))
+		   (cadr ts))
 		  ((= 11 (cat (cadr ts)))
 		   (string-append "\\" (x->string (cdar ts)) " "))
 		  (else
@@ -61,7 +67,7 @@
 	   ((and (= (cat (car ts)) 12)
 		 (char-set-contains? #[$%&#_] (cdar ts)))
 	    (cons (string-append "\\" (x->string (cdar ts)))
-		  (restore-command (cdr ts))))	    
+		  (restore-command (cdr ts))))
 	   (else
 	    (cons (cdar ts) (restore-command (cdr ts))))))
   (tree->string (restore-command tls)))
