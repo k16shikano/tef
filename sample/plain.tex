@@ -4,9 +4,9 @@
 \mathcode`\<="2003c
 \mathcode`\=="2003d
 \mathcode`\>="2003e
-
+%
 \catcode`\@=11
-
+%
 \chardef\@ne=1
 \chardef\tw@=2
 \chardef\thr@@=3
@@ -16,7 +16,7 @@
 \mathchardef\@m=1000
 \mathchardef\@M=10000
 \mathchardef\@MM=20000
-
+%
 \mathchardef\alpha="003b1
 \mathchardef\beta="003b2
 \mathchardef\gamma="003b3
@@ -46,7 +46,7 @@
 \mathchardef\varrho="003f1
 \mathchardef\varsigma="003c2
 \mathchardef\varphi="003c6
-
+%
 \mathchardef\Gamma="00393
 \mathchardef\Delta="00394
 \mathchardef\Theta="00498
@@ -58,7 +58,7 @@
 \mathchardef\Phi="003a6
 \mathchardef\Psi="003a8
 \mathchardef\Omega="003a6
-
+%
 \mathchardef\aleph="02135
 \mathchardef\imath="00131
 \mathchardef\jmath="00237
@@ -82,14 +82,14 @@
 \mathchardef\cdotp = "000b7
 \mathchardef\sum   = "103a3
 \mathchardef\intop = "1222b
-
+%
 \countdef\count@=255
 %\toksdef\toks@=0
 %\skipdef\skip@=0
 %\dimendef\dimen@=0
 %\dimendef\dimen@i=1
 %\dimendef\dimen@ii=2
-
+%
 \count10=22
 \count11=9
 \count12=9
@@ -105,18 +105,18 @@
 \countdef\allocationnumber=21
 \countdef\m@ne=22 \m@ne=-1
 \def\newcount{\alloc@0\count\countdef\insc@unt}
-%\def\newdimen{\alloc@1\count\dimendef\insc@unt}
+\def\newdimen{\alloc@1\dimen\dimendef\insc@unt}
 %\def\newskip{\alloc@2\count\skipdef\insc@unt}
-
-\def\alloc#1#2#3#4#5{\global\advance\count1#1 by1
+%
+\def\alloc@#1#2#3#4#5{\global\advance\count1#1 by1
   \allocationnumber=\count1#1
   \global#3#5=\allocationnumber}
-
-
+%
+%
 \def\int{\intop\nolimits}
 \def\sqrt{\radical"2221a}
 \mathchardef\cdotp = "000b7
 \def\cdots{%
   \mathinner{\cdotp\cdotp\cdotp}}
-
+%
 \catcode`\@=12

@@ -1,0 +1,8 @@
+\catcode`[=13 \catcode`]=13
+\def[{*}
+
+\ifcat[* yes \else no \fi % yes
+
+\ifcat\noexpand[\noexpand] yes \else no \fi % yes
+
+\ifcat\noexpand[* yes \else no \fi % no

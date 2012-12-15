@@ -1,0 +1,46 @@
+\input sample/plain
+
+\newcount\xx@cnta
+\newcount\xx@cntb
+\newcount\xx@year
+\newcount\xx@month
+
+%%<*> \julian{年/月/日}
+% 指定の日付に対する修正ユリウス通日の値をマクロ
+% \thejulian に返す.
+\def\julian#1{%
+  \edef\xx@tmpa{#1}%
+  \expandafter\xx@julian@a\xx@tmpa///\relax
+}
+\def\xx@julian@a#1/#2/#3/#4\relax{%
+  \xx@cnta=#1\relax
+  \xx@cntb=#2\relax
+  \ifnum\xx@cnta<1 \xx@cnta=\@ne \fi
+  \ifnum\xx@cntb<1 \xx@cntb=\@ne \fi 
+  \ifnum\xx@cntb<3\relax
+    \advance\xx@cntb by 12\relax
+    \advance\xx@cnta by -1\relax
+  \fi
+  \xx@year=\xx@cnta
+  \xx@month=\xx@cntb
+  \multiply\xx@cnta by 1461\relax
+  \divide\xx@cnta by 4\relax
+  \xx@cntb=\xx@year
+  \divide\xx@cntb by 100\relax  
+  \advance\xx@cnta by -\xx@cntb
+  \divide\xx@cntb by 4\relax
+  \advance\xx@cnta by \xx@cntb
+  \xx@cntb=\xx@month
+  \advance\xx@cntb by -2\relax
+  \multiply\xx@cntb by 520\relax
+  \divide\xx@cntb by 17\relax
+  \advance\xx@cnta by \xx@cntb
+  \advance\xx@cnta by #3\relax
+  \advance\xx@cnta by -678912
+  \edef\thejulian{\number\xx@cnta}%
+}
+
+\julian{2012/12/25}
+\thejulian
+
+
