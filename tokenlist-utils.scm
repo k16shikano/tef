@@ -105,6 +105,7 @@
 (defpred mathchardef? "mathchardef")
 
 (defpred countdef? "countdef")
+(defpred dimendef? "dimendef")
 
 (define assignment? (orp let? def? edef? gdef? xdef? chardef? mathchardef?))
 

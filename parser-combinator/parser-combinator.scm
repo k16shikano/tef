@@ -22,7 +22,7 @@
 		    (pred (cdar ts))))
 	   (values (list (car ts)) (cdr ts)))
 	  (else
-	   (error <parser-error> (format "it's not a ~a, anyway" type-name))))))
+	   (error <parser-error> (format "~a: it's not a ~a, anyway" ts type-name))))))
 
 (define any-token
   (make-token-parser
