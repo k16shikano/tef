@@ -1,9 +1,9 @@
 * Name
-tex-modoki
+TeF (pronounce as "Te-Fu": former tex-modoki)
  
 * Overview
 
- TeX-modoki is aiming to become a subset of plain TeX implementation. 
+ TeF is aiming to become a subset of plain TeX implementation. 
  It's implemented with Gauche Scheme interpreter.
 
 * Feature
